@@ -1,0 +1,20 @@
+{
+    "title": "Redeem invitation code",
+    "description": "The Rabbithole app is in <strong>closed beta</strong> testing. To register, you need to request an invitation code from the developer.",
+    "invite": {
+        "label": "Invitation code",
+        "hint": "Currently, signing up for the app is by invitation only.",
+        "errors": {
+            "required": "Invitation code is required",
+            "pattern": "Invalid invitation code",
+            "notFound": "Invitation code not found",
+            "expired": "Invitation has expired",
+            "alreadyUsed": "Invitation code has already been used"
+        }
+    },
+    "actions": {
+        "cancel": "Cancel",
+        "redeem": "Redeem",
+        "loading": "Loading..."
+    }
+}

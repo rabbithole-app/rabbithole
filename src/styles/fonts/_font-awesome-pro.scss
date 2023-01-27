@@ -1,0 +1,34 @@
+@use "sass:string";
+
+$fa-pro-font-path: '../../assets/fonts/font-awesome-pro';
+
+@mixin fa-pro-font($type, $weight, $style: normal) {
+    @font-face {
+        font-family: 'Font Awesome 6 Pro';
+        src:
+            url('#{$fa-pro-font-path}/fa-#{$type}-#{$weight}.woff2') format('woff2'),
+            url('#{$fa-pro-font-path}/fa-#{$type}-#{$weight}.ttf') format('truetype');
+        font-weight: $weight;
+        font-display: block;
+        font-style: $style;
+    }
+}
+
+$fa-pro-font-list: ('regular', 400) ('solid', 900);
+@each $type, $weight in $fa-pro-font-list {
+    @include fa-pro-font($type, $weight);
+    .fa-#{$type}, .fa#{string.slice($type, 0, 1)} {
+        font-weight: $weight;
+    }
+}
+
+/*!
+ * Font Awesome Pro 6.3.0 by @fontawesome - https://fontawesome.com
+ * License - https://fontawesome.com/license (Commercial License)
+ * Copyright 2023 Fonticons, Inc.
+ */
+:host,:root {
+    --fa-style-family-classic: "Font Awesome 6 Pro";
+    --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Pro";
+    --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Pro";
+}

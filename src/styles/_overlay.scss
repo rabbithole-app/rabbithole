@@ -1,0 +1,18 @@
+.uploading-overlay-pane .mat-menu-panel {
+    min-width: 460px;
+    max-width: 460px;
+    min-height: 160px;
+    display: grid;
+
+    .mat-tab-label {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        min-width: auto;
+    }
+
+    .mat-tab-body-content {
+        display: grid;
+        // grid-row-gap: 1rem;
+        // padding: 1rem;
+    }
+}

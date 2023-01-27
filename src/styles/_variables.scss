@@ -1,0 +1,26 @@
+// Custom Theming for Angular Material
+@use '@angular/material' as mat;
+
+$typography: mat.define-typography-config(
+    $font-family: unquote("'Euclid Square', 'Helvetica Neue', sans-serif"),
+    $button: mat.define-typography-level(14px, $font-weight: 500, $letter-spacing: normal),
+    $headline-1: mat.define-typography-level(112px, 112px, 300, $letter-spacing: -0.05em),
+    $headline-2: mat.define-typography-level(56px, 56px, 400, $letter-spacing: -0.02em),
+    $headline-3: mat.define-typography-level(45px, 48px, 400, $letter-spacing: -0.005em),
+    $headline-4: mat.define-typography-level(34px, 40px, 400),
+    $headline-5: mat.define-typography-level(24px, 32px, 400),
+    $body-1: mat.define-typography-level(16px, 24px, 400, $letter-spacing: normal)
+);
+
+$folder-colors: (
+    'blue': #75d0fa #3fa1d6,
+    'yellow': #ffed93 #fbb653,
+    'orange': #ffbb00 #ffac00,
+    'purple': #b6bfff #848ff4,
+    'pink': #ffc3ce #fa8295,
+    'gray': #d9d9d9 #b9b9b9,
+    'green': #b9ddaf #9cc093
+);
+
+$drop-list-dragging-border-color: #2196f3;
+$drop-list-dragging-bg-color: #e3f2fd;

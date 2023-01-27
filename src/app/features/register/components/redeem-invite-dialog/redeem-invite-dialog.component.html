@@ -1,0 +1,26 @@
+<ng-container *transloco="let t; read: 'invite'">
+    <h1 mat-dialog-title>{{ t('title') }}</h1>
+    <div mat-dialog-content>
+        <mat-form-field [hideRequiredMarker]="true">
+            <mat-label>{{ t('invite.label') }}</mat-label>
+            <input [formControl]="control" matInput placeholder="" />
+            <!-- <mat-hint align="start">{{ t('invite.hint') }}</mat-hint> -->
+            <mat-error *rxIf="control.invalid && (control.dirty || control.touched)">{{ errorMessage }}</mat-error>
+            <mat-spinner matSuffix diameter="20" *rxIf="control.pending"></mat-spinner>
+        </mat-form-field>
+    </div>
+    <div mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
+        <button mat-button disabled *rxIf="loading$; else redeemButton">
+            <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+            {{ t('actions.loading') }}
+        </button>
+        <ng-template #redeemButton>
+            <button mat-button cdkFocusInitial color="primary" (click)="handleRedeem($event)"
+                [disabled]="control.invalid">
+                <mat-icon svgIcon="far:envelope"></mat-icon>
+                {{ t('actions.redeem') }}
+            </button>
+        </ng-template>
+    </div>
+</ng-container>

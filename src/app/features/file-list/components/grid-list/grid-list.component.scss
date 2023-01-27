@@ -1,0 +1,108 @@
+@use '@angular/material' as mat;
+
+:host {
+    /*display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(auto-fit, 100px);
+    align-items: start;
+    grid-auto-flow: dense;*/
+    /*display: flex;
+    grid-gap: 1rem;
+    flex-wrap: wrap;*/
+    //display: flex;
+}
+
+dts-select-container {
+    flex-grow: 1;
+    min-height: 100%;
+}
+
+.grid-container {
+    display: flex;
+    flex-wrap: wrap;
+    //display: grid;
+    grid-gap: 1rem;
+    //grid-template-columns: repeat(auto-fit, 100px);
+    // grid-template-rows: repeat(auto-fit, 126px);
+    //align-items: start;
+    // grid-auto-flow: dense;
+
+    &.cdk-drop-list-dragging {
+        // background-color: yellow;
+    }
+}
+
+.cdk-drag-preview {
+    box-sizing: border-box;
+    border-radius: 4px;
+    @include mat.elevation(2);
+}
+
+/*.cdk-drop-dragging .cdk-drag {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}*/
+.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-placeholder {
+    opacity: 0.5;
+    // display: none;
+    // display: inline-flex;
+    // width: 100px;
+    // height: 120px;
+    // margin: 0 1rem 1rem 0;
+    // order: 10000;
+}
+
+.grid-container .cdk-drop-list-dragging > .cdk-drag-placeholder {
+    // opacity: 0.5;
+    display: none;
+    // visibility: hidden;
+}
+
+.grid-container.cdk-drop-list-dragging app-grid-list-item:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/*
+
+.custom-placeholder {
+    width: 100px;
+    height: 120px;
+    background: red;
+    border: dotted 3px #999;
+    //display: flex;
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}*/
+
+/*.drag-preview {
+    width: 100px;
+    height: 120px;
+    padding: .4375rem;
+    border: 3px dashed #00A1E0;
+    border-radius: 5px;
+    @include mat.elevation(3);
+}
+
+.example-custom-placeholder {
+    display: inline-flex;
+    width: 100px;
+    // height: 100%;
+    background: #ccc;
+    // border: dotted 3px #999;
+    min-height: 60px;
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}*/
+
+// скрытый элемент для перетаскивания
+.drag-preview-ghost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 60px;
+    background-color: #2c8093;
+    transform: translate(-100%, -100%);
+    opacity: 0;
+}

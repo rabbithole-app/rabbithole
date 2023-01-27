@@ -1,0 +1,27 @@
+@use '@angular/material' as mat;
+
+$rabbithole-dark-primary: mat.define-palette(mat.$indigo-palette, 500);
+$rabbithole-dark-accent: mat.define-palette(mat.$blue-gray-palette);
+$rabbithole-dark-theme: mat.define-dark-theme(
+    (
+        color: (
+            primary: $rabbithole-dark-primary,
+            accent: $rabbithole-dark-accent
+        )
+    )
+);
+
+.dark-theme {
+    @include mat.all-component-colors($rabbithole-dark-theme);
+
+    --body-bg: #1e1f22;
+    --content-bg: #f7f7ff;
+    --sidebar-text-color: #fff;
+    --sidebar-bg-color: #1a2634;
+    --sidebar-border-right-color: #1f1f1f;
+    --sidebar-border-right-width: 1px;
+    --navlink-color: #fff;
+    --navlink-color-active: #4461f8;
+    --navlink-color-hover: #4461f8;
+    --footer-border-top: 1px solid #e4e8f0;
+}

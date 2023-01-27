@@ -1,0 +1,16 @@
+<ng-container *transloco="let t;">
+    <mat-icon class="icon" svgIcon="ic:token"></mat-icon>
+    <div class="name">{{ tokenAmount.token.name }}</div>
+    <div class="amount">{{ amount }} {{ tokenAmount.token.symbol }}</div>
+    <mat-spinner [diameter]="16" *rxIf="loading; else refreshButton"></mat-spinner>
+    <ng-template #refreshButton>
+        <button mat-icon-button class="refresh-button" type="button" (click)="refresh.emit()" [matTooltip]="t('common.tooltips.refresh')">
+            <mat-icon svgIcon="far:arrows-rotate"></mat-icon>
+        </button>
+    </ng-template>
+    <div class="actions" *rxIf="actionsEnabled">
+        <button mat-icon-button type="button" (click)="send.emit()">
+            <mat-icon svgIcon="far:paper-plane-top"></mat-icon>
+        </button>
+    </div>
+</ng-container>

@@ -1,0 +1,33 @@
+<ng-container *transloco="let t; read: 'createProfile'">
+    <div class="mat-typography">
+        <h1>{{ t('title') }}</h1>
+    </div>
+    <form class="grid-form" [formGroup]="registerForm">
+        <mat-form-field>
+            <mat-label>{{ t('username.label') }}</mat-label>
+            <input #usernameInput formControlName="username" matInput placeholder="Type here" minlength="2" maxlength="20" />
+            <mat-error *rxIf="username?.invalid && (username?.dirty || username?.touched)">{{ usernameErrorMessage }}</mat-error>
+            <mat-spinner matSuffix diameter="20" *rxIf="pending$"></mat-spinner>
+            <mat-hint align="start">{{ t('username.hint') }}</mat-hint>
+            <mat-hint align="end">{{ username?.value?.length ? username?.value?.length : 0 }} / 20</mat-hint>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>{{ t('displayName.label') }}</mat-label>
+            <input formControlName="displayName" matInput placeholder="Type here" maxlength="50" />
+            <mat-hint align="start">{{ t('displayName.hint') }}</mat-hint>
+        </mat-form-field>
+    </form>
+    <ng-container [ngSwitch]="userStatus$ | push">
+        <button class="action-button" *ngSwitchCase="userStatus.Unregistered" mat-raised-button color="primary" (click)="register()" [disabled]="disabled$ | push">
+            <mat-icon svgIcon="far:user-plus"></mat-icon>
+            <span>{{ t('create') }}</span>
+        </button>
+        <button class="action-button" *ngSwitchCase="userStatus.Creating" mat-raised-button disabled>
+            <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+            {{ t('loading') }}
+        </button>
+        <button class="action-button" *ngSwitchCase="userStatus.Registered" mat-raised-button disabled>
+            {{ t('redirect') }}
+        </button>
+    </ng-container>
+</ng-container>

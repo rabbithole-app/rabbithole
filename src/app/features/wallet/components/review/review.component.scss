@@ -1,0 +1,68 @@
+.review {
+    display: grid;
+    grid-template-areas: 'source source' 'amount amount' 'destination destination' 'back-button send-button';
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto;
+    grid-gap: 1rem;
+    overflow-wrap: break-word;
+
+    div.amount {
+        grid-area: amount;
+        justify-self: center;
+        display: grid;
+        grid-template-areas: 'icon amount' 'icon fee';
+        grid-template-columns: auto 1fr;
+        grid-template-rows: 1fr 1fr;
+        grid-column-gap: 1rem;
+        align-items: center;
+
+        mat-icon {
+            grid-area: icon;
+            $size: 32px;
+            font-size: $size;
+            width: $size;
+            height: $size;
+            color: var(--primary-color);
+        }
+
+        span.amount {
+            grid-area: amount;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        span.fee {
+            grid-area: fee;
+            opacity: 0.6;
+        }
+    }
+
+    .send-button {
+        grid-area: send-button;
+        // .mdc-button__label {
+        //     display: flex;
+        //     column-gap: .75rem;
+        //     align-items: center;
+        // }
+        // .mat-mdc-progress-spinner {
+        //     --mdc-circular-progress-active-indicator-color: #fff;
+        // }
+    }
+
+    .back-button {
+        grid-area: back-button;
+    }
+
+    .source {
+        grid-area: source;
+    }
+
+    .destination {
+        grid-area: destination;
+    }
+
+    code {
+        font-weight: 300;
+        font-size: 0.8125rem;
+    }
+}

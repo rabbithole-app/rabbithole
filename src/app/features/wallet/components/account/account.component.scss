@@ -1,0 +1,39 @@
+@use 'mixins';
+
+:host {
+    display: block;
+    // padding-left: 1rem;
+    // padding-right: 1rem;
+}
+
+.ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.line {
+    display: grid;
+    grid-template-areas:
+        'head head'
+        'code button';
+    grid-template-columns: 1fr max-content;
+    align-items: center;
+    margin-left: 1rem;
+    margin-right: 1rem;
+
+    h1 {
+        grid-area: head;
+    }
+
+    code {
+        font-weight: 300;
+        font-size: 0.8125rem;
+        grid-area: code;
+    }
+    
+    .copy-button {
+        @include mixins.custom-icon-button();
+        grid-area: button;
+    }
+}

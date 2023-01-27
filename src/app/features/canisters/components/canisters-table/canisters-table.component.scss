@@ -1,0 +1,57 @@
+@use 'mixins';
+
+table {
+    width: 100%;
+
+    .mat-mdc-header-cell,
+    .mdc-data-table__cell {
+        vertical-align: middle;
+    }
+
+    .copy-button,
+    .delete-button {
+        @include mixins.custom-icon-button();
+    }
+
+    .info-icon {
+        height: 16px;
+        width: 16px;
+    }
+
+    .mat-column-actions {
+        text-align: center;
+
+        mat-spinner {
+            display: inline-block;
+        }
+    }
+
+    tr.detail-row {
+        height: 0;
+    }
+
+    tr.item-row:not(.expanded-row):hover {
+        background: whitesmoke;
+    }
+
+    tr.item-row:not(.expanded-row):active {
+        background: #efefef;
+    }
+
+    .item-row td {
+        border-bottom-width: 0;
+    }
+}
+
+.flex-line {
+    display: flex;
+    column-gap: 0.5rem;
+    white-space: nowrap;
+    align-items: center;
+}
+
+.details {
+    dt {
+        font-weight: bold;
+    }
+}

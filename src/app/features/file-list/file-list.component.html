@@ -1,0 +1,65 @@
+<app-page-header [class.dragging]="dragging$ | async">My Drive</app-page-header>
+<app-grid-list *ngIf="hasItems$ | async; else empty" [items]="items$ | async" (openContext)="handleContextMenu($event)"></app-grid-list>
+<ng-template #empty>
+    <app-empty (contextmenu)="handleEmptyContextMenu($event)"></app-empty>
+</ng-template>
+<ng-container *ngIf="selected$ | async as items">
+    <button #itemsTrigger mat-button [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="{ items: items }" [matMenuTriggerRestoreFocus]="false"></button>
+</ng-container>
+<input type="file" class="file-input" (change)="handleFileSelected($event)" #fileUpload multiple />
+<mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">
+    <ng-template matMenuContent let-items="items">
+        <ng-container [ngSwitch]="items.length">
+            <ng-container *ngSwitchCase="0">
+                <ng-container [ngTemplateOutlet]="emptyAreaTemplate"></ng-container>
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+                <ng-container [ngTemplateOutlet]="contextItemsTemplate" [ngTemplateOutletContext]="{ items: items }"></ng-container>
+            </ng-container>
+        </ng-container>
+    </ng-template>
+</mat-menu>
+<ng-template #emptyAreaTemplate>
+    <button mat-menu-item (click)="openCreateDirectoryDialog($event)">
+        <mat-icon svgIcon="far:folder-plus"></mat-icon>
+        <span>Create folder</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="fileUpload.click()">
+        <mat-icon svgIcon="far:files"></mat-icon>
+        <span>Upload files</span>
+    </button>
+    <!--<button mat-menu-item>
+        <mat-icon svgIcon="far:folder-plus"></mat-icon>
+        <span>{{ 'sidebar.upload-folder' | translate }}</span>
+    </button>-->
+</ng-template>
+<ng-template #contextItemsTemplate let-items="items">
+    <!--<h3 *ngFor="let item of items" class="mat-typography">{{ item.name }} [{{ item.id }}]</h3>-->
+    <div class="choose-color">
+        <div class="label">
+            Colors: <strong>{{ nextColor }}</strong>
+        </div>
+        <div class="tag-colors">
+            <span
+                *ngFor="let color of folderColors"
+                [class]="'tag-color tag-color--' + color"
+                (mouseenter)="nextColor = color"
+                (mouseleave)="nextColor = ''"
+                (click)="folderColor = color">
+                <mat-icon svgIcon="far:plus"></mat-icon>
+            </span>
+        </div>
+    </div>
+    <!--<button mat-menu-item (click)="handleItemsAction('open')">
+        <mat-icon svgIcon="far:trash-can"></mat-icon>
+        &lt;!&ndash;<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>&ndash;&gt;
+        <span>Open</span>
+    </button>-->
+    <mat-divider></mat-divider>
+    <button mat-menu-item class="warn" (click)="handleItemsAction('remove', items)">
+        <mat-icon svgIcon="far:trash-can"></mat-icon>
+        <!--<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>-->
+        <span>Remove</span>
+    </button>
+</ng-template>

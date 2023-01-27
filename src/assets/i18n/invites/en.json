@@ -1,0 +1,42 @@
+{
+    "title": "Invites",
+    "table": {
+        "id": "ID",
+        "cycles": "Cycles",
+        "status": "Status",
+        "createdAt": "Created at",
+        "expiredAt": "Expired at",
+        "actions": "Actions"
+    },
+    "create": {
+        "title": "Create invite",
+        "description": "To create an invitation with a deposit of {{ tcycles }} TCycles, {{ icp }} ICP will be debited from your balance.",
+        "expires": {
+            "label": "Expires",
+            "errors": {
+                "required": "Select an expiration date"
+            }
+        },
+        "actions": {
+            "cancel": "Cancel",
+            "create": "Create"
+        }
+    },
+    "delete": {
+        "errors": {
+            "expired": "Invitation expired",
+            "notFound": "Invitation not found",
+            "alreadyUsed": "Invitation already used",
+            "notPermission": "You don't have enough permissions"
+        }
+    },
+    "actions": {
+        "create": "Create invite",
+        "loading": "Creating..."
+    },
+    "messages": {
+        "successfullyCreated": "Invitation successfully created",
+        "successfullyDeleted": "Invitation successfully deleted",
+        "copied": "Invitation code copied to clipboard"
+    }
+}

@@ -1,0 +1,49 @@
+:host {
+    display: inline-flex;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    pointer-events: none;
+
+    .badge {
+        position: absolute;
+        z-index: 3;
+        font-weight: 500;
+        line-height: 2rem;
+        text-indent: -8px;
+    }
+}
+
+mat-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.stack {
+    display: flex;
+    align-self: center;
+    margin-top: 8px;
+    justify-content: center;
+
+    > mat-icon {
+        &:nth-child(1) {
+            z-index: 2;
+        }
+        &:nth-child(2) {
+            margin-left: -28px;
+            margin-top: -4px;
+            z-index: 1;
+        }
+        &:nth-child(3) {
+            margin-left: -28px;
+            margin-top: -8px;
+        }
+    }
+}

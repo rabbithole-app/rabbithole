@@ -1,0 +1,58 @@
+@use 'sass:list';
+@use 'sass:map';
+@use 'sass:math';
+
+$icons: (
+    'blockchain': (
+        145,
+        110
+    ),
+    'error': (
+        153,
+        96
+    ),
+    'file-not-found': (
+        180,
+        140
+    ),
+    'files': (
+        183,
+        122
+    ),
+    'locked-files': (
+        131,
+        132
+    ),
+    'pack': (
+        146,
+        120
+    ),
+    'upload': (
+        203,
+        118
+    )
+);
+$sizes: (
+    'small': 0.7,
+    'medium': 1
+);
+
+:host {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+
+    @each $modifier, $multi in $sizes {
+        &.size-#{$modifier} mat-icon {
+            @each $name, $value in $icons {
+                $width: math.round(list.nth($value, 1) * $multi);
+                $height: math.round(list.nth($value, 2) * $multi);
+
+                &.empty-#{$name} {
+                    width: #{$width}px;
+                    height: #{$height}px;
+                }
+            }
+        }
+    }
+}

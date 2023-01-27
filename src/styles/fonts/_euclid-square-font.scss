@@ -1,0 +1,26 @@
+$euclid-square-font-path: '../../assets/fonts/euclid-square';
+
+@mixin euclid-square-font($type, $weight, $style: normal) {
+    @font-face {
+        font-family: 'Euclid Square';
+        src: local('Euclid Square #{type}'), local('EuclidSquare-#{type}'), url('#{$euclid-square-font-path}/EuclidSquare-#{$type}.woff2') format('woff2'),
+            url('#{$euclid-square-font-path}/EuclidSquare-#{$type}.woff') format('woff'),
+            url('#{$euclid-square-font-path}/EuclidSquare-#{$type}.ttf') format('truetype');
+        font-weight: $weight;
+        font-style: $style;
+    }
+}
+
+@mixin euclid-square-font-pair($type, $weight) {
+    @include euclid-square-font($type, $weight);
+    $italic: #{$type}Italic;
+    @if $type == 'Regular' {
+        $italic: Italic;
+    }
+    @include euclid-square-font($italic, $weight, italic);
+}
+
+$euclid-square-font-list: ('Light', 300) ('Regular', normal) ('Medium', 500) ('SemiBold', 600) ('Bold', bold);
+@each $type, $weight in $euclid-square-font-list {
+    @include euclid-square-font-pair($type, $weight);
+}

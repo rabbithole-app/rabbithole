@@ -1,0 +1,22 @@
+@use 'sass:list';
+@use 'variables';
+
+mat-icon.folder {
+    @each $modifier, $colors in variables.$folder-colors {
+        &--#{$modifier} svg {
+            .front {
+                fill: list.nth($colors, 1);
+            }
+            .back {
+                fill: list.nth($colors, 2);
+            }
+        }
+    }
+}
+
+/*mat-icon[data-mat-icon-namespace='far'],
+mat-icon[data-mat-icon-namespace='fas'] {
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+}*/

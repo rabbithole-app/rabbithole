@@ -1,0 +1,75 @@
+<ng-container *transloco="let t; read: 'register'">
+    <div class="mat-typography">
+        <h1>{{ t('title') }}</h1>
+        <!-- <p [innerHTML]="t('description')"></p>
+        <button mat-raised-button (click)="handleRedeem($event)">
+            <mat-icon svgIcon="far:envelope"></mat-icon>
+            {{ t('actions.redeem' )}}
+        </button> -->
+        <ng-container *rxIf="invite$; else withInvoice">
+            <p [innerHTML]="t('description')"></p>
+            <button mat-raised-button (click)="handleRedeem($event)">
+                <mat-icon svgIcon="far:envelope"></mat-icon>
+                {{ t('actions.redeem' )}}
+            </button>
+        </ng-container>
+    </div>
+    <!-- <app-empty icon="locked-files"></app-empty> -->
+    <ng-template #withInvoice>
+        <mat-stepper orientation="horizontal" labelPosition="bottom" [linear]="true"
+            [selectedIndex]="selectedIndex$ | push" #stepper *rxIf="true">
+            <mat-step [editable]="false" [state]="createInvoiceStateIcon$ | push"
+                [completed]="createInvoiceCompleted$ | push">
+                <ng-template matStepLabel>{{ t('steps.createInvoice.title') }}</ng-template>
+                <ng-template matStepContent>
+                    <div class="content">
+                        <p [innerHTML]="t('steps.createInvoice.description', { xdr, usd })"></p>
+                        <ng-container
+                            *rxIf="loadingCreateInvoice$; then loadingButton; else createInvoiceButton; suspense loadingButton"></ng-container>
+                    </div>
+                </ng-template>
+            </mat-step>
+            <mat-step [editable]="false" [completed]="invoiceCompleted$ | push">
+                <ng-template matStepLabel>{{ t('steps.invoice.title') }}</ng-template>
+                <ng-template matStepContent>
+                    <app-invoice class="content"></app-invoice>
+                </ng-template>
+            </mat-step>
+            <mat-step [editable]="false" [state]="createJournalStateIcon$ | push"
+                [completed]="createJournalCompleted$ | push">
+                <ng-template matStepLabel>{{ t('steps.createJournal.title') }}</ng-template>
+                <ng-template matStepContent>
+                    <div class="content">
+                        <p [innerHTML]="t('steps.createJournal.description', { xdr, usd })"></p>
+                        <ng-container
+                            *rxIf="loadingCreateJournal$; then loadingButton; else createJournalButton; suspense loadingButton"></ng-container>
+                    </div>
+                </ng-template>
+            </mat-step>
+            <ng-template matStepperIcon="done">
+                <mat-icon svgIcon="far:check"></mat-icon>
+            </ng-template>
+            <ng-template matStepperIcon="spinner">
+                <mat-spinner diameter="20"></mat-spinner>
+            </ng-template>
+        </mat-stepper>
+    </ng-template>
+    <ng-template #createInvoiceButton>
+        <button mat-raised-button color="primary" (click)="handleCreateInvoice($event)">
+            <mat-icon svgIcon="far:check"></mat-icon>
+            {{ t('actions.createInvoice') }}
+        </button>
+    </ng-template>
+    <ng-template #createJournalButton>
+        <button mat-raised-button color="primary" (click)="handleCreateJournal($event)">
+            <mat-icon svgIcon="far:database"></mat-icon>
+            {{ t('actions.createJournal') }}
+        </button>
+    </ng-template>
+    <ng-template #loadingButton>
+        <button mat-raised-button disabled>
+            <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+            {{ t('actions.loading') }}
+        </button>
+    </ng-template>
+</ng-container>

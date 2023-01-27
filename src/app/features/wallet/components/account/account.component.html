@@ -1,0 +1,18 @@
+<div class="line" *ngIf="accountId$ | push as accountId">
+    <h3>{{ 'wallet.accountId' | transloco }}:</h3>
+    <code class="ellipsis">{{ accountId }}</code>
+    <button #tooltip="matTooltip" mat-icon-button class="copy-button" (click)="copy(accountId)" [matTooltip]="copyMessage" matTooltipHideDelay="500">
+        <mat-icon svgIcon="far:copy"></mat-icon>
+    </button>
+</div>
+<!-- <div class="line" *ngIf="accountState.select('principal') | push as principal">
+    <h3>Principal ID:</h3>
+    <code class="ellipsis">{{ principal }}</code>
+    <button mat-icon-button class="copy-button" [cdkCopyToClipboard]="principal">
+        <mat-icon svgIcon="far:copy"></mat-icon>
+    </button>
+</div> -->
+<!-- <app-wallet></app-wallet> -->
+<!-- <ng-container *ngIf="icp$ | push as icp">
+    
+</ng-container> -->

@@ -1,0 +1,24 @@
+:host {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--content-bg);
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: var(--header-height) auto var(--footer-height);
+    grid-template-areas: 'header info' 'content info' 'footer footer';
+    flex-grow: 1;
+}
+
+main {
+    grid-area: content;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - var(--header-height) - var(--footer-height));
+    box-sizing: border-box;
+    overflow-y: auto;
+}

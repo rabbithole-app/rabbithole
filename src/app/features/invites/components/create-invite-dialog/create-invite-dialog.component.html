@@ -1,0 +1,19 @@
+<ng-container *transloco="let t; read: 'invites.create'">
+  <h1 mat-dialog-title>{{ t('title') }}</h1>
+  <div mat-dialog-content>
+    <p>{{ t('description') }}</p>
+    <br />
+    <mat-form-field>
+      <mat-label>{{ t('expires.label') }}</mat-label>
+      <input matInput [matDatepicker]="picker" [min]="minDate" [max]="maxDate" [formControl]="dateControl" required>
+      <mat-hint>{{ getDateFormatString() }}</mat-hint>
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="dateControl.invalid">{{ t('expires.errors.required') }}</mat-error>
+    </mat-form-field>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
+    <button mat-button [mat-dialog-close]="dateControl.value" cdkFocusInitial [disabled]="dateControl.invalid">{{ t('actions.create') }}</button>
+  </div>
+</ng-container>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="80px" height="104px" viewBox="0 0 80 104" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 61.2 (89653) - https://sketch.com -->
+    <title>file-generic</title>
+    <desc>Created with Sketch.</desc>
+    <g id="file-generic" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Path">
+            <path d="M0,2.00767737 C0,0.898867775 0.890373829,0 2.00662552,0 L62.9848633,0 L80,17.0219727 L80,101.999033 C80,103.104137 79.1015625,104 78.0025017,104 L1.99749826,104 C0.894310431,104 0,103.100914 0,101.992323 L0,2.00767737 Z" fill="#FFFFFF" fill-rule="nonzero"></path>
+            <path d="M61.8183669,1.108773 L61.8183669,14.9935781 C61.8183669,16.6577438 63.1593613,18 64.8135617,18 L78,18" stroke="#C4C6CD" stroke-width="2" stroke-linejoin="round" fill-rule="nonzero"></path>
+            <path d="M1,3.93045901 C1,2.31274751 2.2927349,1 3.90629424,1 L62.253492,1 L79,17.9567167 L79,100.075993 C79,101.686754 77.7029138,103 76.1023766,103 L3.89762335,103 C2.29348793,103 1,101.684031 1,100.069541 L1,3.93045901 Z" stroke="#C4C6CD" stroke-width="2" stroke-linejoin="round"></path>
+        </g>
+    </g>
+</svg>

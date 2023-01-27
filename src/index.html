@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rabbithole</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<style>
+  .spinner {
+    position: fixed;
+    top: calc(50% - 4rem);
+    left: calc(50% - 2rem);
+    width: 4rem;
+    height: 4rem;
+    border: 0.25rem solid #1976d2;
+    border-bottom: 0.25rem solid rgba(0, 0, 0, 0);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 9999;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+<body>
+  <app-root>
+    <div class="spinner"></div>
+  </app-root>
+</body>
+</html>

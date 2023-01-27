@@ -1,0 +1,45 @@
+<ng-container *transloco="let t; read: 'wallet.send'">
+    <form [formGroup]="sendFormGroup" class="send-form">
+        <mat-form-field floatLabel="always" class="amount-field">
+            <mat-label>{{ t('send.amount.label') }}</mat-label>
+            <input autocomplete="off" matInput [placeholder]="placeholder" [inputMask]="select('amountMask') | push"
+                formControlName="amount" />
+            <mat-icon matPrefix svgIcon="ic:token"></mat-icon>
+
+            <button *ngIf="select('showMaxButton') | push" matSuffix mat-icon-button
+                [attr.aria-label]="t('send.amount.max')" (click)="setMaxAmount($event)">
+                <mat-icon svgIcon="far:arrow-up-to-line"></mat-icon>
+            </button>
+            <mat-error *ngIf="amountControl.invalid && (amountControl.dirty || amountControl.touched)">
+                <ng-container *ngIf="amountControl.hasError('required')">{{
+                    t('send.amount.errorMessages.required') }}</ng-container>
+                <ng-container *ngIf="amountControl.hasError('amount')">{{ t('send.amount.errorMessages.amount')
+                    }}</ng-container>
+            </mat-error>
+            <mat-hint>{{ t('send.amount.hint', { amount: select('maxAmount') | push, tokenSymbol })
+                }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field class="recipient-field">
+            <mat-label>{{ t('send.recipient.label') }}</mat-label>
+            <input autocomplete="off" matInput [placeholder]="t('send.recipient.placeholder')"
+                formControlName="recipient" />
+            <mat-error *ngIf="recipientControl.invalid && (recipientControl.dirty || recipientControl.touched)">
+                <ng-container *ngIf="recipientControl.hasError('required'); else invalidError">{{
+                    t('send.recipient.errorMessages.required') }}
+                </ng-container>
+                <ng-template #invalidError>
+                    <ng-container *ngIf="recipientControl.hasError('invalid')">{{
+                        t('send.recipient.errorMessages.invalid') }}</ng-container>
+                </ng-template>
+            </mat-error>
+        </mat-form-field>
+
+        <button class="cancel-button" mat-raised-button type="button" (click)="cancel.next()">{{
+            t('send.actions.cancel') }}</button>
+            <!-- TODO: validate form without formStatus !== 'VALID' -->
+        <button class="continue-button" mat-raised-button type="button" color="primary"
+            [disabled]="sendFormGroup.invalid || formStatus !== 'VALID'" (click)="review.next()">
+            {{ t('send.actions.review') }}
+        </button>
+    </form>
+</ng-container>

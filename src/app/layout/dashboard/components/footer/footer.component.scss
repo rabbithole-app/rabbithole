@@ -1,0 +1,21 @@
+:host {
+    grid-area: footer;
+    display: grid;
+    border-top: var(--footer-border-top);
+    padding: 0 1rem;
+    align-items: center;
+    grid-template-columns: 1fr auto;
+    grid-column-gap: 1rem;
+    grid-template-areas: 'text powered-by-badge';
+
+    p {
+        font-size: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    mat-icon {
+        width: 278px;
+        height: 34px;
+        grid-area: powered-by-badge;
+    }
+}

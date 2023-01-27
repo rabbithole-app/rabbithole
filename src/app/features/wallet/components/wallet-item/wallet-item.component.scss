@@ -1,0 +1,52 @@
+@use 'mixins';
+
+:host {
+    display: grid;
+    grid-template-areas: 'icon name name' 'icon amount refresh';
+    grid-column-gap: 1rem;
+    grid-template-columns: 48px max-content 1fr;
+    grid-template-rows: 1fr 32px;
+    align-items: center;
+    transition: background-color 100ms ease-in-out;
+    &.actions {
+        grid-template-areas: 'icon name name actions' 'icon amount refresh actions';
+        grid-template-columns: 48px max-content 1fr max-content;
+    }
+}
+
+mat-icon.icon {
+    width: 100%;
+    height: auto;
+    grid-area: icon;
+    display: flex;
+}
+
+.name {
+    grid-area: name;
+    font-weight: 500;
+}
+
+.amount {
+    grid-area: amount;
+    opacity: 0.6;
+}
+
+.actions {
+    grid-area: actions;
+    display: grid;
+    grid-template-rows: 48px;
+    grid-template-columns: 1fr;
+    transition: width 100ms ease-in-out;
+}
+
+.refresh-button, mat-spinner {
+    grid-area: refresh;
+}
+
+mat-spinner {
+    margin-left: .5rem;
+}
+
+.refresh-button {
+    @include mixins.custom-icon-button();
+}

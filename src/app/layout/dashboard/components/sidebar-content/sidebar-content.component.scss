@@ -1,0 +1,115 @@
+@use 'mixins';
+
+:host {
+    display: grid;
+}
+
+nav.navigation {
+    display: grid;
+    grid-auto-rows: 44px;
+    align-items: center;
+    margin-top: 2rem;
+
+    /*@media (max-width: 959.98px) {
+        padding-left: calc(var(--sidebar-padding-size) / 2);
+        padding-right: calc(var(--sidebar-padding-size) / 2);
+        transition-delay: 1s;
+    }*/
+
+    a.navigation-link {
+        display: grid;
+        align-items: center;
+        text-decoration: none;
+        
+        color: var(--navlink-color);
+        white-space: nowrap; // remove multilines on text animations
+        grid-template-columns: 48px 1fr;
+
+        &:not(.disabled) {
+            cursor: pointer;
+        }
+
+        /*@media (max-width: 959.98px) {
+            transition-delay: 1s;
+        }*/
+
+        &,
+        &:active {
+            // color: var(--navlink-color-active);
+            // color: var(--bs-primary);
+        }
+
+        &:hover {
+            // color: var(--navlink-color-hover);
+            // background-color: #f7f8fa;
+            // border-radius: 5px;
+        }
+
+        /*fa-icon {
+            justify-self: center;
+        }*/
+
+        mat-icon {
+            justify-self: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        &.active {
+            // color: var(--navlink-color-active);
+            font-weight: 500;
+            // background-color: rgba(0,0,0,.1);
+        }
+
+        > span {
+            line-height: 1;
+        }
+
+        &.disabled {
+            cursor: default;
+            opacity: .5;
+        }
+    }
+}
+
+@mixin no-transition {
+    transition-delay: 0ms;
+    transition-duration: 0ms;
+}
+
+:host-context(.compact) {
+    &.animation-disabled {
+        background-color: aqua;
+        nav.navigation,
+        nav.navigation a.navigation-link {
+            @include no-transition;
+        }
+
+        .upload-button {
+            .mat-button-wrapper mat-icon {
+                @include no-transition;
+            }
+        }
+    }
+    
+    nav.navigation {
+        padding-left: calc(var(--sidebar-padding-size) / 2);
+        padding-right: calc(var(--sidebar-padding-size) / 2);
+        transition-delay: 1s;
+
+        a.navigation-link {
+            transition-delay: 1s;
+        }
+    }
+
+    .upload-button {
+        .mat-content-wrapper mat-icon {
+            margin-right: 0;
+            transition-delay: 1s;
+        }
+    }
+}
+
+button.mat-mdc-button-base.upload-button {
+    @include mixins.button-content-wrapper;
+}

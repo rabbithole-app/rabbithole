@@ -1,0 +1,20 @@
+@use 'sass:list';
+@use 'variables';
+
+mat-progress-bar.folder {
+    border-radius: 2px;
+
+    @each $modifier, $colors in variables.$folder-colors {
+        @at-root .light-theme .color-#{$modifier} ~ .progress-wrapper & {
+            .mat-progress-bar-fill::after {
+                background-color: darken(list.nth($colors, 2), 25);
+            }
+            .mat-progress-bar-background {
+                fill: list.nth($colors, 2);
+            }
+            .mat-progress-bar-buffer {
+                background-color: list.nth($colors, 2);
+            }
+        }
+    }
+}

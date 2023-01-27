@@ -1,0 +1,26 @@
+.content {
+    display: grid;
+    grid-row-gap: 1rem;
+    justify-items: flex-start;
+}
+
+::ng-deep .mat-horizontal-stepper-header, ::ng-deep .mat-vertical-stepper-header {
+    .mat-step-label-selected {
+        // font-size: .875rem;
+        font-weight: 500;
+    }
+
+    &:not(.mat-stepper-label-position-bottom) {
+        padding: 20px 20px;
+    }
+    .mat-step-icon {
+        width: 32px;
+        height: 32px;
+
+        .mat-step-icon-content {
+            .mat-mdc-progress-spinner {
+                --mdc-circular-progress-active-indicator-color: #fff;
+            }
+        }
+    }   
+}

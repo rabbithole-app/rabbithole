@@ -1,0 +1,221 @@
+type UsernameError__1 = 
+ variant {
+   alreadyExists;
+   illegalCharacters;
+   maxLength;
+   minLength;
+ };
+type UsernameError = 
+ variant {
+   alreadyExists;
+   illegalCharacters;
+   maxLength;
+   minLength;
+ };
+type TransferError = 
+ variant {
+   BadFee: record {expected_fee: Tokens;};
+   InsufficientFunds: record {balance: Tokens;};
+   TxCreatedInFuture;
+   TxDuplicate: record {duplicate_of: BlockIndex__1;};
+   TxTooOld: record {allowed_window_nanos: nat64;};
+ };
+type Tokens = record {e8s: nat64;};
+type Time = int;
+type Result_6 = 
+ variant {
+   err: UsernameError__1;
+   ok;
+ };
+type Result_5 = 
+ variant {
+   err:
+    variant {
+      notFound;
+      notPermission;
+      notify: NotifyError;
+      transfer: TransferError;
+      wrongStage;
+    };
+   ok;
+ };
+type Result_4 = 
+ variant {
+   err:
+    variant {
+      notFound;
+      notify: NotifyError;
+      transfer: TransferError;
+      wrongStage;
+    };
+   ok;
+ };
+type Result_3 = 
+ variant {
+   err: ProfileCreateError;
+   ok;
+ };
+type Result_2 = 
+ variant {
+   err: InviteDeleteError;
+   ok;
+ };
+type Result_1 = 
+ variant {
+   err: variant {notFound;};
+   ok;
+ };
+type Result = 
+ variant {
+   err: InviteError;
+   ok;
+ };
+type RegistrationMode = 
+ variant {
+   invite;
+   prepaid;
+ };
+type PublicKey = text;
+type ProfileUpdate = record {displayName: text;};
+type ProfileInfo = 
+ record {
+   createdAt: Time;
+   displayName: text;
+   id: principal;
+   inviter: opt principal;
+   updatedAt: Time;
+   username: text;
+ };
+type ProfileCreateError = 
+ variant {
+   alreadyExists;
+   journalNotFound;
+   username: UsernameError;
+ };
+type ProfileCreate = 
+ record {
+   displayName: text;
+   username: text;
+ };
+type NotifyError = 
+ variant {
+   InvalidTransaction: text;
+   Other: record {
+            error_code: nat64;
+            error_message: text;
+          };
+   Processing;
+   Refunded: record {
+               block_index: opt BlockIndex;
+               reason: text;
+             };
+   TransactionTooOld: BlockIndex;
+ };
+type NotifyCreateCanisterArg = 
+ record {
+   block_index: BlockIndex;
+   controller: principal;
+   subnet_type: opt text;
+ };
+type InvoiceStage = 
+ variant {
+   active;
+   complete: principal;
+   createCanister: Tokens;
+   installJournal: principal;
+   notifyCanister: NotifyCreateCanisterArg;
+   paid;
+   transferUnusedFunds: principal;
+ };
+type Invoice = 
+ record {
+   amount: Tokens;
+   createdAt: Time;
+   errorMessage: opt text;
+   expiredAt: Time;
+   id: ID__1;
+   owner: principal;
+   stage: InvoiceStage;
+   timerId: opt nat;
+ };
+type InviteError = 
+ variant {
+   alreadyUsed;
+   expired;
+   notFound;
+ };
+type InviteDeleteError = 
+ variant {
+   alreadyUsed: principal;
+   expired;
+   notFound;
+   notPermission;
+ };
+type InviteCreate = 
+ record {
+   cycles: nat;
+   expiredAt: Time;
+   owner: principal;
+ };
+type Invite = 
+ record {
+   canisterId: principal;
+   createdAt: Time;
+   cycles: nat;
+   expiredAt: Time;
+   id: ID__1;
+   owner: principal;
+   status: variant {
+             active;
+             expired;
+             used: principal;
+           };
+ };
+type ID__1 = text;
+type ID = text;
+type EncryptedKey = text;
+type BucketId = principal;
+type BlockIndex__1 = nat64;
+type BlockIndex = nat64;
+type AccountIdentifier = blob;
+service : {
+  accountBalance: () -> (Tokens);
+  accountIdentifier: () -> (AccountIdentifier) query;
+  checkInvite: (ID) -> (Result) query;
+  checkUsername: (text) -> (Result_6) query;
+  checkUsernameAvailability: (text) -> (bool) query;
+  createInvite: (InviteCreate) -> ();
+  createInvoice: () -> (Invoice);
+  createJournal: (ID) -> (Result_5);
+  createPrincipalJournal: (principal) -> (Result_4);
+  createProfile: (ProfileCreate) -> (Result_3);
+  deleteInvite: (ID) -> (Result_2);
+  deleteInvoice: () -> ();
+  deleteProfile: () -> (Result_1);
+  getInvites: () -> (vec Invite) query;
+  getInvoice: () -> (opt Invoice) query;
+  getInvoiceById: (ID) -> (opt Invoice) query;
+  getJournalBucket: () -> (opt BucketId);
+  getKey: (PublicKey) -> (EncryptedKey) query;
+  getProfile: () -> (opt ProfileInfo) query;
+  getRegistrationMode: () -> (RegistrationMode) query;
+  installCode:
+   (record {
+      arg: blob;
+      canister_id: principal;
+      mode: variant {
+              install;
+              reinstall;
+              upgrade;
+            };
+      wasm_module: blob;
+    }) -> ();
+  listBuckets: (text) -> (vec record {
+                                principal;
+                                BucketId;
+                              });
+  putProfile: (ProfileUpdate) -> (Result_1);
+  redeemInvite: (ID) -> (Result);
+  setRegistrationMode: (RegistrationMode) -> ();
+  upgradeJournalBuckets: () -> ();
+}

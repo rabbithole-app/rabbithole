@@ -1,0 +1,31 @@
+{
+    "title": "Register",
+    "description": "The Rabbithole app is in <strong>closed beta</strong> testing. To register, you need to request an invitation code from the developer.",
+    "steps": {
+        "createInvoice": {
+            "title": "Create an invoice",
+            "description": "To start using the Rabbit Hole, you need to create a journal. To create a journal, you need to pay ~${{ usd }} (equivalent to {{ xdr }} XDR) in ICP."
+        },
+        "invoice": {
+            "title": "Invoice"
+        },
+        "createJournal": {
+            "title": "Create a journal",
+            "description": "Everything is ready to start creating your journal.",
+            "errors": {
+                "wrongStage": "Wrong stage"
+            }
+        }
+    },
+    "actions": {
+        "redeem": "Redeem invitation code",
+        "createInvoice": "Create invoice",
+        "createJournal": "Create a journal",
+        "createCanister": "Creating a canister...",
+        "notifyCanister": "Creating a canister...",
+        "installJournal": "Installing a journal...",
+        "transferUnusedFunds": "Transfer unused funds",
+        "complete": "Complete",
+        "loading": "Loading..."
+    }
+}

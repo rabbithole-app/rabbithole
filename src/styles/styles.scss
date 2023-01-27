@@ -1,0 +1,35 @@
+@use '@angular/material' as mat;
+@use 'variables';
+@use 'fonts/euclid-square-font';
+@use 'fonts/font-awesome-pro';
+@use 'material';
+@use 'themes';
+@use 'context-menu';
+@use 'overlay';
+
+@include mat.core();
+@include mat.typography-hierarchy(variables.$typography);
+
+:root {
+    --body-font-family: #{mat.font-family(variables.$typography, 'body-1')};
+    --sidebar-desktop-width: 215px;
+    --sidebar-mobile-width: 84px;
+    --sidebar-padding-size: 1rem;
+    --sidebar-animation-duration: 1s;
+    --header-height: 70px;
+    --content-height: auto;
+    --footer-height: 54px;
+}
+
+html,
+body {
+    height: 100%;
+}
+body {
+    margin: 0;
+    font-family: var(--body-font-family);
+}
+
+strong {
+    font-weight: 600;
+}

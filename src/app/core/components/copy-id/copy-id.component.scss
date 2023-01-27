@@ -1,0 +1,12 @@
+@use 'mixins';
+
+:host {
+    display: flex;
+    column-gap: 0.5rem;
+    white-space: nowrap;
+    align-items: center;
+}
+
+.copy-button {
+    @include mixins.custom-icon-button();
+}

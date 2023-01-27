@@ -1,0 +1,29 @@
+<ng-container *transloco="let t; read: 'wallet.send'">
+    <div class="review">
+        <div class="source">
+            <h3>{{ t('review.source') }}</h3>
+            <code>{{ data.from }}</code>
+        </div>
+        <div class="destination">
+            <h3>{{ t('review.destination') }}</h3>
+            <code>{{ data.to }}</code>
+        </div>
+        <div class="amount">
+            <mat-icon svgIcon="far:arrow-down"></mat-icon>
+            <span class="amount">{{ data.amount }} {{ data.tokenSymbol }}</span>
+            <span class="fee">{{ data.fee }} {{ data.tokenSymbol }} ({{ t('review.fee') }})</span>
+        </div>
+        <ng-container *rxIf="loading; else buttonsTemplate">
+            <button class="back-button" mat-raised-button type="button" disabled>{{ t('review.actions.edit') }}</button>
+            <button class="send-button" mat-raised-button type="button" color="primary" [disabled]="true">
+                <mat-spinner diameter="20"></mat-spinner>
+            </button>
+        </ng-container>
+        <ng-template #buttonsTemplate>
+            <button class="back-button" mat-raised-button type="button"
+                (click)="edit.next()">{{ t('review.actions.edit') }}</button>
+            <button class="send-button" mat-raised-button type="button" color="primary"
+                (click)="send.next()">{{ t('review.actions.send') }}</button>
+        </ng-template>
+    </div>
+</ng-container>

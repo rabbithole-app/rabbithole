@@ -1,0 +1,23 @@
+:host {
+    display: flex;
+}
+
+svg {
+    position: relative;
+    .rabbit {
+        transform-origin: center center;
+        fill: #ffa726;
+    }
+    .letters path {
+        position: absolute;
+    }
+    .shadow {
+        fill: #fb8c00;
+    }
+    .hole {
+        fill: #353535;
+    }
+    .letters {
+        fill: #353535;
+    }
+}

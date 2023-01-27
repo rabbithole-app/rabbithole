@@ -1,0 +1,32 @@
+<div class="item">
+    <div class="icon-container">
+        <ng-container [ngSwitch]="data.type">
+            <ng-container *ngSwitchCase="'folder'">
+                <!--<mat-icon svgIcon="filetype:folder" [class]="'folder folder&#45;&#45;' + (loading || disabled ? 'gray' : folderColor)">
+                    &lt;!&ndash;<ng-container [ngTemplateOutlet]="progressTemplate"></ng-container>&ndash;&gt;
+                </mat-icon>-->
+                <app-animated-folder [color]="loading || disabled ? 'gray' : folderColor" [active]="active ?? false"></app-animated-folder>
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+                <mat-icon [svgIcon]="getIconByExt($any(data).extension)"></mat-icon>
+            </ng-container>
+        </ng-container>
+        <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;loading" *ngIf="loading" @zoomOutOnLeave>
+            <mat-spinner mode="indeterminate" diameter="20"></mat-spinner>
+        </div>-->
+        <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;success" *ngIf="statusIcon$ | async" [@zoomInOnEnter]="statusAnimationParams" [@zoomOutOnLeave]="statusAnimationParams">
+            <fa-icon icon="check"></fa-icon>
+        </div>-->
+        <div class="progress-wrapper" *ngIf="loading" @fadeOutDownOnLeave>
+            <mat-progress-bar mode="indeterminate" class="folder"></mat-progress-bar>
+        </div>
+    </div>
+    <div class="info">
+        <div class="title">{{ data.name }}</div>
+        <!--<div class="description">lorem ipsum</div>-->
+    </div>
+</div>
+
+<!--<ng-template #progressTemplate>
+    <fa-icon icon="check"></fa-icon>
+</ng-template>-->

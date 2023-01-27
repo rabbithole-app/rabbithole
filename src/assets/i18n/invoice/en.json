@@ -1,0 +1,17 @@
+{
+    "title": "Register",
+    "description": "To start using the Rabbit Hole, you need to create a journal. To create a journal, you need to pay ~${{ usd }} (equivalent to {{ xdr }} XDR) in ICP.",
+    "descriptionJournal": "Everything is ready to start creating your magazine. If you have sent more than necessary, do not worry, unused funds will be returned to your internal account.",
+    "transfer": "Please transfer {{ icp }} ICP to account.",
+    "actions": {
+        "create": "Create invoice",
+        "check": "Check invoice",
+        "paid": "Create a journal",
+        "createCanister": "Creating a canister...",
+        "notifyCanister": "Creating a canister...",
+        "installJournal": "Installing a journal...",
+        "transferUnusedFunds": "Transfer unused funds",
+        "complete": "Complete",
+        "loading": "Loading..."
+    }
+}

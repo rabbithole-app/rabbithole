@@ -1,0 +1,55 @@
+{
+    "application": {
+        "title": "The Rabbit Hole",
+        "sign-in": "Войти с помощью Internet Computer",
+        "sign-in-redirect": "Вы вошли. Переадресация...",
+        "sign-out": "Выйти",
+        "initializing": "Инициализация...",
+        "synchronizing": "Синхронизация...",
+        "synchronizing.description": "Пожалуйста, держите приложение открытым на устройстве, которое уже добавлено."
+    },
+    "sidebar": {
+        "upload": "Загрузить",
+        "upload-files": "Загрузить файлы",
+        "upload-folder": "Загрузить папку"
+    },
+    "navigation": {
+        "my-files": "Мой диск",
+        "settings": "Настройки",
+        "profile": "Профиль",
+        "shared": "Общие",
+        "favorites": "Избранное",
+        "trash": "Корзина",
+        "canisters": "Канистры",
+        "invites": "Приглашения"
+    },
+    "settings": {
+        "title": "Настройки",
+        "language": {
+            "label": "Язык интерфейса"
+        },
+        "theme": {
+            "label": "Тема оформления"
+        }
+    },
+    "profile": {
+        "create": {
+
+        }
+    },
+    "invites": {
+        "title": "Приглашения",
+        "create": {
+            "title": "Создать приглашение",
+            "description": "Для создания приглашения с депозитом {tcycles} TCycles с вашего баланса спишется {icp} ICP. Убедитесь что у вас достаточно средств на балансе.",
+            "actions": {
+                "cancel": "Отмена",
+                "create": "Создать"
+            }
+        },
+        "actions": {
+            "create": "Создать приглашение",
+            "loading": "Создание..."
+        }
+    }
+}

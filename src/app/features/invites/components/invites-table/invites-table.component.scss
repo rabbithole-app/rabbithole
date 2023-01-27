@@ -1,0 +1,40 @@
+@use 'mixins';
+
+:host {
+    display: grid;
+    grid-template-areas: 'table table' 'actions paginator';
+    grid-gap: 1rem;
+    align-items: center;
+}
+
+table {
+    width: 100%;
+    grid-area: table;
+    .mat-mdc-header-cell, .mdc-data-table__cell {
+        vertical-align: middle;
+    }
+    .copy-button, .delete-button {
+        @include mixins.custom-icon-button();
+    }
+    .info-icon {
+        height: 16px;
+        width: 16px;
+    }
+    .mat-column-actions {
+        text-align: center;
+        mat-spinner {
+            display: inline-block;
+        }
+    }
+}
+
+.flex-line {
+    display: flex;
+    column-gap: 0.5rem;
+    white-space: nowrap;
+    align-items: center;
+}
+
+mat-paginator {
+    grid-area: paginator;
+}

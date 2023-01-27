@@ -1,0 +1,8 @@
+@use 'sass:list';
+@use 'variables';
+
+@each $modifier, $colors in variables.$folder-colors {
+    .light-theme .icon-container mat-icon.folder--#{$modifier} ~ .spinner-wrapper--success {
+        color: list.nth($colors, 2);
+    }
+}

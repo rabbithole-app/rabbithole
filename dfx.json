@@ -1,0 +1,35 @@
+{
+  "canisters": {
+    "rabbithole": {
+      "main": "src/backend/main.mo",
+      "type": "motoko"
+    },
+    "rabbithole_frontend": {
+      "dependencies": [
+        "rabbithole"
+      ],
+      "frontend": {
+        "entrypoint": "dist/index.html"
+      },
+      "source": [
+        "dist"
+      ],
+      "type": "assets"
+    },
+    "journal": {
+      "main": "src/backend/journal/main.mo",
+      "type": "motoko"
+    },
+    "storage": {
+      "main": "src/backend/storage/main.mo",
+      "type": "motoko"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "vessel sources"
+    }
+  },
+  "version": 1
+}

@@ -1,0 +1,29 @@
+.send-form {
+    display: grid;
+    grid-template-areas: 'amount amount' 'recipient recipient' 'cancel-button continue-button';
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto;
+    grid-gap: 1rem;
+}
+
+.amount-field {
+    grid-area: amount;
+}
+
+.recipient-field {
+    grid-area: recipient;
+}
+
+.continue-button {
+    grid-area: continue-button;
+}
+
+.cancel-button {
+    grid-area: cancel-button;
+}
+
+.max-button {
+    grid-area: max-button;
+    align-self: center;
+    margin-bottom: 22px;
+}

@@ -1,0 +1,29 @@
+:host {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+
+    .login {
+        display: grid;
+        justify-items: center;
+        // justify-content: center;
+        grid-row-gap: 1.5rem;
+        max-width: 600px;
+    }
+}
+
+// header {
+//     background: #3d62e0;
+//     background: -webkit-gradient(linear, right top, left top, from(#f1556c), to(#6658dd));
+//     background: linear-gradient(to left, #f1556c, #6658dd);
+//     h1 {
+//         background: #f2f6fa;
+//         color: #240e35;
+//         mix-blend-mode: lighten;
+//         overflow: hidden;
+//         font-size: 48px;
+//         line-height: 54px;
+//         font-weight: 600;
+//     }
+// }

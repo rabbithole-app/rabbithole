@@ -1,0 +1,32 @@
+<ng-container *transloco="let t">
+    <div class="logo" rel="noopener noreferrer" routerLink="/drive">
+        <app-logo [expanded]="isFull$ | push"></app-logo>
+    </div>
+    <div class="sidebar-content">
+        <router-outlet name="sidebar"></router-outlet>
+    </div>
+    <div class="sidebar-footer">
+        <button
+            mat-button
+            class="sign-out-button"
+            [matTooltip]="t('application.sign-out')"
+            matTooltipClass="rh-tooltip"
+            matTooltipPosition="after"
+            [matTooltipDisabled]="isFull$ | push"
+            (click)="authService.signOut()">
+            <div class="mat-content-wrapper">
+                <mat-icon svgIcon="far:arrow-right-from-bracket"></mat-icon>
+                <span *rxIf="isFull$" @textAnimation>{{ t('application.sign-out') }}</span>
+            </div>
+        </button>
+    </div>
+</ng-container>
+
+<!--<ng-container *ngIf="isMediumScreen$ | async; else smallToggler">
+    <mat-slide-toggle labelPosition="before" (change)="handleTheme($event)" [checked]="isDarkMode$ | async">{{
+        'rh.sidebar.theme-toggle' | translate
+    }}</mat-slide-toggle>
+</ng-container>-->
+<!--<ng-template #smallToggler>
+    <mat-slide-toggle (change)="handleTheme($event)" [checked]="isDarkMode$ | async" [matTooltip]="'rh.sidebar.theme-toggle' | translate" matTooltipClass="rh-tooltip"></mat-slide-toggle>
+</ng-template>-->

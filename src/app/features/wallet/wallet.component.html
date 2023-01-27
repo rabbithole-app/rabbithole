@@ -1,0 +1,32 @@
+<!-- <mat-sidenav-container class="example-container" [hasBackdrop]="false" [autosize]="true">
+    <mat-sidenav #send class="send-container" position="end" mode="push" [opened]="true">
+        <button mat-icon-button type="button" (click)="send.close()">
+            <mat-icon fontIcon="arrow_back"></mat-icon>
+        </button>
+
+        <br/>
+        <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Amount</mat-label>
+            <input matInput type="number" class="example-right-align" placeholder="0.00000">
+        </mat-form-field>
+    </mat-sidenav>
+
+    <div class="example-sidenav-content">
+        <ng-container *ngIf="icp$ | async as icp">
+            <app-wallet-item [data]="icp" (send)="send.open()"></app-wallet-item>
+        </ng-container>
+    </div>
+</mat-sidenav-container>
+<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" class="mat-elevation-z4">
+    <mat-tab label="First">Content 1</mat-tab>
+    <mat-tab label="Second">Content 2</mat-tab>
+  </mat-tab-group> -->
+<!-- <button type="button" mat-raised-button (click)="handleCreateWallet()">Create wallet</button> -->
+<!-- <ng-container *ngIf="icp$ | async as icp">
+    
+</ng-container> -->
+<!-- <app-send [data]="icp$ | push" [accountId]="accountState.select('accountId') | push"></app-send> -->
+<app-account></app-account>
+<app-send [loadingBalance]="loadingBalance$ | push" [amount]="amount$ | push" [token]="token"
+    [transactionFee]="transactionFee$ | push" [accountId]="accountId$ | push"
+    [loadingTransfer]="loadingTransfer$ | push" (transfer)="transferICP($event)" (refresh)="refreshBalance()"></app-send>

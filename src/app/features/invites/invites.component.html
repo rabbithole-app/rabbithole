@@ -1,0 +1,17 @@
+<ng-container *transloco="let t; read: 'invites'">
+    <div class="content">
+        <h1 class="mat-h1">{{ t('title') }}</h1>
+        <app-invites-table [data]="items$ | push" (action)="handleAction($event)">
+            <button class="action-button" mat-raised-button disabled *ngIf="create$ | push; else createButton">
+                <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+                {{ t('actions.loading') }}
+            </button>
+        </app-invites-table>
+    </div>
+    <ng-template #createButton>
+        <button class="action-button" mat-raised-button color="primary" (click)="handleCreate($event)">
+            <mat-icon svgIcon="far:envelope"></mat-icon>
+            {{ t('actions.create') }}
+        </button>
+    </ng-template>
+</ng-container>

@@ -1,0 +1,21 @@
+$roboto-font-path: '../../assets/fonts/roboto';
+
+@mixin roboto-font($type, $weight, $style: normal) {
+    @font-face {
+        font-family: 'Roboto';
+        src: url('#{$roboto-font-path}/Roboto-#{$type}.woff2') format('woff2'), url('#{$roboto-font-path}/Roboto-#{$type}.woff') format('woff'),
+            url('#{$roboto-font-path}/Roboto-#{$type}.ttf') format('truetype');
+        font-weight: $weight;
+        font-style: $style;
+    }
+}
+
+@mixin roboto-font-pair($type, $weight) {
+    @include roboto-font($type, $weight);
+    @include roboto-font(#{$type}Italic, $weight, italic);
+}
+
+$roboto-font-list: ('Thin', 100) ('Light', 300) ('Regular', 400) ('Medium', 500) ('Bold', 700) ('Black', 900);
+@each $type, $weight in $roboto-font-list {
+    @include roboto-font-pair($type, $weight);
+}

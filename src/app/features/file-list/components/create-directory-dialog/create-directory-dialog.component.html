@@ -1,0 +1,18 @@
+<h1 mat-dialog-title>Create directory</h1>
+<mat-dialog-content class="mat-typography">
+    <mat-form-field>
+        <mat-label>Directory name</mat-label>
+        <input [formControl]="name" matInput />
+        <mat-error *ngIf="errorMessages$ | async as errorMessages">
+            <ng-container *ngIf="errorMessages.length && (name.touched || name.dirty)">
+                <ng-container *ngFor="let message of errorMessages">{{ message }}<br /></ng-container>
+            </ng-container>
+        </mat-error>
+    </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button color="primary" [mat-dialog-close]="{ id: data.id, name: name.value, parentId: data.parentId }" [disabled]="name.invalid">
+        Create
+    </button>
+</mat-dialog-actions>

@@ -1,0 +1,28 @@
+<ng-container *transloco="let t; read: 'canisters'">
+    <header class="mat-h1">
+        <h1>{{ t('journals') }}</h1>
+        <mat-spinner diameter="20" *rxIf="journalLoading$"></mat-spinner>
+    </header>
+    <app-canisters-table [data]="journalStatus$ | push"></app-canisters-table>
+    <br />
+    <header class="mat-h1">
+        <h1>{{ t('storages') }}</h1>
+        <mat-spinner diameter="20" *rxIf="storagesLoading$"></mat-spinner>
+    </header>
+    <app-canisters-table [data]="storageStatus$ | push" (action)="handleAction($event)"></app-canisters-table>
+</ng-container>
+<!-- <button mat-raised-button (click)="handleSend()">Send</button> -->
+<!--
+    Cycles в основной канистре пользователя
+    - Общее количество / примерная стоимость в $ (необходимо получать курс xdr/icp из CMC)
+    - Freezing threshold in cycles - порог замерзания в циклах, значение циклов при достижении которого канистра переходит в состояние заморозки
+    - Freezing threshold - порог замерзания в секундах, период в течение которого канистра не будет принимать вызовы и тратить циклы
+    - Объем используемой памяти
+    - Стоимость хранения текущих данных пользователя в день/месяц/год
+    - Информация отдельно по каждому хранилищу пользователя
+        - объем используемой памяти
+        - баланс циклов
+        - количество циклов до порога замерзания
+        - время последней проверки
+        - время последнего автопополнения
+-->

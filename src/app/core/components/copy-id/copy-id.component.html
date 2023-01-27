@@ -1,0 +1,7 @@
+<div>
+    <code>{{ content }}</code>
+    <ng-content></ng-content>
+</div>
+<button mat-icon-button class="copy-button" (click)="copy($event)" [matTooltip]="'common.tooltips.copy.clipboard' | transloco">
+    <mat-icon svgIcon="far:copy"></mat-icon>
+</button>

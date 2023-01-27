@@ -1,0 +1,54 @@
+<ul class="links" *ngIf="items$ | async as links">
+    <li class="links__item">
+        <a
+            routerLink="/drive"
+            dndDropzone
+            [class.receiving]="get('entered') === 'root'"
+            (drop)="handleDrop($event)"
+            (dragleave)="handleDragleave($event)"
+            (dragenter)="handleDragenter($event, 'root')"
+            >My Drive</a
+        >
+        <mat-icon svgIcon="far:angle-right"></mat-icon>
+    </li>
+    <li class="links__item" *ngFor="let link of links; trackBy: itemTrackBy">
+        <a
+            [routerLink]="getUrl((link.path ?? '') + '/' + link.name)"
+            dndDropzone
+            [class.receiving]="get('entered') === link.id"
+            (drop)="handleDrop($event)"
+            (dragleave)="handleDragleave($event)"
+            (dragenter)="handleDragenter($event, link.id)"
+            >{{ link.name }}</a
+        >
+        <mat-icon svgIcon="far:angle-right"></mat-icon>
+    </li>
+</ul>
+<ng-container *ngIf="last$ | async as last">
+    <button
+        #backButton
+        mat-button
+        [routerLink]="getUrl(get('parentPath') ?? '')"
+        [class.receiving]="backReceiving"
+        dndDropzone
+        (drop)="handleDrop($event)"
+        (dragleave)="handleDragleave($event)"
+        (dragenter)="handleDragenter($event, $any(last.parentId || 'root'))">
+        <mat-icon svgIcon="far:arrow-left"></mat-icon>
+    </button>
+    <div class="active">
+        <span>{{ last.name }}</span>
+        <mat-spinner [diameter]='16' *ngIf="last.loading ?? false; else activeMenuTemplate"></mat-spinner>
+        <ng-template #activeMenuTemplate>
+            <button #activeMenu mat-icon-button (click)="handleActiveClick($event)">
+                <mat-icon svgIcon="far:ellipsis-vertical"></mat-icon>
+            </button>
+        </ng-template>
+    </div>
+</ng-container>
+<button id="current-dir-trigger" #currentMenuTrigger mat-button [matMenuTriggerFor]="currentDirectoryMenu"></button>
+<mat-menu #currentDirectoryMenu="matMenu" hasBackdrop="false" class="context-menu">
+    <ng-template matMenuContent let-items="items">
+        <ng-container [ngTemplateOutlet]="contextTemplate" [ngTemplateOutletContext]="{ items: items }"></ng-container>
+    </ng-template>
+</mat-menu>

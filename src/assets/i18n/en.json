@@ -1,0 +1,99 @@
+{
+    "application": {
+        "title": "The Rabbit Hole",
+        "sign-in": "Sign In with Internet Computer",
+        "sign-in-redirect": "You are signed in. Redirecting...",
+        "sign-out": "Sign out",
+        "initializing": "Initializing...",
+        "synchronizing": "Synchronizing...",
+        "synchronizing.description": "Please keep the app open on a device that's already added.",
+        "signed-out": "You have been logged out because your session has expired."
+    },
+    "sidebar": {
+        "upload": "Upload",
+        "upload-files": "Upload files",
+        "upload-folder": "Upload folder"
+    },
+    "navigation": {
+        "my-files": "My Drive",
+        "settings": "Settings",
+        "profile": "Profile",
+        "shared": "Shared",
+        "favorites": "Favorites",
+        "trash": "Trash",
+        "canisters": "Canisters",
+        "invites": "Invites"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": {
+            "label": "Language"
+        },
+        "theme": {
+            "label": "Theme"
+        }
+    },
+    "table": {
+        "header": {
+            "id": "ID",
+            "canisterId": "Canister ID",
+            "cycles": "Cycles",
+            "status": "Status",
+            "createdAt": "Created at",
+            "expiredAt": "Expired at",
+            "actions": "Actions",
+            "memorySize": "Memory size",
+            "freezingThresholdInCycles": "Freezing threshold in cycles",
+            "moduleHash": "Module hash",
+            "settings": "Settings"
+        }
+    },
+    "paginator": {
+        "label": "Select page",
+        "firstPageLabel": "First page",
+        "lastPageLabel": "Last page",
+        "nextPageLabel": "Next page",
+        "previousPageLabel": "Previous page",
+        "itemsPerPageLabel": "Items per page:",
+        "rangeLabel": "Page {{ page }} of {{ amountPages }}"
+    },
+    "file-list": {
+        "get": {
+            "errors": {
+                "notFound": "Directory not found"
+            }
+        }
+    },
+    "common": {
+        "cmc": {
+            "notify": {
+                "errors": {
+                    "Refunded": "The payment processing failed and the payment was returned the caller.",
+                    "InvalidTransaction": "The transaction does not satisfy the cycle minting canister payment protocol. Desciption: {{ value }}",
+                    "TransactionTooOld": "The payment was too old to be processed.",
+                    "Other": "Other error. {{ value.error_message }}",
+                    "Processing": "The same payment is already being processed by a concurrent request."
+                }
+            }
+        },
+        "ledger": {
+            "transfer": {
+                "successfullySent": "Transaction successfully sent",
+                "errors": {
+                    "TxTooOld": "The request is too old. The ledger only accepts requests created within 24 hours window.",
+                    "BadFee": "The fee that the caller specified in the transfer request was not the one that ledger expects.",
+                    "TxDuplicate": "The caller specified `created_at_time` that is too far in future.",
+                    "InsufficientFunds": "You don't have enough funds. On your balance {{ value }}",
+                    "TxCreatedInFuture": "The ledger has already executed the request."
+                }
+            }
+        },
+        "tooltips": {
+            "copy": {
+                "clipboard": "Copy to clipboard",
+                "copied": "Copied!"
+            },
+            "refresh": "Refresh"
+        }
+    }
+}

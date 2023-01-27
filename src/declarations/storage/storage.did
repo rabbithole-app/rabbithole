@@ -1,0 +1,35 @@
+type StorageBucket = 
+ service {
+   commitUpload:
+    (record {
+       batchId: nat;
+       chunkIds: vec nat;
+       headers: vec HeaderField;
+     }) -> ();
+   getUsedMemorySize: () -> (nat);
+   getVersion: () -> (text) query;
+   initUpload: (AssetKey) -> (record {batchId: nat;});
+   sendCyclesToInstaller: () -> () oneway;
+   uploadChunk: (Chunk) -> (record {chunkId: nat;});
+ };
+type ID = text;
+type HeaderField = 
+ record {
+   text;
+   text;
+ };
+type Chunk = 
+ record {
+   batchId: nat;
+   content: blob;
+ };
+type AssetKey = 
+ record {
+   fileSize: nat;
+   folder: text;
+   fullPath: text;
+   name: text;
+   parentId: opt ID;
+   token: opt text;
+ };
+service : (principal) -> StorageBucket

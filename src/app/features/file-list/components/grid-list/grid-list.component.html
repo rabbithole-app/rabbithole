@@ -1,0 +1,29 @@
+<div class="grid-container" [class.dragging]="dragging" [appAnimateCssGrid]="{ duration: 250 }" [appAnimateCssGridDisabled]="animationDisabled">
+    <app-grid-list-item
+        *ngFor="let item of items$ | async; trackBy: itemTrackBy; let index = index"
+        dndDropzone
+        [id]="item.id"
+        (contextmenu)="handleContext($event, item)"
+        (dblclick)="handleItemDblClick($event, item)"
+        (click)="handleItemClick($event, item.id)"
+        (mousedown)="$event.stopPropagation()"
+        [dndDraggable]="item.id"
+        [dndDisableIf]="item.disabled ?? false"
+        [dndDisableDropIf]="selected.isSelected(item.id) || item.type === 'file'"
+        [class.cdk-drop-list-dragging]="activeDirectory === item.id"
+        dndDraggingSourceClass="cdk-drag-placeholder"
+        (dndStart)="handleStart($event, item.id)"
+        (dndEnd)="handleEnd($event)"
+        (dndDrop)="handleDrop($event, $any(item))"
+        [data]="item"
+        [disabled]="item.disabled ?? false"
+        [loading]="item.loading ?? false"
+        [active]="activeDirectory === item.id"
+        [selected]="selected.isSelected(item.id)"
+        (dragleave)="handleDragleave($event)"
+        (dragenter)="handleDragenter($event)"
+        (dndDrag)="handleDrag($event)">
+    </app-grid-list-item>
+</div>
+<div #dragPreviewGhost class="drag-preview-ghost"></div>
+<app-drag-preview #dragPreview [selected]="dragSelected$ | async" *ngIf="dragging"></app-drag-preview>

@@ -1,0 +1,18 @@
+:host {
+    display: grid;
+    grid-row-gap: 1rem;
+    
+    h1 {
+        margin-bottom: 0;
+    }
+}
+
+.grid-form {
+    display: grid;
+    grid-row-gap: 1rem;
+    grid-template-columns: minmax(min-content, 400px);
+}
+
+.action-button {
+    justify-self: flex-start;
+}

@@ -1,0 +1,39 @@
+@mixin custom-icon-button($button-size: 32px, $icon-size: 16px) {
+    &.mat-mdc-icon-button {
+        width: $button-size;
+        height: $button-size;
+        padding: ($button-size - $icon-size) / 2;
+        font-size: $icon-size;
+        mat-icon {
+            height: $icon-size;
+            width: $icon-size;
+            font-size: $icon-size;
+            display: inline-flex;
+            --mdc-icon-button-icon-size: #{$icon-size};
+        }
+        ::ng-deep .mat-mdc-button-touch-target {
+            width: $button-size;
+            height: $button-size;
+        }
+    }
+}
+
+@mixin button-content-wrapper {
+    .mat-content-wrapper {
+        display: flex;
+        min-height: 36px;
+        align-items: center;
+        mat-icon {
+            font-size: 1.125rem;
+            height: 1.125rem;
+            width: 1.125rem;
+            margin-right: 0.5rem;
+            transition-property: margin-right;
+            transition-duration: 1s;
+            transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        span {
+            white-space: nowrap;
+        }
+    }
+}

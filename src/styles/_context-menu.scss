@@ -1,0 +1,80 @@
+@use 'sass:list';
+@use 'variables';
+
+.context-menu {
+    .warn {
+        &,
+        fa-icon {
+            color: var(--warn-color);
+        }
+    }
+
+    .choose-color {
+        display: grid;
+        grid-template-areas: 'label' 'colors';
+        align-items: center;
+        grid-row-gap: 0.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        min-height: 48px;
+        margin-bottom: 0.5rem;
+
+        .label {
+            grid-area: label;
+            font-size: 0.875rem;
+            strong {
+                font-weight: 500;
+            }
+        }
+
+        .tag-colors {
+            display: flex;
+            column-gap: 0.5rem;
+            grid-area: colors;
+        }
+
+        .tag-color {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            border-style: solid;
+            border-width: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            fa-icon,
+            mat-icon {
+                visibility: hidden;
+                color: #fff;
+            }
+
+            fa-icon {
+                font-size: 0.625rem;
+            }
+
+            mat-icon {
+                $size: 12px;
+                width: $size;
+                height: $size;
+                line-height: $size;
+            }
+
+            &:hover {
+                transform: scale(1.5);
+
+                fa-icon,
+                mat-icon {
+                    visibility: visible;
+                }
+            }
+
+            @each $modifier, $colors in variables.$folder-colors {
+                &--#{$modifier} {
+                    background-color: list.nth($colors, 1);
+                    border-color: darken(list.nth($colors, 1), 10);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+.mat-mdc-menu-item mat-icon {
+    height: 20px;
+    width: 20px;
+}
+
+.mat-mdc-menu-panel.upload-menu {
+    min-width: calc(var(--sidebar-desktop-width) - var(--sidebar-padding-size) * 2) !important;
+}
+
+.mat-mdc-menu-panel.mat-mdc-menu-panel.user-menu {
+    width: 360px;
+    max-width: 360px;
+}
