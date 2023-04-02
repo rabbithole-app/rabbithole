@@ -14,7 +14,7 @@ export const idlFactory = ({ IDL }) => {
         maxLength: IDL.Null,
         minLength: IDL.Null
     });
-    const Result_6 = IDL.Variant({ ok: IDL.Null, err: UsernameError__1 });
+    const Result_5 = IDL.Variant({ ok: IDL.Null, err: UsernameError__1 });
     const Time = IDL.Int;
     const InviteCreate = IDL.Record({
         expiredAt: Time,
@@ -42,7 +42,6 @@ export const idlFactory = ({ IDL }) => {
         expiredAt: Time,
         owner: IDL.Principal,
         createdAt: Time,
-        errorMessage: IDL.Opt(IDL.Text),
         stage: InvoiceStage,
         amount: Tokens,
         timerId: IDL.Opt(IDL.Nat)
@@ -67,16 +66,6 @@ export const idlFactory = ({ IDL }) => {
         TxDuplicate: IDL.Record({ duplicate_of: BlockIndex__1 }),
         TxCreatedInFuture: IDL.Null,
         InsufficientFunds: IDL.Record({ balance: Tokens })
-    });
-    const Result_5 = IDL.Variant({
-        ok: IDL.Null,
-        err: IDL.Variant({
-            notify: NotifyError,
-            wrongStage: IDL.Null,
-            notFound: IDL.Null,
-            transfer: TransferError,
-            notPermission: IDL.Null
-        })
     });
     const Result_4 = IDL.Variant({
         ok: IDL.Null,
@@ -147,19 +136,17 @@ export const idlFactory = ({ IDL }) => {
         accountBalance: IDL.Func([], [Tokens], []),
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
         checkInvite: IDL.Func([ID], [Result], ['query']),
-        checkUsername: IDL.Func([IDL.Text], [Result_6], ['query']),
+        checkUsername: IDL.Func([IDL.Text], [Result_5], ['query']),
         checkUsernameAvailability: IDL.Func([IDL.Text], [IDL.Bool], ['query']),
         createInvite: IDL.Func([InviteCreate], [], []),
         createInvoice: IDL.Func([], [Invoice], []),
-        createJournal: IDL.Func([ID], [Result_5], []),
-        createPrincipalJournal: IDL.Func([IDL.Principal], [Result_4], []),
+        createJournal: IDL.Func([ID], [Result_4], []),
         createProfile: IDL.Func([ProfileCreate], [Result_3], []),
         deleteInvite: IDL.Func([ID], [Result_2], []),
         deleteInvoice: IDL.Func([], [], []),
         deleteProfile: IDL.Func([], [Result_1], []),
         getInvites: IDL.Func([], [IDL.Vec(Invite)], ['query']),
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
-        getInvoiceById: IDL.Func([ID], [IDL.Opt(Invoice)], ['query']),
         getJournalBucket: IDL.Func([], [IDL.Opt(BucketId)], []),
         getKey: IDL.Func([PublicKey], [EncryptedKey], ['query']),
         getProfile: IDL.Func([], [IDL.Opt(ProfileInfo)], ['query']),

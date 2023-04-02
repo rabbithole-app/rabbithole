@@ -29,7 +29,6 @@ export interface Invoice {
     expiredAt: Time;
     owner: Principal;
     createdAt: Time;
-    errorMessage: [] | [string];
     stage: InvoiceStage;
     amount: Tokens;
     timerId: [] | [bigint];
@@ -82,12 +81,7 @@ export type Result_4 =
     | {
           err: { notify: NotifyError } | { wrongStage: null } | { notFound: null } | { transfer: TransferError };
       };
-export type Result_5 =
-    | { ok: null }
-    | {
-          err: { notify: NotifyError } | { wrongStage: null } | { notFound: null } | { transfer: TransferError } | { notPermission: null };
-      };
-export type Result_6 = { ok: null } | { err: UsernameError__1 };
+export type Result_5 = { ok: null } | { err: UsernameError__1 };
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;
@@ -106,19 +100,17 @@ export interface _SERVICE {
     accountBalance: ActorMethod<[], Tokens>;
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
     checkInvite: ActorMethod<[ID], Result>;
-    checkUsername: ActorMethod<[string], Result_6>;
+    checkUsername: ActorMethod<[string], Result_5>;
     checkUsernameAvailability: ActorMethod<[string], boolean>;
     createInvite: ActorMethod<[InviteCreate], undefined>;
     createInvoice: ActorMethod<[], Invoice>;
-    createJournal: ActorMethod<[ID], Result_5>;
-    createPrincipalJournal: ActorMethod<[Principal], Result_4>;
+    createJournal: ActorMethod<[ID], Result_4>;
     createProfile: ActorMethod<[ProfileCreate], Result_3>;
     deleteInvite: ActorMethod<[ID], Result_2>;
     deleteInvoice: ActorMethod<[], undefined>;
     deleteProfile: ActorMethod<[], Result_1>;
     getInvites: ActorMethod<[], Array<Invite>>;
     getInvoice: ActorMethod<[], [] | [Invoice]>;
-    getInvoiceById: ActorMethod<[ID], [] | [Invoice]>;
     getJournalBucket: ActorMethod<[], [] | [BucketId]>;
     getKey: ActorMethod<[PublicKey], EncryptedKey>;
     getProfile: ActorMethod<[], [] | [ProfileInfo]>;

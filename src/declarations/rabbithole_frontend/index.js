@@ -30,4 +30,4 @@ export const createActor = (canisterId, options = {}) => {
     });
 };
 
-export const rabbithole_frontend = createActor(canisterId);
+// export const rabbithole_frontend = createActor(canisterId);

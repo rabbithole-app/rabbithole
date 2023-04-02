@@ -56,7 +56,18 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "src/assets/",
+                "output": "/assets/",
+                "ignore": ["fonts/**/*"]
+              },
+              {
+                "glob": "**/*",
+                "input": "src/.well-known",
+                "output": "/.well-known"
+              },
+              "src/.ic-assets.json"
             ],
             "styles": [
               "node_modules/the-new-css-reset/css/reset.css",

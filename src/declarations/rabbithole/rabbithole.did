@@ -22,21 +22,9 @@ type TransferError =
  };
 type Tokens = record {e8s: nat64;};
 type Time = int;
-type Result_6 = 
- variant {
-   err: UsernameError__1;
-   ok;
- };
 type Result_5 = 
  variant {
-   err:
-    variant {
-      notFound;
-      notPermission;
-      notify: NotifyError;
-      transfer: TransferError;
-      wrongStage;
-    };
+   err: UsernameError__1;
    ok;
  };
 type Result_4 = 
@@ -131,7 +119,6 @@ type Invoice =
  record {
    amount: Tokens;
    createdAt: Time;
-   errorMessage: opt text;
    expiredAt: Time;
    id: ID__1;
    owner: principal;
@@ -182,19 +169,17 @@ service : {
   accountBalance: () -> (Tokens);
   accountIdentifier: () -> (AccountIdentifier) query;
   checkInvite: (ID) -> (Result) query;
-  checkUsername: (text) -> (Result_6) query;
+  checkUsername: (text) -> (Result_5) query;
   checkUsernameAvailability: (text) -> (bool) query;
   createInvite: (InviteCreate) -> ();
   createInvoice: () -> (Invoice);
-  createJournal: (ID) -> (Result_5);
-  createPrincipalJournal: (principal) -> (Result_4);
+  createJournal: (ID) -> (Result_4);
   createProfile: (ProfileCreate) -> (Result_3);
   deleteInvite: (ID) -> (Result_2);
   deleteInvoice: () -> ();
   deleteProfile: () -> (Result_1);
   getInvites: () -> (vec Invite) query;
   getInvoice: () -> (opt Invoice) query;
-  getInvoiceById: (ID) -> (opt Invoice) query;
   getJournalBucket: () -> (opt BucketId);
   getKey: (PublicKey) -> (EncryptedKey) query;
   getProfile: () -> (opt ProfileInfo) query;

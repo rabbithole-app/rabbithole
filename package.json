@@ -1,6 +1,6 @@
 {
   "name": "ng-rabbithole4",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4201",
@@ -42,6 +42,7 @@
     "buffer-crc32": "^0.2.13",
     "date-fns": "^2.29.3",
     "idb-keyval": "^6.2.0",
+    "inputmask": "^5.0.8",
     "ngx-drag-drop": "^15.0.1",
     "rxjs": "~7.8.0",
     "the-new-css-reset": "^1.8.3",

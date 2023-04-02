@@ -89,7 +89,7 @@ export class RegisterComponent extends RxState<State> implements OnDestroy {
         this.set({
             createInvoiceStateIcon: 'number',
             createJournalStateIcon: 'number',
-            invite: false
+            invite: true
         });
         const createInvoiceStep$ = this.registerService.select('invoice').pipe(map(v => ({ [Step[Step.CREATE_INVOICE]]: !isUndefined(v) })));
         const invoiceStep$ = this.registerService.select('invoice').pipe(map(({ stage }) => ({ [Step[Step.INVOICE]]: stage >= InvoiceStage.PAID })));

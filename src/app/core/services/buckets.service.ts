@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { ActorSubclass } from '@dfinity/agent';
+import { ActorSubclass, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { catchError, combineLatestWith, defer, EMPTY, from, iif, map, mergeMap, of, startWith, Subject, switchMap, throwError, toArray } from 'rxjs';
+import { catchError, combineLatestWith, concat, connect, defer, from, iif, map, merge, mergeMap, Observable, of, startWith, Subject, switchMap, throwError, toArray } from 'rxjs';
 import { fromNullable } from '@dfinity/utils';
 import { isUndefined } from 'lodash';
 
@@ -24,6 +24,7 @@ interface State {
     canisterId: Principal | null;
     storages: Bucket<StorageActor>[];
     loading: boolean;
+    loaded: boolean;
 }
 
 @Injectable()
@@ -40,49 +41,50 @@ export class BucketsService extends RxState<State> {
                 switchMap(([{ actor, identity, isAuthenticated }]) =>
                     iif(
                         () => isAuthenticated,
-                        defer(() => {
-                            this.set({ loading: true });
-                            return actor.getJournalBucket();
-                        }).pipe(
-                            map(optCanister => fromNullable(optCanister)),
-                            switchMap(canisterId => iif(() => isUndefined(canisterId), EMPTY, of(canisterId as Principal))),
-                            switchMap(canisterId =>
-                                createActor<JournalActor>({
-                                    canisterId,
-                                    idlFactory: journalIdlFactory,
-                                    identity
-                                }).pipe(
-                                    switchMap(journalActor =>
-                                        from(journalActor.listStorages()).pipe(
-                                            switchMap(buckets => from(buckets)),
-                                            mergeMap(bucketId =>
-                                                createActor<StorageActor>({
-                                                    canisterId: bucketId,
-                                                    idlFactory: storageIdlFactory,
-                                                    identity
-                                                }).pipe(map(storageActor => ({ actor: storageActor, canisterId: bucketId.toText() } as Bucket<StorageActor>)))
-                                            ),
-                                            toArray(),
-                                            map(
-                                                storages =>
-                                                    ({
-                                                        journal: journalActor,
-                                                        canisterId,
-                                                        storages,
-                                                        loading: false
-                                                    } as unknown as Partial<State>)
-                                            )
-                                        )
-                                    )
-                                )
+                        defer(() => concat(
+                            of({ loading: true }),
+                            from(actor.getJournalBucket()).pipe(
+                                map(optCanister => fromNullable(optCanister)),
+                                switchMap(canisterId => iif(() => isUndefined(canisterId), of({ journal: null, canisterId: null, loaded: true }), this.loadActors(canisterId as Principal, identity))),
                             ),
-                            catchError(err => throwError(() => err))
-                        ),
-                        of({ journal: null, canisterId: null, storages: [], loading: false })
+                            of({ loading: false })
+                        )),
+                        of({ journal: null, canisterId: null, storages: [], loading: false, loaded: false })
                     )
                 )
             )
         );
+    }
+
+    private loadActors(canisterId: Principal, identity: Identity): Observable<Partial<State>> {
+        return createActor<JournalActor>({
+            canisterId,
+            idlFactory: journalIdlFactory,
+            identity
+        }).pipe(
+            connect(shared =>
+                merge(
+                    shared.pipe(map(journal => ({ journal, canisterId, loaded: true }))),
+                    shared.pipe(
+                        switchMap(journalActor =>
+                            from(journalActor.listStorages()).pipe(
+                                switchMap(buckets => from(buckets)),
+                                mergeMap(bucketId =>
+                                    createActor<StorageActor>({
+                                        canisterId: bucketId,
+                                        idlFactory: storageIdlFactory,
+                                        identity
+                                    }).pipe(map(storageActor => ({ actor: storageActor, canisterId: bucketId.toText() } as Bucket<StorageActor>)))
+                                ),
+                                toArray(),
+                                map(storages => ({ storages }))
+                            )
+                        ),
+                        catchError(err => throwError(() => err))
+                    )
+                )
+            )
+        )
     }
 
     update() {

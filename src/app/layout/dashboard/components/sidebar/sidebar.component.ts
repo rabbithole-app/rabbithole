@@ -24,9 +24,7 @@ import { SidebarService } from '../../services/sidebar.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [PushModule, IfModule, LogoComponent, RouterModule, MatTooltipModule, TranslocoModule, MatIconModule, MatButtonModule],
     standalone: true,
-    animations: [
-        trigger('textAnimation', SIDEBAR_TEXT_ANIMATION)
-    ]
+    animations: [trigger('textAnimation', SIDEBAR_TEXT_ANIMATION)]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();

@@ -1,7 +1,5 @@
-import { importProvidersFrom, inject } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { Route } from '@angular/router';
-import { authGuard, hasJournalGuard, dashboardGuard, journalGuard, loginGuard, registerGuard, createProfileGuard } from '@core/guards';
+import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard } from '@core/guards';
 import { fileListStateFactory, FILE_LIST_RX_STATE } from '@features/file-list';
 import { InvitesService } from '@features/invites/services/invites.service';
 import { RegisterService } from '@features/register/services/register.service';
@@ -64,7 +62,11 @@ export const appRoutes: Route[] = [
         providers: [SidebarService, RegisterService, BucketsService],
         canActivate: [authGuard],
         children: [
-            { path: '', canMatch: [createProfileGuard], loadComponent: () => import('./features/register/components/profile/profile.component').then(m => m.ProfileComponent) },
+            {
+                path: '',
+                canMatch: [createProfileGuard],
+                loadComponent: () => import('./features/register/components/profile/profile.component').then(m => m.ProfileComponent)
+            },
             { path: '', canActivate: [registerGuard], loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) },
             {
                 path: '',
