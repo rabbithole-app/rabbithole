@@ -7,6 +7,7 @@ import { CanistersService } from '@features/canisters/services';
 import { WalletService } from '@features/wallet/services';
 import { SidebarService } from './layout/dashboard/services/sidebar.service';
 import { BucketsService } from '@core/services';
+import { fileListResolver } from '@features/file-list/resolvers/file-list.resolver';
 
 export const appRoutes: Route[] = [
     {
@@ -18,8 +19,8 @@ export const appRoutes: Route[] = [
                 path: 'drive',
                 canActivateChild: [journalGuard],
                 children: [
-                    { path: '', loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) },
-                    { path: '**', loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) }
+                    { path: '', resolve: { fileList: fileListResolver }, loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) },
+                    { path: '**', resolve: { fileList: fileListResolver }, loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) }
                 ]
             },
             { path: 'invites', loadComponent: () => import('./features/invites/invites.component').then(m => m.InvitesComponent), providers: [InvitesService] },

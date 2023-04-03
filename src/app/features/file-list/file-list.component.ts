@@ -93,6 +93,7 @@ export class FileListComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // this.openCreateDirectoryDialog(new MouseEvent('click'));
+        this.fileListState.connect(this.route.data.pipe(map(({ fileList }) => fileList)));
     }
 
     ngOnDestroy(): void {
