@@ -2,5 +2,17 @@
     {
         "match": ".well-known",
         "ignore": false
+    },
+    {
+        "match": "*.gz",
+        "headers": {
+            "Content-Encoding": "gzip"
+        }
+    },
+    {
+        "match": "*.br",
+        "headers": {
+            "Content-Encoding": "br"
+        }
     }
 ]

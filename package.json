@@ -1,5 +1,5 @@
 {
-  "name": "ng-rabbithole4",
+  "name": "ng-rabbithole",
   "version": "0.2.0",
   "scripts": {
     "ng": "ng",
@@ -64,6 +64,7 @@
     "assert": "^2.0.0",
     "buffer": "^6.0.3",
     "commander": "^10.0.0",
+    "compression-webpack-plugin": "^10.0.0",
     "listr2": "^5.0.7",
     "node-fetch": "^3.3.0",
     "process": "^0.11.10",
