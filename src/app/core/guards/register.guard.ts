@@ -13,6 +13,6 @@ export const createProfileGuard = (next: ActivatedRouteSnapshot, state: RouterSt
     const router = inject(Router);
     return hasJournalGuard(next, state).pipe(
         combineLatestWith(hasProfileGuard(next, state)),
-        map(([hasJournal, hasProfile]) => hasProfile ? router.createUrlTree(['/drive']) : hasJournal)
+        map(([hasJournal, hasProfile]) => (hasProfile ? router.createUrlTree(['/drive']) : hasJournal))
     );
 };

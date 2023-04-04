@@ -192,7 +192,6 @@ export const idlFactory = ({ IDL }) => {
             ],
             []
         ),
-        checkRoute: IDL.Func([IDL.Opt(IDL.Text)], [IDL.Bool], ['query']),
         createDirectory: IDL.Func(
             [
                 IDL.Record({

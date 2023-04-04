@@ -69,28 +69,28 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type Tokens = LedgerTypes.Tokens;
     type InviteCreate = Types.InviteCreate;
 
-    private let STORAGE_BUCKET_CAPACITY = 4 * 1024 * 1024 * 1024;
-    private let CYCLE_SHARE = 500_000_000_000;
-    private let CHECK_INTERVAL_NANOS : Nat = 60_000_000_000; // 1 minute
-    // private let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
-    private let MIN_CYCLE_SHARE = 250_000_000_000;
-    private let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
-    private let INVITE_CYCLE_SHARE = 500_000_000_000;
-    private let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
-    private let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
-    private let logger = Logger.new(10);
-    private let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
-    private let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
+    let STORAGE_BUCKET_CAPACITY = 4 * 1024 * 1024 * 1024;
+    let CYCLE_SHARE = 500_000_000_000;
+    let CHECK_INTERVAL_NANOS : Nat = 60_000_000_000; // 1 minute
+    // let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
+    let MIN_CYCLE_SHARE = 250_000_000_000;
+    let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
+    let INVITE_CYCLE_SHARE = 500_000_000_000;
+    let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
+    let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
+    let logger = Logger.new(10);
+    let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
+    let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
 
-    // private var files : HashMap.HashMap<ID, [File]> = HashMap.HashMap<ID, [File]>(10, Text.equal, Text.hash);
-    private func equal(a : JournalEntry, b : JournalEntry) : Bool { Text.equal(a.id, b.id) };
-    private func hash({ id } : JournalEntry) : Hash.Hash { Text.hash(id) };
-    private var directories : BiMap.BiMap<Directory, Text> = BiMap.New(
+    // var files : HashMap.HashMap<ID, [File]> = HashMap.HashMap<ID, [File]>(10, Text.equal, Text.hash);
+    func equal(a : JournalEntry, b : JournalEntry) : Bool { Text.equal(a.id, b.id) };
+    func hash({ id } : JournalEntry) : Hash.Hash { Text.hash(id) };
+    var directories : BiMap.BiMap<Directory, Text> = BiMap.New(
         BiHashMap.empty<Directory, Text>(0, equal, hash),
         BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
         Text.equal
     );
-    private var files : BiMap.BiMap<File, Text> = BiMap.New(
+    var files : BiMap.BiMap<File, Text> = BiMap.New(
         BiHashMap.empty<File, Text>(0, equal, hash),
         BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
         Text.equal
@@ -103,7 +103,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // поиск папки по id
-    private func getDirectoryByID(id : ?ID) : ?Directory {
+    func getDirectoryByID(id : ?ID) : ?Directory {
         var found : ?Directory = null;
         label dirloop for (dir in directories.keys()) {
             if (?dir.id == id) {
@@ -115,7 +115,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // возвращает пару (l, r) по id директории
-    private func getPairByID(id : ?ID) : ?(Directory, Text) {
+    func getPairByID(id : ?ID) : ?(Directory, Text) {
         switch (getDirectoryByID(id)) {
             case null null;
             case (?l) {
@@ -128,7 +128,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // // возвращает пару (l, r) по id файла
-    // private func getPairByFileID (id : ?ID) : ?(File, Text) {
+    // func getPairByFileID (id : ?ID) : ?(File, Text) {
     //     switch (getDirectoryByID(id)) {
     //         case null null;
     //         case (?l) {
@@ -141,7 +141,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // };
 
     // список директорий и файлов по id родителя
-    private func getChildrenByID(id : ?ID) : ([Directory], [File]) {
+    func getChildrenByID(id : ?ID) : ([Directory], [File]) {
         let dirs : [Directory] = do {
             let buffer : Buffer.Buffer<Directory> = Buffer.Buffer<Directory>(0);
             for (dir in directories.keys()) {
@@ -163,7 +163,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         (dirs, files_);
     };
 
-    private func createDirectory_(caller : Principal, directory_ : { id : ID; name : Text; parentId : ?ID }) : async Result.Result<Directory, DirectoryCreateError> {
+    func createDirectory_(caller : Principal, directory_ : { id : ID; name : Text; parentId : ?ID }) : async Result.Result<Directory, DirectoryCreateError> {
         if (not validateName(directory_.name)) {
             return #err(#illegalCharacters);
         };
@@ -232,7 +232,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         let preparedSourcePath : Text = Text.trim(sourcePath, #text "/");
         let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func(text : Text) { Text.trim(text, #text "/") });
         // Text.trim(targetPath_, #text "/");
-        await moveDirectory_(preparedSourcePath, preparedTargetPath);
+        await* moveDirectory_(preparedSourcePath, preparedTargetPath);
     };
 
     // Перемещение директории из одной в другу
@@ -245,11 +245,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     //-------------------------------------
     // sourcePath = "layer1/ic"
     // targetPath = "crypto/layer1"
-    private func moveDirectory_(sourcePath : Text, targetPath : ?Text) : async Result.Result<(), DirectoryMoveError> {
-        // if (?sourcePath == targetPath) {
-        //     return #err(#invalidParams);
-        // };
-
+    func moveDirectory_(sourcePath : Text, targetPath : ?Text) : async* Result.Result<(), DirectoryMoveError> {
         switch (directories.getByRight(sourcePath)) {
             case null return #err(#sourceNotFound);
             case (?sourceDir) {
@@ -258,8 +254,14 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     case (?v) directories.getByRight(v);
                 };
 
-                if (Option.isSome(targetPath) and Option.isNull(targetDir)) {
-                    return #err(#targetNotFound);
+                switch (targetPath, targetDir) {
+                    case (?v, null) return #err(#targetNotFound);
+                    case (?v, _) {
+                        if (isTargetParentOfSource(sourcePath, v)) {
+                            return #err(#invalidParams);
+                        };
+                    };
+                    case (null, _) {};
                 };
 
                 // список директорий в папке-получателе
@@ -273,7 +275,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                         let directory : Directory = { sourceDir with updatedAt = Time.now(); parentId = id };
                         let path : Text = Option.getMapped<Text, Text>(targetPath, func(v : Text) : Text { v # "/" # directory.name }, directory.name);
                         ignore directories.replace(directory, path);
-                        let (_, sourceFiles : [File]) = getChildrenByID(?sourceDir.id);
+                        let (sourceDirs : [Directory], sourceFiles : [File]) = getChildrenByID(?sourceDir.id);
+                        await* updateSubdirPaths(directory.id, path);
 
                         for (file in Iter.fromArray<File>(sourceFiles)) {
                             ignore moveFile_(sourcePath # "/" # file.name, Option.make(path # "/" # file.name));
@@ -283,11 +286,42 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     };
                     case (?found) {
                         let path : Text = Option.getMapped<Text, Text>(targetPath, func(v : Text) : Text { v # "/" # found.name }, found.name);
-                        await mergeDirectory_(sourcePath, path);
+                        await* mergeDirectory_(sourcePath, path);
                     };
                 };
             };
         };
+    };
+
+    func updateSubdirPaths(id : Text, path : Text) : async* () {
+        let (dirs : [Directory], files_ : [File]) = getChildrenByID(?id);
+        
+        for (file in Iter.fromArray<File>(files_)) {
+            let newPath : Text = path # "/" # file.name;
+            ignore files.replace(file, path);
+        };
+                        
+        for (dir in Iter.fromArray<Directory>(dirs)) {
+            let newPath : Text = path # "/" # dir.name;
+            ignore directories.replace(dir, newPath);
+            await* updateSubdirPaths(dir.id, newPath);
+        };
+    };
+
+    func isTargetParentOfSource(sourcePath : Text, targetPath : Text) : Bool {
+        switch (directories.getByRight(sourcePath)) {
+            case null false;
+            case (?v) {
+                let parents : [Directory] = getBreadcrumbs(targetPath);
+                for ({ id } in Iter.fromArray<Directory>(parents)) {
+                    if (Text.equal(v.id, id)) {
+                        return true;
+                    };
+                };
+                false;
+            };
+        };
+        // let ?sourceDir : ?Directory = directories.getByRight(sourcePath) else { return false };
     };
 
     // Слияние двух директорий
@@ -300,7 +334,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     //-------------------------------------
     // sourcePath = "layer1"
     // targetPath = "crypto/layer1"
-    private func mergeDirectory_(sourcePath : Text, targetPath : Text) : async Result.Result<(), DirectoryMoveError> {
+    func mergeDirectory_(sourcePath : Text, targetPath : Text) : async* Result.Result<(), DirectoryMoveError> {
         if (Text.equal(sourcePath, targetPath)) {
             return #err(#invalidParams);
         };
@@ -323,8 +357,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     // если существует директория с таким же именем в папке-получателе, рекурсивно вызываем mergeDirectory
                     let found = Array.find(targetDirs, func(dir : Directory) : Bool { Text.equal(dir.name, sourceChildDir.name) });
                     switch (found) {
-                        case (?v) { ignore await mergeDirectory_(sourcePath # "/" # v.name, targetPath # "/" # v.name) };
-                        case null { ignore await moveDirectory_(sourcePath # "/" # sourceChildDir.name, ?targetPath) };
+                        case (?v) { ignore await* mergeDirectory_(sourcePath # "/" # v.name, targetPath # "/" # v.name) };
+                        case null { ignore await* moveDirectory_(sourcePath # "/" # sourceChildDir.name, ?targetPath) };
                     };
                 };
 
@@ -341,7 +375,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await deleteDirectory_(preparedPath);
     };
 
-    private func deleteDirectory_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
+    func deleteDirectory_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
         let found : ?Directory = directories.getByRight(sourcePath);
         switch found {
             case null #err(#notFound);
@@ -390,16 +424,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    public query ({ caller }) func checkRoute(path : ?Text) : async Bool {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
-
-        switch (path) {
-            case null true;
-            case (?v) directories.containsRight(Text.trim(v, #text "/"));
-        };
-    };
-
     public query ({ caller }) func getJournal(path : ?Text) : async Result.Result<Journal, JournalError> {
         assert not Principal.isAnonymous(caller);
         assert Principal.equal(caller, owner);
@@ -422,7 +446,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         #ok({ id; dirs; files; breadcrumbs });
     };
 
-    private func getBreadcrumbs(path : Text) : [Directory] {
+    func getBreadcrumbs(path : Text) : [Directory] {
         let dirnames : Iter.Iter<Text> = Text.split(path, #text "/");
         let buffer : Buffer.Buffer<Directory> = Buffer.Buffer<Directory>(0);
         var parentPath : ?Text = null;
@@ -454,7 +478,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         validateName(name);
     };
 
-    private func validateName(name : Text) : Bool {
+    func validateName(name : Text) : Bool {
         for (c : Char in name.chars()) {
             let isNonPrintableChar : Bool = Char.fromNat32(0x00) <= c and c <= Char.fromNat32(0x1f);
             if (isNonPrintableChar or Text.contains("<>:/|\\?*\"", #char c)) {
@@ -464,7 +488,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         true;
     };
 
-    private func repeatText(text : Text, n : Int) : Text {
+    func repeatText(text : Text, n : Int) : Text {
         var output : Text = "";
         for (i in Iter.range(1, n)) {
             output #= text;
@@ -472,7 +496,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         output;
     };
 
-    private func showSubdirsTree(id : ?ID, depth : Nat, prefix_ : ?Text, isParentLast_ : ?Bool) : Text {
+    func showSubdirsTree(id : ?ID, depth : Nat, prefix_ : ?Text, isParentLast_ : ?Bool) : Text {
         var output : Text = "";
         var i : Nat = 0;
         var isParentLast = Option.get(isParentLast_, true);
@@ -560,7 +584,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await deleteFile_(preparedPath);
     };
 
-    private func deleteFile_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
+    func deleteFile_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
         switch (files.removeByRight(sourcePath)) {
             case null #err(#notFound);
             case (?(file, _)) {
@@ -579,7 +603,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await moveFile_(preparedSourceFullPath, preparedTargetPath);
     };
 
-    private func moveFile_(sourceFullPath : Text, targetPath : ?Text) : async Result.Result<(), FileMoveError> {
+    func moveFile_(sourceFullPath : Text, targetPath : ?Text) : async Result.Result<(), FileMoveError> {
         switch (files.getByRight(sourceFullPath)) {
             case null return #err(#sourceNotFound);
             case (?sourceFile) {
@@ -635,9 +659,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         // };
     };
 
-    private stable var stableDirectories : [(Directory, Text)] = [];
-    private stable var stableFiles : [(File, Text)] = [];
-    // private stable var stableCanisters : [Canister] = [];
+    stable var stableDirectories : [(Directory, Text)] = [];
+    stable var stableFiles : [(File, Text)] = [];
+    // stable var stableCanisters : [Canister] = [];
 
     system func preupgrade() {
         stableDirectories := Iter.toArray(directories.entries());
@@ -666,7 +690,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         // stableCanisters := [];
     };
 
-    private func restartTimers() : () {
+    func restartTimers() : () {
         for ((_, { canisterId }) in Trie.iter(canisters)) {
             // startBucketMonitor_(canisterId);
         };
@@ -678,9 +702,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     //     version;
     // };
 
-    private stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
+    stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
 
-    private let ic : IC.Self = actor "aaaaa-aa";
+    let ic : IC.Self = actor "aaaaa-aa";
     var creatingStorage : Bool = false;
 
     public shared ({ caller }) func getStorage(fileSize : Nat) : async ?BucketId {
@@ -691,7 +715,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Инициализация storage-канистры, если у caller еще нет канистры или все канистры заполнены, то создаем канистру
-    private func getBucketWithAvailableCapacity(caller : Principal, fileSize : Nat) : async ?BucketId {
+    func getBucketWithAvailableCapacity(caller : Principal, fileSize : Nat) : async ?BucketId {
         var bucketId_ : ?BucketId = null;
         label bucketsLoop for (bucketId in Iter.fromArray(TrieSet.toArray(storageBuckets))) {
             let storageBucket : actor { getUsedMemorySize : shared () -> async Nat } = actor (Principal.toText(bucketId));
@@ -709,7 +733,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Создание канистры с хранилищем
-    private func createStorageBucket(caller : Principal) : async BucketId {
+    func createStorageBucket(caller : Principal) : async BucketId {
         creatingStorage := true;
         let self : Principal = Principal.fromActor(this);
         let settings = {
@@ -728,7 +752,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Удаление канистры пользователя
-    private func deleteStorageBucket(caller : Principal, bucketId : BucketId) : async Result.Result<(), Text> {
+    func deleteStorageBucket(caller : Principal, bucketId : BucketId) : async Result.Result<(), Text> {
         switch (TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal)) {
             case false #err("Bucket " # Principal.toText(bucketId) # " not found. " # Principal.toText(caller));
             case true {
@@ -762,7 +786,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         TrieSet.toArray<BucketId>(storageBuckets);
     };
 
-    private func isStorage(bucketId : BucketId) : Bool {
+    func isStorage(bucketId : BucketId) : Bool {
         TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
     };
 
@@ -785,9 +809,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // - раз в минуту происходит обновление одной канистры, обновленная канистра удаляется из очереди
     // - когда очередь заканчивается, таймер отменяется
 
-    private stable var storageWasm : [Nat8] = [];
-    // private stable var storageQueue : List.List<BucketId> = List.nil();
-    // private var upgradeStorageTimerId : ?Nat = null;
+    stable var storageWasm : [Nat8] = [];
+    // stable var storageQueue : List.List<BucketId> = List.nil();
+    // var upgradeStorageTimerId : ?Nat = null;
 
     // Source:
     // https://github.com/ORIGYN-SA/large_canister_deployer_internal
@@ -851,13 +875,13 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     let MEMO_TOP_UP_CANISTER : LedgerTypes.Memo = 0x50555054; // == 'TPUP'
     let FEE : Nat64 = 10_000;
     let CHECK_INTERVAL_SECONDS : Nat = 20;
-    // private stable var canisters : List.List<Canister> = List.nil<Canister>();
-    private stable var canisters : Trie.Trie<BucketId, Canister> = Trie.empty<BucketId, Canister>();
-    // private stable var topupQueue : List.List<Canister> = List.nil<Canister>();
-    private var topupQueue : List.List<Topup> = List.nil();
-    private stable var depositQueue : List.List<BucketId> = List.nil();
-    private var toppingUp : ?BucketId = null;
-    private var depositing : Bool = false;
+    // stable var canisters : List.List<Canister> = List.nil<Canister>();
+    stable var canisters : Trie.Trie<BucketId, Canister> = Trie.empty<BucketId, Canister>();
+    // stable var topupQueue : List.List<Canister> = List.nil<Canister>();
+    var topupQueue : List.List<Topup> = List.nil();
+    stable var depositQueue : List.List<BucketId> = List.nil();
+    var toppingUp : ?BucketId = null;
+    var depositing : Bool = false;
 
     // public shared ({ caller }) func topupCanister(value : Topup) : async () {
     //     assert not Principal.isAnonymous(caller);
@@ -875,7 +899,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await startBucketMonitor_(canisterId);
     };
 
-    private func startBucketMonitor_(canisterId : BucketId) : async () {
+    func startBucketMonitor_(canisterId : BucketId) : async () {
         let found : ?Canister = Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
         let defaults = switch (found) {
             case null {
@@ -905,7 +929,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await stopBucketMonitor_(canisterId);
     };
 
-    private func stopBucketMonitor_(canisterId : BucketId) : async () {
+    func stopBucketMonitor_(canisterId : BucketId) : async () {
         switch (Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal)) {
             case null {};
             case (?canister) {
@@ -920,7 +944,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    private func topup() : async () {
+    func topup() : async () {
         assert Option.isNull(toppingUp);
 
         switch (List.pop<Topup>(topupQueue)) {
@@ -941,7 +965,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    // private func cyclesToE8s(cycles : Nat) : async Tokens {
+    // func cyclesToE8s(cycles : Nat) : async Tokens {
     //     let { data } = await CMC.get_icp_xdr_conversion_rate();
     //     let account : A.AccountIdentifier = accountIdentifier_();
     //     let balance = await Ledger.account_balance({ account });
@@ -950,7 +974,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // };
 
     // пополнение текущей канистры
-    // private func depositCycles() : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
+    // func depositCycles() : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
     //     let amount : Tokens = switch(await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
     //         case (#ok amount) amount;
     //         case (#err balance) {
@@ -961,7 +985,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // };
 
     // пополнение канистры циклами из Cycles Minting Canister путем сжигания ICP на внутреннем балансе пользователя
-    private func depositCycles(amount : Tokens) : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
+    func depositCycles(amount : Tokens) : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
         let self = Principal.fromActor(this);
         let fromSubaccount : A.Subaccount = A.principalToSubaccount(owner);
         let account : A.AccountIdentifier = do {
@@ -1024,7 +1048,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         accountIdentifier_();
     };
 
-    private func accountIdentifier_() : A.AccountIdentifier {
+    func accountIdentifier_() : A.AccountIdentifier {
         let subaccount : A.Subaccount = A.principalToSubaccount(owner);
         A.accountIdentifier(Principal.fromActor(this), subaccount);
     };
@@ -1057,7 +1081,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     //     ignore checkBalance();
     // };
 
-    private func checkCycles() : async () {
+    func checkCycles() : async () {
         try {
             let self = Principal.fromActor(this);
             let status = await ic.canister_status({ canister_id = self });
@@ -1081,7 +1105,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // проверка состояния баланса канистры, добавление в очередь на пополнение при необходимости
-    private func monitorCycles(canisterId : BucketId) : async () {
+    func monitorCycles(canisterId : BucketId) : async () {
         let found : ?Canister = Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
         switch (found) {
             case null {};
@@ -1123,7 +1147,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // конвертация циклов в ICP
-    private func cyclesToE8s(cyclesAmount : Nat) : async Result.Result<Tokens, Tokens> {
+    func cyclesToE8s(cyclesAmount : Nat) : async Result.Result<Tokens, Tokens> {
         let { data } = await CMC.get_icp_xdr_conversion_rate();
         let account : A.AccountIdentifier = accountIdentifier_();
         let balance : Tokens = await Ledger.account_balance({ account });

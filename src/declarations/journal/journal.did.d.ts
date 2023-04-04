@@ -89,7 +89,6 @@ export interface JournalBucket {
             freezingThresholdInCycles: bigint;
         }
     >;
-    checkRoute: ActorMethod<[[] | [string]], boolean>;
     createDirectory: ActorMethod<[{ id: ID__1; name: string; parentId: [] | [ID__1] }], Result_6>;
     createInvite: ActorMethod<[Time], Result_5>;
     createPath: ActorMethod<[string], undefined>;

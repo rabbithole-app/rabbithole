@@ -116,7 +116,6 @@ type JournalBucket =
        id: principal;
        status: canister_status_response;
      });
-   checkRoute: (opt text) -> (bool) query;
    createDirectory: (record {
                        id: ID__1;
                        name: text;

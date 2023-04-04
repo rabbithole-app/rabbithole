@@ -37,7 +37,7 @@ export const FILE_LIST_RX_STATE = new InjectionToken<RxState<FileListState>>('FI
 export function fileListStateFactory(bucketsService: BucketsService) {
     const state = new RxState<FileListState>();
     const router = inject(Router);
-    // state.select('tree').subscribe(console.log);
+    state.select('tree').subscribe(console.log);
     // const selected$ = path$.pipe(map(() => ({ selected: [] })));
     // const version$ = journalState.select('actor').pipe(
     //     filter(actor => !isNil(actor)),
@@ -45,8 +45,14 @@ export function fileListStateFactory(bucketsService: BucketsService) {
     //     map(version => ({ version }))
     // );
     const loading$ = merge(
-        router.events.pipe(filter(event => event instanceof ResolveStart), map(() => true)),
-        router.events.pipe(filter(event => event instanceof ResolveEnd), map(() => false))
+        router.events.pipe(
+            filter(event => event instanceof ResolveStart),
+            map(() => true)
+        ),
+        router.events.pipe(
+            filter(event => event instanceof ResolveEnd),
+            map(() => false)
+        )
     ).pipe(map(loading => ({ loading })));
     const tree$ = bucketsService.select('journal').pipe(
         combineLatestWith(

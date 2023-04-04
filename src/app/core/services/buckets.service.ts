@@ -3,7 +3,25 @@ import { ActorSubclass, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { catchError, combineLatestWith, concat, connect, defer, from, iif, map, merge, mergeMap, Observable, of, startWith, Subject, switchMap, throwError, toArray } from 'rxjs';
+import {
+    catchError,
+    combineLatestWith,
+    concat,
+    connect,
+    defer,
+    from,
+    iif,
+    map,
+    merge,
+    mergeMap,
+    Observable,
+    of,
+    startWith,
+    Subject,
+    switchMap,
+    throwError,
+    toArray
+} from 'rxjs';
 import { fromNullable } from '@dfinity/utils';
 import { isUndefined } from 'lodash';
 
@@ -41,14 +59,22 @@ export class BucketsService extends RxState<State> {
                 switchMap(([{ actor, identity, isAuthenticated }]) =>
                     iif(
                         () => isAuthenticated,
-                        defer(() => concat(
-                            of({ loading: true }),
-                            from(actor.getJournalBucket()).pipe(
-                                map(optCanister => fromNullable(optCanister)),
-                                switchMap(canisterId => iif(() => isUndefined(canisterId), of({ journal: null, canisterId: null, loaded: true }), this.loadActors(canisterId as Principal, identity))),
-                            ),
-                            of({ loading: false })
-                        )),
+                        defer(() =>
+                            concat(
+                                of({ loading: true }),
+                                from(actor.getJournalBucket()).pipe(
+                                    map(optCanister => fromNullable(optCanister)),
+                                    switchMap(canisterId =>
+                                        iif(
+                                            () => isUndefined(canisterId),
+                                            of({ journal: null, canisterId: null, loaded: true }),
+                                            this.loadActors(canisterId as Principal, identity)
+                                        )
+                                    )
+                                ),
+                                of({ loading: false })
+                            )
+                        ),
                         of({ journal: null, canisterId: null, storages: [], loading: false, loaded: false })
                     )
                 )
@@ -84,7 +110,7 @@ export class BucketsService extends RxState<State> {
                     )
                 )
             )
-        )
+        );
     }
 
     update() {

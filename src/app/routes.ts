@@ -19,8 +19,16 @@ export const appRoutes: Route[] = [
                 path: 'drive',
                 canActivateChild: [journalGuard],
                 children: [
-                    { path: '', resolve: { fileList: fileListResolver }, loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) },
-                    { path: '**', resolve: { fileList: fileListResolver }, loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent) }
+                    {
+                        path: '',
+                        resolve: { fileList: fileListResolver },
+                        loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent)
+                    },
+                    {
+                        path: '**',
+                        resolve: { fileList: fileListResolver },
+                        loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent)
+                    }
                 ]
             },
             { path: 'invites', loadComponent: () => import('./features/invites/invites.component').then(m => m.InvitesComponent), providers: [InvitesService] },
