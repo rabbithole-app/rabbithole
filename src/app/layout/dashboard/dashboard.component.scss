@@ -1,7 +1,12 @@
 :host {
-    display: flex;
+    display: grid;
     width: 100%;
     min-height: 100vh;
+    background-color: var(--content-bg);
+}
+
+.mat-drawer-content {
+    display: flex;
     background-color: var(--content-bg);
 }
 

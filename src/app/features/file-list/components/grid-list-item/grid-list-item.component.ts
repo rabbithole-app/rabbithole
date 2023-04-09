@@ -1,36 +1,20 @@
-import {
-    Component,
-    ChangeDetectionStrategy,
-    Input,
-    ElementRef,
-    HostBinding,
-    OnDestroy,
-    Inject,
-    Output,
-    EventEmitter,
-    NgZone,
-    ChangeDetectorRef,
-    inject
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, ElementRef, HostBinding, OnDestroy, Inject, Output, EventEmitter, NgZone, ChangeDetectorRef, inject } from '@angular/core';
 import { Highlightable } from '@angular/cdk/a11y';
-
-import { MatMenuTrigger } from '@angular/material/menu';
 import { Point } from '@angular/cdk/drag-drop';
+import { MatMenuTrigger } from '@angular/material/menu';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { RxState } from '@rx-angular/state';
 import { AsyncSubject } from 'rxjs';
 import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
 
 import { JournalItem } from '@features/file-list/models';
-
-import { getIconByExt } from '@features/file-list/utils';
+import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { RxState } from '@rx-angular/state';
 import { ContextMenuService, DirectoryService } from '@features/file-list/services';
 import { OverlayService, WINDOW } from '@core/services';
-import { CommonModule } from '@angular/common';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 interface State {
     data: JournalItem;
@@ -112,7 +96,7 @@ export class GridListItemComponent implements OnDestroy, Highlightable {
         this.destroyed.complete();
     }
 
-    getIconByExt = (extension: string) => getIconByExt(this.iconsConfig, extension);
+    getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);
 
     setActiveStyles(): void {
         this._isActive = true;

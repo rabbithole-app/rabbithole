@@ -15,16 +15,10 @@ module {
     };
 
     public type AssetKey = {
-        // myimage.jpg
-        name : Text;
-        // images
-        folder : Text;
-        parentId : ?ID;
-        // /images/myimage.jpg
-        fullPath : Text;
-        // ?token=1223-3345-5564-3333
-        token : ?Text;
+        id : ID;
         fileSize : Nat;
+        name : Text;
+        parentId : ?ID;
     };
 
     public type Asset = {

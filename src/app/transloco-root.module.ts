@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
+import { Injectable, NgModule, isDevMode } from '@angular/core';
 import { TRANSLOCO_LOADER, Translation, TranslocoLoader, TRANSLOCO_CONFIG, translocoConfig, TranslocoModule } from '@ngneat/transloco';
-import { Injectable, NgModule } from '@angular/core';
-import { environment } from '../environments/environment';
+import { TranslocoLocaleModule } from '@ngneat/transloco-locale';
+import { TranslocoMessageFormatModule } from '@ngneat/transloco-messageformat';
 
 @Injectable({ providedIn: 'root' })
 export class TranslocoHttpLoader implements TranslocoLoader {
@@ -13,6 +14,15 @@ export class TranslocoHttpLoader implements TranslocoLoader {
 }
 
 @NgModule({
+    imports: [
+        TranslocoLocaleModule.forRoot({
+            langToLocaleMapping: {
+                en: 'en-US',
+                ru: 'ru-RU'
+            }
+        }),
+        TranslocoMessageFormatModule.forRoot()
+    ],
     exports: [TranslocoModule],
     providers: [
         {
@@ -21,7 +31,7 @@ export class TranslocoHttpLoader implements TranslocoLoader {
                 availableLangs: ['en', 'ru'],
                 defaultLang: 'en',
                 reRenderOnLangChange: true,
-                prodMode: environment.production
+                prodMode: !isDevMode()
             })
         },
         { provide: TRANSLOCO_LOADER, useClass: TranslocoHttpLoader }

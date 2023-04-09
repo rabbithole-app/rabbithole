@@ -1,6 +1,6 @@
 {
   "name": "ng-rabbithole",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4201",
@@ -33,6 +33,7 @@
     "@ngneat/input-mask": "^6.1.0",
     "@ngneat/transloco": "^4.2.6",
     "@ngneat/transloco-locale": "^4.0.0",
+    "@ngneat/transloco-messageformat": "^4.1.0",
     "@rx-angular/cdk": "^2.0.0",
     "@rx-angular/state": "^2.0.0",
     "@rx-angular/template": "^2.0.0",

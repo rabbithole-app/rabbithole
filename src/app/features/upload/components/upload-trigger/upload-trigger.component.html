@@ -1,0 +1,47 @@
+<ng-container *transloco="let t; read: 'upload'">
+    <ng-container *rxIf="uploadService.summary$ as summary">
+        <ng-container [ngSwitch]="summary.status">
+            <ng-container *ngSwitchCase="uploadStatus.Queue">
+                <button class="trigger" #triggerButton mat-icon-button (click)="sidebarService.toggleDrawer()">
+                    <mat-icon svgIcon="far:cloud-arrow-up"></mat-icon>
+                </button>
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+                <button #triggerButton mat-button (click)="sidebarService.toggleDrawer()" [class]="'uploading uploading--' + summary.status">
+                    <ng-container [ngSwitch]="summary.status">
+                        <ng-container *ngSwitchCase="uploadStatus.Done">
+                            <span>{{ t('status.done') }}</span>
+                            <span>{{ t('uploaded', { count: summary.completed }) }}</span>
+                            <mat-icon svgIcon="far:check"></mat-icon>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="uploadStatus.Paused">
+                            <span>{{ t('status.paused') }}</span>
+                            <span>{{ summary.progress }}% &middot; {{ t('process', { count: summary.files, completed: summary.completed }) }}</span>
+                            <mat-icon svgIcon="far:play"></mat-icon>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="uploadStatus.Failed">
+                            <span>{{ t('status.failed') }}</span>
+                            <span>{{ t('failed', { failed: summary.failed, completed: summary.completed }) }}</span>
+                            <mat-icon svgIcon="far:circle-exclamation"></mat-icon>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="uploadStatus.Cancelled">
+                            <span>{{ t('status.cancelled') }}</span>
+                            <span>{{ t('cancelled') }}</span>
+                            <mat-icon svgIcon="far:circle-exclamation"></mat-icon>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="uploadStatus.Processing">
+                            <span>{{ t('status.processing', { count: summary.files, completed: summary.completed }) }}</span>
+                            <span>{{ summary.progress }}% &middot; {{ t('process', { count: summary.files, completed: summary.completed }) }}</span>
+                            <mat-spinner strokeWidth="2" diameter="28" mode="determinate" [value]="summary.progress"></mat-spinner>
+                        </ng-container>
+                    </ng-container>
+                </button>
+            </ng-container>
+        </ng-container>
+    </ng-container>
+    <ng-template #uploadingTemplate>
+        <div class="mat-mdc-menu-panel mdc-menu-surface mdc-menu-surface--open">
+            <app-upload></app-upload>
+        </div>
+    </ng-template>
+</ng-container>

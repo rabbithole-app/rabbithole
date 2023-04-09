@@ -1,0 +1,57 @@
+<div [class]="'actions actions--' + status">
+    <ng-container *ngIf="pausable">
+        <button class="pause" mat-icon-button (click)="handlePause($event)" *ngIf="status === UploadStatus.Processing" matTooltip="Pause">
+            <mat-icon svgIcon="far:pause"></mat-icon>
+        </button>
+        <button class="resume" mat-icon-button (click)="handleResume($event)" *ngIf="status === UploadStatus.Paused" matTooltip="Resume">
+            <mat-icon svgIcon="far:play"></mat-icon>
+        </button>
+    </ng-container>
+    <button
+        class="cancel"
+        mat-icon-button
+        (click)="handleCancel($event)"
+        *ngIf="status === UploadStatus.Processing"
+        matTooltip="Cancel"
+        matTooltipPosition="below">
+        <mat-icon svgIcon="far:xmark"></mat-icon>
+    </button>
+    <button
+        class="repeat"
+        mat-icon-button
+        (click)="handleRepeat($event)"
+        *ngIf="status === UploadStatus.Failed || status === UploadStatus.Cancelled"
+        matTooltip="Repeat">
+        <mat-icon svgIcon="far:arrow-rotate-right"></mat-icon>
+    </button>
+    <!--<button class="done" mat-icon-button *ngIf="status == 'done'" >
+        <mat-icon svgIcon="far:check"></mat-icon>
+    </button>-->
+</div>
+<div class="icon">
+    <mat-icon [svgIcon]="getIconByFilename(data.name)"></mat-icon>
+    <mat-icon class="success" svgIcon="far:check" *ngIf="status === UploadStatus.Done"></mat-icon>
+    <mat-icon
+        class="error"
+        svgIcon="far:xmark"
+        *ngIf="status === UploadStatus.Failed || status === UploadStatus.Cancelled"
+        [matTooltip]="data.errorMessage ?? ''"></mat-icon>
+</div>
+<div class="info">
+    <div class="filename mat-subheading-1">
+        {{ data.name }}
+        <!--<mat-icon svgIcon="far:check" *ngIf="status === 'done'"></mat-icon>-->
+        <!--<mat-icon class="circle-icon circle-icon&#45;&#45;success" svgIcon="far:check" *ngIf="status === 'done'"></mat-icon>-->
+    </div>
+    <div class="description mat-caption">
+        <span *ngIf="status === UploadStatus.Paused || status === UploadStatus.Processing">{{ progress }}%</span>{{ formatSize }}
+    </div>
+</div>
+<mat-progress-bar
+    *ngIf="
+        [UploadStatus.Queue, UploadStatus.Init, UploadStatus.Finalize, UploadStatus.Request, UploadStatus.Processing, UploadStatus.Paused].includes(
+            $any(status)
+        )
+    "
+    [mode]="status === UploadStatus.Queue ? 'indeterminate' : 'determinate'"
+    [value]="progress"></mat-progress-bar>

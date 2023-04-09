@@ -35,13 +35,13 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
 
     type HeaderField = HTTP.HeaderField;
 
-    private stable var assets : Trie.Trie<Text, Asset> = Trie.empty();
-    private var batches : HashMap.HashMap<Nat, Batch> = HashMap.HashMap<Nat, Batch>(10, Nat.equal, Hash.hash);
-    private var chunks : HashMap.HashMap<Nat, Chunk> = HashMap.HashMap<Nat, Chunk>(10, Nat.equal, Hash.hash);
-    private var nextBatchID : Nat = 0;
-    private var nextChunkID : Nat = 0;
-    private let journal : JournalTypes.Self = actor (Principal.toText(installer));
-    private let ic : IC.Self = actor "aaaaa-aa";
+    stable var assets : Trie.Trie<Text, Asset> = Trie.empty();
+    var batches : HashMap.HashMap<Nat, Batch> = HashMap.HashMap<Nat, Batch>(10, Nat.equal, Hash.hash);
+    var chunks : HashMap.HashMap<Nat, Chunk> = HashMap.HashMap<Nat, Chunk>(10, Nat.equal, Hash.hash);
+    var nextBatchID : Nat = 0;
+    var nextChunkID : Nat = 0;
+    let journal : JournalTypes.Self = actor (Principal.toText(installer));
+    let ic : IC.Self = actor "aaaaa-aa";
 
     // таймер мониторинга циклов
     // private let timerId : ?Nat = null;
@@ -116,20 +116,14 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
             throw Error.reject("User does not have the permission to commit an upload.");
         };
 
-        switch (batches.get(batchId)) {
-            case null {
-                throw Error.reject("No batch to commit.");
-            };
-            case (?batch) {
-                switch (await commitChunks({ batchId; batch; chunkIds; headers })) {
-                    case (#err message) throw Error.reject(message);
-                    case (#ok) {};
-                };
-            };
+        let ?batch = batches.get(batchId) else throw Error.reject("No batch to commit.");
+        switch (await commitChunks({ batchId; batch; chunkIds; headers })) {
+            case (#err message) throw Error.reject(message);
+            case (#ok) {};
         };
     };
 
-    private func clearBatch({ batchId : Nat; chunkIds : [Nat] } : { batchId : Nat; chunkIds : [Nat] }) : () {
+    func clearBatch({ batchId : Nat; chunkIds : [Nat] } : { batchId : Nat; chunkIds : [Nat] }) : () {
         for (chunkId in chunkIds.vals()) {
             chunks.delete(chunkId);
         };
@@ -137,7 +131,7 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
         batches.delete(batchId);
     };
 
-    private func clearExpiredBatches() : () {
+    func clearExpiredBatches() : () {
         let now : Time.Time = Time.now();
 
         // Remove expired batches
@@ -155,7 +149,7 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
         };
     };
 
-    private func commitChunks({ batchId; batch; chunkIds; headers } : { batchId : Nat; batch : Batch; headers : [HeaderField]; chunkIds : [Nat] }) : async Result.Result<(), Text> {
+    func commitChunks({ batchId; batch; chunkIds; headers } : { batchId : Nat; batch : Batch; headers : [HeaderField]; chunkIds : [Nat] }) : async Result.Result<(), Text> {
         // Test batch is not expired
         let now : Time.Time = Time.now();
         if (now > batch.expiresAt) {
@@ -201,12 +195,14 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
             };
         };
 
+        Debug.print(debug_show({ bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId }));
+
         switch (await journal.addFile({ bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId })) {
             case (#err message) {
                 return #err "message";
             };
             case (#ok _) {
-                assets := Trie.put<Text, Asset>(assets, Utils.keyText(batch.key.fullPath), Text.equal, asset).0;
+                assets := Trie.put<Text, Asset>(assets, Utils.keyText(batch.key.id), Text.equal, asset).0;
                 clearBatch({ batchId; chunkIds });
                 #ok();
             };
@@ -232,12 +228,12 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
         Nat64.toNat(size) + reservedMemory;
     };
 
-    public shared ({ caller }) func sendCyclesToInstaller() : () {
-        Cycles.add(1_000_000_000_000);
-        ignore ic.deposit_cycles({ canister_id = installer });
-    };
+    // public shared ({ caller }) func sendCyclesToInstaller() : () {
+    //     Cycles.add(1_000_000_000_000);
+    //     ignore ic.deposit_cycles({ canister_id = installer });
+    // };
 
-    let version = "v3";
+    let version = "v4";
 
     public query ({ caller }) func getVersion() : async Text {
         version;

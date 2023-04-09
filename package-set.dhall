@@ -1,4 +1,4 @@
-let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.8.4-20230311/package-set.dhall sha256:bf5cec8ba99cfa6abcdb793a4aeaea9f4c913a4bd97af0a556bd6e81aaf75cd4
+let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.8.6-20230404/package-set.dhall sha256:35a37f381e4de1c017785baed753364646e2c87c7a6301aebcf5d03fc9562019
 let aviate-labs = https://github.com/aviate-labs/package-set/releases/download/v0.1.8/package-set.dhall sha256:9ab42c1f732299dc8c1f631d39ea6a2551414bf6efc8bbde4e11e36ebc6d7edd
 
 let Package =

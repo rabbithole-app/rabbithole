@@ -1,4 +1,7 @@
 import { Route } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { MatDialogModule } from '@angular/material/dialog';
+
 import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard } from '@core/guards';
 import { fileListStateFactory, FILE_LIST_RX_STATE } from '@features/file-list';
 import { InvitesService } from '@features/invites/services/invites.service';
@@ -8,6 +11,10 @@ import { WalletService } from '@features/wallet/services';
 import { SidebarService } from './layout/dashboard/services/sidebar.service';
 import { BucketsService } from '@core/services';
 import { fileListResolver } from '@features/file-list/resolvers/file-list.resolver';
+import { JournalService, SnackbarProgressService } from '@features/file-list/services';
+import { UploadService } from '@features/upload/services';
+import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
+import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
 
 export const appRoutes: Route[] = [
     {
@@ -44,6 +51,16 @@ export const appRoutes: Route[] = [
                 loadComponent: () => import('./layout/dashboard/components/sidebar-content/sidebar-content.component').then(m => m.SidebarContentComponent),
                 outlet: 'sidebar'
             },
+            {
+                path: '',
+                loadComponent: () => import('./features/upload/upload.component').then(m => m.UploadComponent),
+                outlet: 'sidebar-right'
+            },
+            {
+                path: '',
+                loadComponent: () => import('./features/upload/components/upload-trigger/upload-trigger.component').then(m => m.UploadTriggerComponent),
+                outlet: 'header'
+            },
             // { path: 'profile', loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule) },
             { path: '', redirectTo: 'drive', pathMatch: 'full' }
         ],
@@ -51,20 +68,17 @@ export const appRoutes: Route[] = [
             BucketsService,
             { provide: FILE_LIST_RX_STATE, useFactory: fileListStateFactory, deps: [BucketsService] },
             SidebarService,
-            WalletService
-            // SnackbarProgressService
+            WalletService,
+            UploadService,
+            JournalService,
+            SnackbarProgressService,
+            importProvidersFrom(MatDialogModule),
+            {
+                provide: FILE_LIST_ICONS_CONFIG,
+                useValue: GRAY_ICONS_CONFIG
+            }
         ]
     },
-    // {
-    //     path: '',
-    //     loadComponent: () => import('./upload/upload.component').then(m => m.UploadComponent),
-    //     providers: [
-    //         {
-    //             provide: FILE_LIST_ICONS_CONFIG,
-    //             useValue: GRAY_ICONS_CONFIG
-    //         }
-    //     ]
-    // },
     {
         path: 'register',
         loadComponent: () => import('./layout/dashboard/dashboard.component').then(m => m.DashboardComponent),

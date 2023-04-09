@@ -1,0 +1,39 @@
+<ng-container *transloco="let t; read: 'upload'">
+    <mat-tab-group animationDuration="500ms" (animationDone)="tabAnimationDone()" (selectedTabChange)="tabChange()">
+        <mat-tab [label]="t('tabs.uploading')">
+            <ng-container *ngIf="state.select('hasUploading') | async; else emptyTemplate">
+                <app-upload-item
+                    *ngFor="let item of uploading$ | async; trackBy: trackById"
+                    [data]="item"
+                    (pauseUpload)="uploadService.pause(item.id)"
+                    (resumeUpload)="uploadService.resume(item.id)"
+                    (repeatUpload)="uploadService.retry(item.id)"
+                    (cancelUpload)="uploadService.cancel(item.id)"></app-upload-item>
+                <!-- <footer>
+                    <button mat-button>
+                        <mat-icon svgIcon="far:play"></mat-icon>
+                        {{ t('actions.resume-all') }}
+                    </button>
+                    <button mat-button color="warn">
+                        <mat-icon svgIcon="far:xmark"></mat-icon>
+                        {{ t('actions.clear-all') }}
+                    </button>
+                </footer> -->
+            </ng-container>
+        </mat-tab>
+        <mat-tab [disabled]="!hasCompleted" [label]="t('tabs.completed', { count: completedCount })">
+            <ng-container *ngIf="state.select('hasCompleted') | async; else emptyTemplate">
+                <app-upload-item *ngFor="let item of completed$ | async" [data]="item"></app-upload-item>
+            </ng-container>
+            <!-- <footer>
+                <button mat-button class="has-icon" (click)="clearCompleted($event)" [disabled]="!hasCompleted">
+                    <mat-icon svgIcon="far:trash-can-list"></mat-icon>
+                    <span>{{ t('actions.clear-completed') }}</span>
+                </button>
+            </footer> -->
+        </mat-tab>
+    </mat-tab-group>
+    <ng-template #emptyTemplate>
+        <app-empty icon="upload"></app-empty>
+    </ng-template>
+</ng-container>

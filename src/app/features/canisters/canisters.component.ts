@@ -32,14 +32,10 @@ export class CanistersComponent {
     journalLoading$: Observable<boolean> = this.canistersService.select('journalLoading');
     storagesLoading$: Observable<boolean> = this.canistersService.select('storagesLoading');
 
-    handleSend() {
-        this.canistersService.send();
-    }
-
     handleAction(event: { type: string; id: string }) {
         switch (event.type) {
             case 'delete': {
-                this.journalService.deleteStorage(event.id);
+                // this.journalService.deleteStorage(event.id);
                 break;
             }
             default: {

@@ -2,12 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AssetKey {
-    token: [] | [string];
+    id: ID;
     name: string;
-    fullPath: string;
     fileSize: bigint;
     parentId: [] | [ID];
-    folder: string;
 }
 export interface Chunk {
     content: Uint8Array | number[];
@@ -29,7 +27,6 @@ export interface StorageBucket {
     getUsedMemorySize: ActorMethod<[], bigint>;
     getVersion: ActorMethod<[], string>;
     initUpload: ActorMethod<[AssetKey], { batchId: bigint }>;
-    sendCyclesToInstaller: ActorMethod<[], undefined>;
     uploadChunk: ActorMethod<[Chunk], { chunkId: bigint }>;
 }
 export interface _SERVICE extends StorageBucket {}

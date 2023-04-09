@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export DFX_MOC_PATH="$(vessel bin)/moc"
+
 if dfx build rabbithole; then
     dfx generate rabbithole
     sed -i'.bak' '/^export const rabbithole/s/^/\/\//g' src/declarations/rabbithole/index.js
@@ -9,3 +11,5 @@ if dfx build rabbithole; then
     dfx canister install rabbithole --mode upgrade --yes
     # dfx canister deposit-cycles 1000000000000 rabbithole
 fi
+
+unset DFX_MOC_PATH

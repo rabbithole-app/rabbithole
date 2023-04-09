@@ -1,51 +1,25 @@
 import { CommonModule, Location } from '@angular/common';
-import {
-    Component,
-    ChangeDetectionStrategy,
-    OnDestroy,
-    HostListener,
-    ViewChild,
-    inject,
-    ElementRef,
-    ChangeDetectorRef,
-    OnInit,
-    TemplateRef
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnDestroy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import {
-    asapScheduler,
-    asyncScheduler,
-    AsyncSubject,
-    filter,
-    first,
-    firstValueFrom,
-    from,
-    Observable,
-    observeOn,
-    shareReplay,
-    startWith,
-    switchMap
-} from 'rxjs';
-import { map, pluck, take, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
-import { compact, isEmpty, isUndefined, last, omit, trimStart } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { asapScheduler, AsyncSubject, filter, Observable, observeOn } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
+import { v4 as uuidv4 } from 'uuid';
 
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
-import { DirectoryCreate, DirectoryExtended, JournalItem, MenuItemAction } from '@features/file-list/models';
-
+import { JournalItem, MenuItemAction } from '@features/file-list/models';
 import { ContextMenuService, DirectoryService, JournalService } from '@features/file-list/services';
-import { MatDividerModule } from '@angular/material/divider';
 import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
-import { MatIconModule } from '@angular/material/icon';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { addFASvgIcons } from '@core/utils';
-import { ActivatedRoute } from '@angular/router';
 import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
 import { PageHeaderComponent } from '@features/file-list/components/page-header/page-header.component';
 import { EmptyComponent } from '@core/components/empty/empty.component';
+import { UploadService } from '@features/upload/services';
 
 interface State {
     emptyRef: ElementRef;
@@ -71,13 +45,13 @@ export class FileListComponent implements OnInit, OnDestroy {
     journalService = inject(JournalService);
     fileListState = inject(FILE_LIST_RX_STATE);
     directoryService = inject(DirectoryService);
+    uploadService = inject(UploadService);
 
     items$: Observable<JournalItem[]> = this.fileListState.select('items').pipe(observeOn(asapScheduler));
     selected$: Observable<JournalItem[]> = this.fileListState.select('selected');
     hasItems$: Observable<boolean> = this.fileListState.select('items').pipe(map(items => items.length > 0));
     dragging$: Observable<boolean> = this.fileListState.select('dragging');
     @ViewChild('itemsTrigger', { read: MatMenuTrigger }) itemsMenuTrigger!: MatMenuTrigger;
-    // uploadService = inject(UploadService);
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     readonly folderColors: string[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
     folderColor: string = 'blue';
@@ -92,7 +66,6 @@ export class FileListComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        // this.openCreateDirectoryDialog(new MouseEvent('click'));
         this.fileListState.connect(this.route.data.pipe(map(({ fileList }) => fileList)));
     }
 
@@ -160,7 +133,7 @@ export class FileListComponent implements OnInit, OnDestroy {
     handleFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         const files: FileList = input.files as FileList;
-        // this.uploadService.add(files);
+        this.uploadService.add(files);
     }
 
     handleEmptyContextMenu(event: MouseEvent) {

@@ -9,7 +9,6 @@ type StorageBucket =
    getUsedMemorySize: () -> (nat);
    getVersion: () -> (text) query;
    initUpload: (AssetKey) -> (record {batchId: nat;});
-   sendCyclesToInstaller: () -> () oneway;
    uploadChunk: (Chunk) -> (record {chunkId: nat;});
  };
 type ID = text;
@@ -26,10 +25,8 @@ type Chunk =
 type AssetKey = 
  record {
    fileSize: nat;
-   folder: text;
-   fullPath: text;
+   id: ID;
    name: text;
    parentId: opt ID;
-   token: opt text;
  };
 service : (principal) -> StorageBucket

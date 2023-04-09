@@ -2,12 +2,10 @@ export const idlFactory = ({ IDL }) => {
     const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
     const ID = IDL.Text;
     const AssetKey = IDL.Record({
-        token: IDL.Opt(IDL.Text),
+        id: ID,
         name: IDL.Text,
-        fullPath: IDL.Text,
         fileSize: IDL.Nat,
-        parentId: IDL.Opt(ID),
-        folder: IDL.Text
+        parentId: IDL.Opt(ID)
     });
     const Chunk = IDL.Record({
         content: IDL.Vec(IDL.Nat8),
@@ -28,7 +26,6 @@ export const idlFactory = ({ IDL }) => {
         getUsedMemorySize: IDL.Func([], [IDL.Nat], []),
         getVersion: IDL.Func([], [IDL.Text], ['query']),
         initUpload: IDL.Func([AssetKey], [IDL.Record({ batchId: IDL.Nat })], []),
-        sendCyclesToInstaller: IDL.Func([], [], ['oneway']),
         uploadChunk: IDL.Func([Chunk], [IDL.Record({ chunkId: IDL.Nat })], [])
     });
     return StorageBucket;

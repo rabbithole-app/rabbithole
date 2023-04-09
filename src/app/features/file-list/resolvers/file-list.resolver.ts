@@ -12,53 +12,53 @@ import { toDirectoryExtended, toFileExtended } from '../utils';
 import { JournalItem } from '../models';
 
 export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
-  const router = inject(Router);
-  const translateService = inject(TranslocoService);
-  const notificationService = inject(NotificationService);
-  const path: string = route.url.map(({ path }) => path).join('/');
-  return inject(BucketsService)
-    .select(selectSlice(['journal', 'loaded']))
-    .pipe(
-      filter(({ loaded }) => loaded),
-      switchMap(({ journal }) =>
-        iif(
-          () => isNull(journal),
-          throwError(() => new Error()),
-          from((journal as NonNullable<typeof journal>).getJournal(toNullable(path ?? undefined)))
-        ).pipe(
-          map(response => {
-            if (has(response, 'err')) {
-              const err = Object.keys(get(response, 'err') as unknown as JournalError)[0];
-              const message = translateService.translate(`file-list.get.errors.${err}`);
-              throw new Error(message);
-            }
+    const router = inject(Router);
+    const translateService = inject(TranslocoService);
+    const notificationService = inject(NotificationService);
+    const path: string = route.url.map(({ path }) => path).join('/');
+    return inject(BucketsService)
+        .select(selectSlice(['journal', 'loaded']))
+        .pipe(
+            filter(({ loaded }) => loaded),
+            switchMap(({ journal }) =>
+                iif(
+                    () => isNull(journal),
+                    throwError(() => new Error()),
+                    from((journal as NonNullable<typeof journal>).getJournal(toNullable(path ?? undefined)))
+                ).pipe(
+                    map(response => {
+                        if (has(response, 'err')) {
+                            const err = Object.keys(get(response, 'err') as unknown as JournalError)[0];
+                            const message = translateService.translate(`file-list.get.errors.${err}`);
+                            throw new Error(message);
+                        }
 
-            const journal = get(response, 'ok') as unknown as Journal;
+                        const journal = get(response, 'ok') as unknown as Journal;
 
-            const dirs = journal.dirs.map((dir: Directory) => ({
-              ...toDirectoryExtended(dir),
-              path
-            }));
-            const files = journal.files.map((file: File) => ({
-              ...toFileExtended(file),
-              path
-            }));
-            const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
+                        const dirs = journal.dirs.map((dir: Directory) => ({
+                            ...toDirectoryExtended(dir),
+                            path
+                        }));
+                        const files = journal.files.map((file: File) => ({
+                            ...toFileExtended(file),
+                            path
+                        }));
+                        const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
 
-            return {
-              items: [...dirs, ...files] as JournalItem[],
-              breadcrumbs,
-              parentId: fromNullable<string>(journal.id) ?? null,
-              lastPath: path,
-              selected: []
-            };
-          }),
-          catchError(err => {
-            notificationService.error(err.message);
-            router.navigate(['/drive']);
-            return EMPTY;
-          })
-        )
-      )
-    );
+                        return {
+                            items: [...dirs, ...files] as JournalItem[],
+                            breadcrumbs,
+                            parentId: fromNullable<string>(journal.id) ?? null,
+                            lastPath: path,
+                            selected: []
+                        };
+                    }),
+                    catchError(err => {
+                        notificationService.error(err.message);
+                        router.navigate(['/drive']);
+                        return EMPTY;
+                    })
+                )
+            )
+        );
 };

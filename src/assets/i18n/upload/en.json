@@ -1,0 +1,31 @@
+{
+    "tabs": {
+        "uploading": "Uploading",
+        "completed": "Completed{count, plural, =0 {} other { (#)}}"
+    },
+    "actions": {
+        "resume-all": "Resume all",
+        "clear-all": "Clear all",
+        "clear-completed": "Clear completed",
+        "cancel": "Cancel",
+        "resume": "Resume",
+        "pause": "Pause",
+        "repeat": "Repeat"
+    },
+    "status": {
+        "processing": "Uploading",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "done": "Completed",
+        "paused": "Paused"
+    },
+    "process": "{count, plural, =0 {} one { {completed}/# file} other { {completed}/# files}}",
+    "failed": "{failed, plural, =0 {no errors} one {# file has error} other {# files has error}}",
+    "cancelled": "Uploading is cancelled",
+    "uploaded": "Uploaded{count, plural, =0 {} one { # file} other { # files}}",
+    "initUpload": {
+        "responses": {
+            "noPermission": "User does not have the permission to upload data."
+        }
+    }
+}

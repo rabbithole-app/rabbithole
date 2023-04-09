@@ -1,4 +1,4 @@
 {
   dependencies = [ "base", "bimap", "uuid" ],
-  compiler = Some "0.8.3"
+  compiler = Some "0.8.7"
 }

@@ -568,13 +568,16 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             Text.map(UUID.toText(id), Prim.charToLower);
         };
         let file : File = { file_ and { id = uuid; createdAt = now; updatedAt = now } };
-        switch (files.insert(file, path)) {
-            case (#err((l, r))) {
-                let found : File = Option.get(files.getByRight(r), l);
-                #err(#alreadyExists(found));
-            };
-            case (#ok) #ok(file);
-        };
+        // TODO: замена и удаление файлов из хранилища
+        ignore files.replace(file, path);
+        #ok(file);
+        // switch (files.insert(file, path)) {
+        //     case (#err((l, r))) {
+        //         let found : File = Option.get(files.getByRight(r), l);
+        //         #err(#alreadyExists(found));
+        //     };
+        //     case (#ok) #ok(file);
+        // };
     };
 
     public shared ({ caller }) func deleteFile(sourcePath : Text) : async Result.Result<(), { #notFound }> {

@@ -8,7 +8,7 @@
                 <app-animated-folder [color]="loading || disabled ? 'gray' : folderColor" [active]="active ?? false"></app-animated-folder>
             </ng-container>
             <ng-container *ngSwitchDefault>
-                <mat-icon [svgIcon]="getIconByExt($any(data).extension)"></mat-icon>
+                <mat-icon [svgIcon]="getIconByExt(data.name)"></mat-icon>
             </ng-container>
         </ng-container>
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;loading" *ngIf="loading" @zoomOutOnLeave>

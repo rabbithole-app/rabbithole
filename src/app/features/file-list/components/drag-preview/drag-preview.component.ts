@@ -2,11 +2,11 @@ import { Component, ChangeDetectionStrategy, Input, OnChanges, SimpleChanges, El
 import { Point } from '@angular/cdk/drag-drop';
 import { animate, AnimationBuilder, AnimationPlayer, group, keyframes, style } from '@angular/animations';
 import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
-import { head, isArray, last } from 'lodash';
+import { head, isArray } from 'lodash';
 import { RxState } from '@rx-angular/state';
 
 import { JournalItem } from '@features/file-list/models';
-import { getIconByExt } from '@features/file-list/utils';
+import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -59,8 +59,8 @@ export class DragPreviewComponent implements OnChanges, OnDestroy {
             const count = selected.length;
             const item = count === 1 ? (head(selected) as JournalItem) : undefined;
             const type = item ? item.type : undefined;
-            const extension = item?.type === 'file' ? last(item.name.split('.')) : undefined;
-            this.state.set({ count, type, icon: getIconByExt(this.iconsConfig, extension) });
+            const filename = item?.type === 'file' ? item.name : undefined;
+            this.state.set({ count, type, icon: getIconByFilename(this.iconsConfig, filename) });
         }
     }
 

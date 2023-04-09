@@ -1,0 +1,21 @@
+:host {
+    display: grid;
+    grid-row-gap: 1rem;
+}
+
+:host-context(.mat-drawer) {
+    width: 400px;
+    height: 100vh;
+    ::ng-deep .mat-mdc-tab-body-wrapper {
+        flex-grow: 1;
+    }
+}
+
+footer {
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #efefef;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+}

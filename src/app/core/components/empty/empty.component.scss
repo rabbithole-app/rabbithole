@@ -56,3 +56,7 @@ $sizes: (
         }
     }
 }
+
+:host-context(.mat-drawer) {
+    height: 100%;
+}

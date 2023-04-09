@@ -1,6 +1,7 @@
 import { AnimationBuilder, AnimationEvent } from '@angular/animations';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { inject, Injectable } from '@angular/core';
+import { MatDrawer } from '@angular/material/sidenav';
 import { RxState } from '@rx-angular/state';
 import { combineLatest, distinctUntilChanged, first, map } from 'rxjs';
 import { get } from 'lodash';
@@ -15,6 +16,7 @@ export interface State {
     isFull: boolean;
     initAnimationDisabled: boolean;
     activePlayers: TransitionAnimationPlayer[];
+    drawer: MatDrawer;
 }
 
 @Injectable()
@@ -25,6 +27,7 @@ export class SidebarService extends RxState<State> {
 
     constructor() {
         super();
+        console.log('SidebarService');
         this.set({ activePlayers: [] });
         this.connect(
             'isFull',
@@ -57,5 +60,14 @@ export class SidebarService extends RxState<State> {
 
     animationDone(event: AnimationEvent) {
         this.set({ activePlayers: [] });
+    }
+
+    setDrawer(drawer: MatDrawer) {
+        this.set({ drawer });
+    }
+
+    toggleDrawer() {
+        const drawer = this.get('drawer');
+        drawer.toggle();
     }
 }

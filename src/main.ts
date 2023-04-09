@@ -6,7 +6,6 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslocoService, TRANSLOCO_LOADING_TEMPLATE } from '@ngneat/transloco';
-import { TranslocoLocaleModule } from '@ngneat/transloco-locale';
 import { RxState } from '@rx-angular/state';
 import { firstValueFrom } from 'rxjs';
 
@@ -31,17 +30,7 @@ function preloadLanguage(settingsState: RxState<SettingsState>, transloco: Trans
 
 bootstrapApplication(AppComponent, {
     providers: [
-        importProvidersFrom(
-            BrowserAnimationsModule,
-            MatSnackBarModule,
-            TranslocoRootModule,
-            TranslocoLocaleModule.forRoot({
-                langToLocaleMapping: {
-                    en: 'en-US',
-                    ru: 'ru-RU'
-                }
-            })
-        ),
+        importProvidersFrom(BrowserAnimationsModule, MatSnackBarModule, TranslocoRootModule),
         provideRouter(appRoutes, withPreloading(PreloadAllModules)),
         provideHttpClient(/*withInterceptors([])*/),
         { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } },

@@ -2,26 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Principal } from '@dfinity/principal';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import {
-    catchError,
-    concat,
-    defer,
-    EMPTY,
-    filter,
-    first,
-    firstValueFrom,
-    from,
-    map,
-    merge,
-    mergeMap,
-    of,
-    repeat,
-    retry,
-    switchMap,
-    takeUntil,
-    throwError,
-    toArray
-} from 'rxjs';
+import { catchError, concat, defer, EMPTY, filter, from, map, merge, mergeMap, of, repeat, retry, switchMap, takeUntil, throwError, toArray } from 'rxjs';
 import { isNil } from 'lodash';
 
 import { canisterDetails } from '../operators';
@@ -115,15 +96,5 @@ export class CanistersService extends RxState<State> {
         );
 
         this.connect(merge(journalBucket$, storageBucket$).pipe(takeUntil(this.anonymous$), repeat({ delay: () => this.initialized$ })));
-    }
-
-    send() {
-        firstValueFrom(
-            this.bucketsService.select('storages').pipe(
-                switchMap(storages => from(storages)),
-                first(),
-                switchMap(({ actor }) => actor.sendCyclesToInstaller())
-            )
-        );
     }
 }

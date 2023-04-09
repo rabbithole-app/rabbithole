@@ -1,8 +1,16 @@
-<app-sidebar></app-sidebar>
-<div class="wrapper">
-    <app-header></app-header>
-    <main [@routeAnimations]="hasRouteAnimations" cdkScrollable>
-        <router-outlet></router-outlet>
-    </main>
-    <app-footer></app-footer>
-</div>
+
+<mat-drawer-container class="container" autosize>
+    <mat-drawer-content>
+        <app-sidebar></app-sidebar>
+        <div class="wrapper">
+            <app-header></app-header>
+            <main [@routeAnimations]="hasRouteAnimations" cdkScrollable>
+                <router-outlet></router-outlet>
+            </main>
+            <app-footer></app-footer>
+        </div>
+    </mat-drawer-content>
+    <mat-drawer mode="over" position="end">
+        <router-outlet name="sidebar-right"></router-outlet>
+    </mat-drawer>
+</mat-drawer-container>
