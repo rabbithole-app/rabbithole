@@ -30,4 +30,4 @@ export const createActor = (canisterId, options = {}) => {
     });
 };
 
-// export const journal = createActor(canisterId);
+//export const journal = createActor(canisterId);

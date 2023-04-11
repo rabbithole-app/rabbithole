@@ -27,7 +27,6 @@ export class SidebarService extends RxState<State> {
 
     constructor() {
         super();
-        console.log('SidebarService');
         this.set({ activePlayers: [] });
         this.connect(
             'isFull',

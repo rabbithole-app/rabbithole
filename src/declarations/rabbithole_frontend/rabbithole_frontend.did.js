@@ -30,6 +30,15 @@ export const idlFactory = ({ IDL }) => {
         SetAssetContent: SetAssetContentArguments,
         Clear: ClearArguments
     });
+    const Permission = IDL.Variant({
+        Prepare: IDL.Null,
+        ManagePermissions: IDL.Null,
+        Commit: IDL.Null
+    });
+    const GrantPermission = IDL.Record({
+        permission: Permission,
+        to_principal: IDL.Principal
+    });
     const HttpRequest = IDL.Record({
         url: IDL.Text,
         method: IDL.Text,
@@ -59,12 +68,18 @@ export const idlFactory = ({ IDL }) => {
         status_code: IDL.Nat16
     });
     const Time = IDL.Int;
+    const ListPermitted = IDL.Record({ permission: Permission });
+    const RevokePermission = IDL.Record({
+        permission: Permission,
+        of_principal: IDL.Principal
+    });
     const SetAssetPropertiesArguments = IDL.Record({
         key: Key,
         headers: IDL.Opt(IDL.Opt(IDL.Vec(HeaderField))),
         allow_raw_access: IDL.Opt(IDL.Opt(IDL.Bool)),
         max_age: IDL.Opt(IDL.Opt(IDL.Nat64))
     });
+    const ValidationResult = IDL.Variant({ Ok: IDL.Text, Err: IDL.Text });
     return IDL.Service({
         authorize: IDL.Func([IDL.Principal], [], []),
         certified_tree: IDL.Func(
@@ -129,6 +144,7 @@ export const idlFactory = ({ IDL }) => {
             [IDL.Record({ content: IDL.Vec(IDL.Nat8) })],
             ['query']
         ),
+        grant_permission: IDL.Func([GrantPermission], [], []),
         http_request: IDL.Func([HttpRequest], [HttpResponse], ['query']),
         http_request_streaming_callback: IDL.Func([StreamingCallbackToken], [IDL.Opt(StreamingCallbackHttpResponse)], ['query']),
         list: IDL.Func(
@@ -152,6 +168,8 @@ export const idlFactory = ({ IDL }) => {
             ['query']
         ),
         list_authorized: IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+        list_permitted: IDL.Func([ListPermitted], [IDL.Vec(IDL.Principal)], ['query']),
+        revoke_permission: IDL.Func([RevokePermission], [], []),
         set_asset_content: IDL.Func([SetAssetContentArguments], [], []),
         set_asset_properties: IDL.Func([SetAssetPropertiesArguments], [], []),
         store: IDL.Func(
@@ -167,7 +185,10 @@ export const idlFactory = ({ IDL }) => {
             [],
             []
         ),
-        unset_asset_content: IDL.Func([UnsetAssetContentArguments], [], [])
+        take_ownership: IDL.Func([], [], []),
+        unset_asset_content: IDL.Func([UnsetAssetContentArguments], [], []),
+        validate_grant_permission: IDL.Func([GrantPermission], [ValidationResult], []),
+        validate_revoke_permission: IDL.Func([RevokePermission], [ValidationResult], [])
     });
 };
 export const init = ({ IDL }) => {

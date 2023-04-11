@@ -132,7 +132,6 @@ export const idlFactory = ({ IDL }) => {
         err: IDL.Variant({ notFound: IDL.Null })
     });
     const BucketId = IDL.Principal;
-    const Subaccount = IDL.Vec(IDL.Nat8);
     const Canister = IDL.Record({
         status: IDL.Opt(canister_status_response),
         owner: IDL.Principal,
@@ -208,17 +207,6 @@ export const idlFactory = ({ IDL }) => {
         deleteDirectory: IDL.Func([IDL.Text], [Result_4], []),
         deleteFile: IDL.Func([IDL.Text], [Result_4], []),
         deleteStorage: IDL.Func([BucketId], [], []),
-        depositInfo: IDL.Func(
-            [],
-            [
-                IDL.Record({
-                    balance: IDL.Record({ e8s: IDL.Nat64 }),
-                    subaccount: Subaccount,
-                    account: AccountIdentifier
-                })
-            ],
-            []
-        ),
         getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_3], ['query']),
         getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId)], []),
@@ -227,7 +215,6 @@ export const idlFactory = ({ IDL }) => {
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_2], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_1], []),
         showDirectoriesTree: IDL.Func([IDL.Opt(ID__1)], [IDL.Text], ['query']),
-        showPaths: IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
         startBucketMonitor: IDL.Func([BucketId], [], []),
         stopBucketMonitor: IDL.Func([BucketId], [], []),
         storageLoadWasm: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Record({ total: IDL.Nat, chunks: IDL.Nat })], []),

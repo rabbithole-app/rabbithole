@@ -95,14 +95,6 @@ export interface JournalBucket {
     deleteDirectory: ActorMethod<[string], Result_4>;
     deleteFile: ActorMethod<[string], Result_4>;
     deleteStorage: ActorMethod<[BucketId], undefined>;
-    depositInfo: ActorMethod<
-        [],
-        {
-            balance: { e8s: bigint };
-            subaccount: Subaccount;
-            account: AccountIdentifier;
-        }
-    >;
     getCanisters: ActorMethod<[], Array<Canister>>;
     getJournal: ActorMethod<[[] | [string]], Result_3>;
     getStorage: ActorMethod<[bigint], [] | [BucketId]>;
@@ -111,7 +103,6 @@ export interface JournalBucket {
     moveDirectory: ActorMethod<[string, [] | [string]], Result_2>;
     moveFile: ActorMethod<[string, [] | [string]], Result_1>;
     showDirectoriesTree: ActorMethod<[[] | [ID__1]], string>;
-    showPaths: ActorMethod<[], Array<string>>;
     startBucketMonitor: ActorMethod<[BucketId], undefined>;
     stopBucketMonitor: ActorMethod<[BucketId], undefined>;
     storageLoadWasm: ActorMethod<[Uint8Array | number[]], { total: bigint; chunks: bigint }>;
@@ -148,7 +139,6 @@ export type Result_5 =
       };
 export type Result_6 = { ok: Directory } | { err: DirectoryCreateError };
 export type Result_7 = { ok: File__1 } | { err: FileCreateError };
-export type Subaccount = Uint8Array | number[];
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;

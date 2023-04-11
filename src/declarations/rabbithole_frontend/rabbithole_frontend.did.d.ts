@@ -21,6 +21,10 @@ export interface CreateAssetArguments {
 export interface DeleteAssetArguments {
     key: Key;
 }
+export interface GrantPermission {
+    permission: Permission;
+    to_principal: Principal;
+}
 export type HeaderField = [string, string];
 export interface HttpRequest {
     url: string;
@@ -35,6 +39,14 @@ export interface HttpResponse {
     status_code: number;
 }
 export type Key = string;
+export interface ListPermitted {
+    permission: Permission;
+}
+export type Permission = { Prepare: null } | { ManagePermissions: null } | { Commit: null };
+export interface RevokePermission {
+    permission: Permission;
+    of_principal: Principal;
+}
 export interface SetAssetContentArguments {
     key: Key;
     sha256: [] | [Uint8Array | number[]];
@@ -68,6 +80,7 @@ export interface UnsetAssetContentArguments {
     key: Key;
     content_encoding: string;
 }
+export type ValidationResult = { Ok: string } | { Err: string };
 export interface _SERVICE {
     authorize: ActorMethod<[Principal], undefined>;
     certified_tree: ActorMethod<[{}], { certificate: Uint8Array | number[]; tree: Uint8Array | number[] }>;
@@ -107,6 +120,7 @@ export interface _SERVICE {
         ],
         { content: Uint8Array | number[] }
     >;
+    grant_permission: ActorMethod<[GrantPermission], undefined>;
     http_request: ActorMethod<[HttpRequest], HttpResponse>;
     http_request_streaming_callback: ActorMethod<[StreamingCallbackToken], [] | [StreamingCallbackHttpResponse]>;
     list: ActorMethod<
@@ -123,6 +137,8 @@ export interface _SERVICE {
         }>
     >;
     list_authorized: ActorMethod<[], Array<Principal>>;
+    list_permitted: ActorMethod<[ListPermitted], Array<Principal>>;
+    revoke_permission: ActorMethod<[RevokePermission], undefined>;
     set_asset_content: ActorMethod<[SetAssetContentArguments], undefined>;
     set_asset_properties: ActorMethod<[SetAssetPropertiesArguments], undefined>;
     store: ActorMethod<
@@ -137,5 +153,8 @@ export interface _SERVICE {
         ],
         undefined
     >;
+    take_ownership: ActorMethod<[], undefined>;
     unset_asset_content: ActorMethod<[UnsetAssetContentArguments], undefined>;
+    validate_grant_permission: ActorMethod<[GrantPermission], ValidationResult>;
+    validate_revoke_permission: ActorMethod<[RevokePermission], ValidationResult>;
 }

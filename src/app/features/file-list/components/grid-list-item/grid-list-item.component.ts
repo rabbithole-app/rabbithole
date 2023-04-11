@@ -1,4 +1,17 @@
-import { Component, ChangeDetectionStrategy, Input, ElementRef, HostBinding, OnDestroy, Inject, Output, EventEmitter, NgZone, ChangeDetectorRef, inject } from '@angular/core';
+import {
+    Component,
+    ChangeDetectionStrategy,
+    Input,
+    ElementRef,
+    HostBinding,
+    OnDestroy,
+    Inject,
+    Output,
+    EventEmitter,
+    NgZone,
+    ChangeDetectorRef,
+    inject
+} from '@angular/core';
 import { Highlightable } from '@angular/cdk/a11y';
 import { Point } from '@angular/cdk/drag-drop';
 import { MatMenuTrigger } from '@angular/material/menu';

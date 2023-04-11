@@ -34,7 +34,6 @@ type TransferError =
 type Tokens__1 = record {e8s: nat64;};
 type Tokens = record {e8s: nat64;};
 type Time = int;
-type Subaccount = blob;
 type Result_7 = 
  variant {
    err: FileCreateError;
@@ -126,12 +125,6 @@ type JournalBucket =
    deleteDirectory: (text) -> (Result_4);
    deleteFile: (text) -> (Result_4);
    deleteStorage: (BucketId) -> ();
-   depositInfo: () ->
-    (record {
-       account: AccountIdentifier;
-       balance: record {e8s: nat64;};
-       subaccount: Subaccount;
-     });
    getCanisters: () -> (vec Canister) query;
    getJournal: (opt text) -> (Result_3) query;
    getStorage: (nat) -> (opt BucketId);
@@ -140,7 +133,6 @@ type JournalBucket =
    moveDirectory: (text, opt text) -> (Result_2);
    moveFile: (text, opt text) -> (Result_1);
    showDirectoriesTree: (opt ID__1) -> (text) query;
-   showPaths: () -> (vec text) query;
    startBucketMonitor: (BucketId) -> ();
    stopBucketMonitor: (BucketId) -> ();
    storageLoadWasm: (vec nat8) -> (record {

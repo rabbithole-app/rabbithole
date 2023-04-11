@@ -25,7 +25,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import TrieSet "mo:base/TrieSet";
-import { setTimer; recurringTimer; cancelTimer } "mo:base/Timer";
+import { recurringTimer; cancelTimer } "mo:base/Timer";
 
 import AsyncSource "mo:uuid/async/SourceV4";
 import UUID "mo:uuid/UUID";
@@ -97,8 +97,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     );
 
     public shared ({ caller }) func createDirectory(directory : { id : ID; name : Text; parentId : ?ID }) : async Result.Result<Directory, DirectoryCreateError> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
         await createDirectory_(caller, directory);
     };
 
@@ -184,8 +183,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, { #notFound; #alreadyExists }> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
 
         switch (action) {
             case (#rename id) {
@@ -227,8 +225,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     public shared ({ caller }) func moveDirectory(sourcePath : Text, targetPath : ?Text) : async Result.Result<(), DirectoryMoveError> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let preparedSourcePath : Text = Text.trim(sourcePath, #text "/");
         let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func(text : Text) { Text.trim(text, #text "/") });
         // Text.trim(targetPath_, #text "/");
@@ -279,7 +276,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                         await* updateSubdirPaths(directory.id, path);
 
                         for (file in Iter.fromArray<File>(sourceFiles)) {
-                            ignore moveFile_(sourcePath # "/" # file.name, Option.make(path # "/" # file.name));
+                            ignore await moveFile_(sourcePath # "/" # file.name, Option.make(path));
                         };
 
                         #ok();
@@ -295,11 +292,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     func updateSubdirPaths(id : Text, path : Text) : async* () {
         let (dirs : [Directory], files_ : [File]) = getChildrenByID(?id);
-        
-        for (file in Iter.fromArray<File>(files_)) {
-            let newPath : Text = path # "/" # file.name;
-            ignore files.replace(file, path);
-        };
                         
         for (dir in Iter.fromArray<Directory>(dirs)) {
             let newPath : Text = path # "/" # dir.name;
@@ -369,8 +361,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // Удаление директории со всеми дочерними поддиректориями и файлами
     public shared ({ caller }) func deleteDirectory(sourcePath : Text) : async Result.Result<(), { #notFound }> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let preparedPath : Text = Text.trim(sourcePath, #text "/");
         await deleteDirectory_(preparedPath);
     };
@@ -398,8 +389,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // Создание дерева директорий
     public shared ({ caller }) func createPath(path : Text) : async () {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
 
         var parentId : ?ID = null;
         let preparedPath : Text = Text.trim(path, #text "/");
@@ -425,8 +415,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     public query ({ caller }) func getJournal(path : ?Text) : async Result.Result<Journal, JournalError> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
 
         let preparedPath : Text = switch (path) {
             case null "";
@@ -467,10 +456,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             };
         };
         Buffer.toArray(buffer);
-    };
-
-    public query func showPaths() : async [Text] {
-        Iter.toArray(directories.vals());
     };
 
     // Проверка имени директории на недопустимы символы
@@ -532,8 +517,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
       └─icons
     */
     public query ({ caller }) func showDirectoriesTree(id : ?ID) : async Text {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
 
         let result : Text = showSubdirsTree(id, 0, null, null);
         let root = switch (id) {
@@ -581,8 +565,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     public shared ({ caller }) func deleteFile(sourcePath : Text) : async Result.Result<(), { #notFound }> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let preparedPath : Text = Text.trimStart(sourcePath, #text "/");
         await deleteFile_(preparedPath);
     };
@@ -599,8 +582,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     public shared ({ caller }) func moveFile(sourceFullPath : Text, targetPath : ?Text) : async Result.Result<(), FileMoveError> {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let preparedSourceFullPath : Text = Text.trimStart(sourceFullPath, #text "/");
         let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func(text : Text) { Text.trim(text, #text "/") });
         await moveFile_(preparedSourceFullPath, preparedTargetPath);
@@ -711,9 +693,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     var creatingStorage : Bool = false;
 
     public shared ({ caller }) func getStorage(fileSize : Nat) : async ?BucketId {
-        assert not Principal.isAnonymous(caller);
-        assert Principal.equal(caller, owner);
-
+        assert validateCaller(caller);
         await getBucketWithAvailableCapacity(caller, fileSize);
     };
 
@@ -777,7 +757,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // TODO: удаление всех файлов в журнале из канистры-хранилища
     public shared ({ caller }) func deleteStorage(bucketId : BucketId) : async () {
-        assert not Principal.isAnonymous(caller) or Principal.equal(caller, owner);
+        assert validateCaller(caller);
         // assert not Principal.isAnonymous(caller) or Principal.equal(caller, owner) or Principal.equal(caller, installer) or Utils.isAdmin(caller);
         ignore deleteStorageBucket(caller, bucketId);
     };
@@ -1031,7 +1011,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // вывод средств из пользовательского аккаунта
     public shared ({ caller }) func withdraw({ amount : LedgerTypes.Tokens; to : ?A.AccountIdentifier }) : async LedgerTypes.TransferResult {
-        assert not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let fromSubaccount : A.Subaccount = A.principalToSubaccount(owner);
         let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
         let account : A.AccountIdentifier = A.accountIdentifier(caller, defaultSubaccount);
@@ -1047,7 +1027,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // внутренний аккаунт пользователя
     public query ({ caller }) func accountIdentifier() : async A.AccountIdentifier {
-        assert not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+        assert validateCaller(caller);
         accountIdentifier_();
     };
 
@@ -1056,28 +1036,28 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         A.accountIdentifier(Principal.fromActor(this), subaccount);
     };
 
-    public shared ({ caller }) func depositInfo() : async {
-        account : A.AccountIdentifier;
-        subaccount : A.Subaccount;
-        balance : { e8s : Nat64 };
-    } {
-        assert Utils.isAdmin(caller);
-        let subaccount : A.Subaccount = A.principalToSubaccount(owner);
-        let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
-        // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromText(LEDGER_CANISTER_ID), subaccount);
-        let account : A.AccountIdentifier = A.accountIdentifier(owner, defaultSubaccount);
-        // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromActor(this), subaccount);
-        let balance = await Ledger.account_balance({ account });
-        { account; subaccount; balance };
-    };
+    // public shared ({ caller }) func depositInfo() : async {
+    //     account : A.AccountIdentifier;
+    //     subaccount : A.Subaccount;
+    //     balance : { e8s : Nat64 };
+    // } {
+    //     assert Utils.isAdmin(caller);
+    //     let subaccount : A.Subaccount = A.principalToSubaccount(owner);
+    //     let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
+    //     // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromText(LEDGER_CANISTER_ID), subaccount);
+    //     let account : A.AccountIdentifier = A.accountIdentifier(owner, defaultSubaccount);
+    //     // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromActor(this), subaccount);
+    //     let balance = await Ledger.account_balance({ account });
+    //     { account; subaccount; balance };
+    // };
 
     // public shared ({ caller }) func deposit() : async () {
     //     ignore depositCycles();
     // };
 
-    system func heartbeat() : async () {
-        ignore topup();
-    };
+    // system func heartbeat() : async () {
+    //     ignore topup();
+    // };
 
     // system func timer(set : Nat64 -> ()) : async () {
     //     set(Nat64.fromIntWrap(Time.now() + CHECK_INTERVAL_NANOS));
@@ -1167,7 +1147,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         #notify : CMCTypes.NotifyError;
         #insufficientFunds : { balance : Tokens }
     }> {
-        assert not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+        assert validateCaller(caller);
         let self = Principal.fromActor(this);
         // let amount : Tokens = switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
         //     case (#ok amount) amount;
@@ -1242,7 +1222,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         Int.abs(Float.toInt(Float.mul(Float.div(Float.fromInt(status.idle_cycles_burned_per_day), Float.fromInt(86400)), Float.fromInt(Int.abs(status.settings.freezing_threshold)))));
     };
 
-    // func availableCycles () : Bool {
-
-    // };
+    func validateCaller(caller : Principal) : Bool {
+        not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+    };
 };

@@ -1,5 +1,10 @@
-import { Bucket } from '@core/stores';
+import { ActorSubclass } from '@dfinity/agent';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
+
+export type Bucket<T> = {
+    actor: ActorSubclass<T>;
+    canisterId: string;
+};
 
 export type WithRequiredProperty<Type, Key extends keyof Type> = Type & {
     [Property in Key]-?: Type[Property];
@@ -20,7 +25,10 @@ export enum UPLOAD_STATUS {
 export type FileUpload = {
     id: string;
     parentId?: string;
-    file: File;
+    data: ArrayBuffer;
+    name: string;
+    fileSize: number;
+    contentType: string;
 };
 
 export type BatchInfo = {
@@ -28,7 +36,7 @@ export type BatchInfo = {
     expiredAt: Date;
 };
 
-export type ChunkUpload = Pick<FileUpload, 'id' | 'file'> & {
+export type ChunkUpload = Pick<FileUpload, 'id' | 'data'> & {
     startByte: number;
     endByte: number;
 };
@@ -52,4 +60,14 @@ export type FileUploadState = {
 export type UploadFileOptions = {
     concurrentChunksCount: number;
     chunkSize: number;
+};
+
+export type Summary = {
+    loaded: number;
+    total: number;
+    files: number;
+    completed: number;
+    failed: number;
+    progress: number;
+    status: UPLOAD_STATUS;
 };

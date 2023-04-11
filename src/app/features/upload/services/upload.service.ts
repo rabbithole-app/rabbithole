@@ -1,46 +1,40 @@
+import { inject, Injectable, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
 import { RxState } from '@rx-angular/state';
-import { inject, Injectable } from '@angular/core';
-import { filter, first, from, mergeMap, Observable, of, onErrorResumeNext, range, Subject, switchMap, last, iif, defer, merge, timer } from 'rxjs';
-import { connect, distinctUntilChanged, map, scan, shareReplay, takeUntil, tap } from 'rxjs/operators';
-import { defaults, entries, findIndex, has, isEqual, isNull, isPlainObject, pick, uniqBy, values } from 'lodash';
-import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
-import { addSeconds, differenceInSeconds } from 'date-fns';
+import { filter, first, from, mergeMap, Observable, of, onErrorResumeNext, Subject, switchMap, merge, timer, concat } from 'rxjs';
+import { connect, debounceTime, distinctUntilChanged, map, shareReplay, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
+import { defaults, entries, isEqual, isPlainObject, uniqBy, values } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BatchInfo, FileUpload, FileUploadState, UploadFileOptions, UPLOAD_STATUS, WithRequiredProperty } from '../models';
-import { AssetKey } from 'declarations/storage/storage.did.js';
+import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
 import { JournalService } from '@features/file-list/services';
 import { FILE_LIST_RX_STATE } from '@features/file-list';
-
-type Summary = {
-    loaded: number;
-    total: number;
-    files: number;
-    completed: number;
-    failed: number;
-    progress: number;
-    status: UPLOAD_STATUS;
-};
+import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
+import { uploadFile } from '../operators';
 
 interface State {
     items: FileUpload[];
     progress: Record<string, FileUploadState>;
     summary: Summary;
+    worker: Worker;
+    workerEnabled: boolean;
 }
 
 @Injectable()
 export class UploadService extends RxState<State> {
     private fileListState = inject(FILE_LIST_RX_STATE);
     private journalService = inject(JournalService);
+    private router = inject(Router);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<string> = new Subject<string>();
+    private readonly zone = inject(NgZone);
 
-    readonly concurrentFilesCount = 4;
-    readonly concurrentChunksCount = 10;
-    readonly chunkSize = 1024 * 1024; // 1mb
-    readonly fileMaxSize = 1024 * 1024 * 1024; // 1gb
-    readonly batchExpirySeconds = 25;
-    readonly summaryResetTimeout = 5000;
+    readonly concurrentFilesCount = CONCURRENT_FILES_COUNT;
+    readonly concurrentChunksCount = CONCURRENT_CHUNKS_COUNT;
+    readonly chunkSize = CHUNK_SIZE;
+    readonly fileMaxSize = FILE_MAX_SIZE;
+    readonly batchExpirySeconds = BATCH_EXPIRY_SECONDS;
+    readonly summaryResetTimeout = SUMMARY_RESET_TIMEOUT;
     readonly summaryInitValue = {
         loaded: 0,
         total: 0,
@@ -51,26 +45,39 @@ export class UploadService extends RxState<State> {
         status: UPLOAD_STATUS.Queue
     };
 
-    progress$: Observable<FileUploadState[]> = this.select('progress').pipe(map(value => values(value)), shareReplay(1));
+    progress$: Observable<FileUploadState[]> = this.select('progress').pipe(
+        map(value => values(value)),
+        shareReplay(1)
+    );
     uploading$: Observable<FileUploadState[]> = this.progress$.pipe(map(items => items.filter(({ status }) => status !== UPLOAD_STATUS.Done)));
-    completed$: Observable<FileUploadState[]> = this.progress$.pipe(map(items => items.filter(({ status }) => status === UPLOAD_STATUS.Done)), distinctUntilChanged(isEqual));
+    completed$: Observable<FileUploadState[]> = this.progress$.pipe(
+        map(items => items.filter(({ status }) => status === UPLOAD_STATUS.Done)),
+        distinctUntilChanged(isEqual)
+    );
     summary$: Observable<Summary> = this.select('summary');
 
     constructor() {
         super();
-        // this.completed$.pipe(withLatestFrom(this.fileListState.select('parentId').pipe(map(v => v ?? undefined))), switchMap(([items, parentId]) => from(items.filter(item => item.parentId === parentId))), debounceTime(1000)).subscribe(console.log);
+        this.completed$
+            .pipe(
+                withLatestFrom(this.fileListState.select('parentId').pipe(map(v => v ?? undefined))),
+                switchMap(([items, parentId]) => from(items.filter(item => item.parentId === parentId))),
+                debounceTime(1000)
+            )
+            .subscribe(() => this.reloadComponent(true));
         this.set({
             items: [],
-            summary: this.summaryInitValue
+            summary: this.summaryInitValue,
+            workerEnabled: false
         });
         this.connect(this.files.asObservable(), (state, item) => {
-            const chunkCount = Math.ceil(item.file.size / this.chunkSize);
+            const chunkCount = Math.ceil(item.fileSize / this.chunkSize);
             const prevProgress = state.progress?.[item.id];
             const fileProgressState = defaults({ status: UPLOAD_STATUS.Queue }, isPlainObject(prevProgress) ? prevProgress : null, {
                 id: item.id,
-                name: item.file.name,
+                name: item.name,
                 loaded: 0,
-                total: item.file.size,
+                total: item.fileSize,
                 progress: 0,
                 chunkIds: Array.from<number | null>({ length: chunkCount }).fill(null)
             });
@@ -128,8 +135,8 @@ export class UploadService extends RxState<State> {
         this.connect(
             'summary',
             summary$.pipe(
-                connect(
-                    shared => merge(
+                connect(shared =>
+                    merge(
                         shared,
                         shared.pipe(
                             filter(({ status }) => status === UPLOAD_STATUS.Done),
@@ -141,38 +148,61 @@ export class UploadService extends RxState<State> {
             )
         );
 
-        const chunks$ = this.files.asObservable().pipe(
-            mergeMap((item: FileUpload) => {
-                const status$ = this.select('progress', item.id, 'status');
-                const paused$ = status$.pipe(
-                    filter(status => status === UPLOAD_STATUS.Paused),
-                    tap(() => this.keepAlive.next(item.id))
-                );
-                const cancelled$ = status$.pipe(filter(status => status === UPLOAD_STATUS.Cancelled));
+        if (typeof Worker !== 'undefined' && this.get('workerEnabled')) {
+            const worker = new Worker(new URL('../workers/upload.worker', import.meta.url), { type: 'module' });
+            this.set({ worker });
 
-                return onErrorResumeNext(
-                    this.select('progress', item.id).pipe(
-                        first(),
-                        switchMap(state =>
-                            this.uploadFile(
-                                item,
-                                {
-                                    concurrentChunksCount: this.concurrentChunksCount,
-                                    chunkSize: this.chunkSize
-                                },
-                                state
-                            )
-                        ),
-                        tap(value => {
-                            this.updateProgress(item.id, value);
-                        }),
-                        takeUntil(merge(paused$, cancelled$))
-                    )
-                );
-            }, this.concurrentFilesCount)
-        );
+            worker.onmessage = async ({ data }) => {
+                switch (data.action) {
+                    case 'progress':
+                        this.updateProgress(data.id, data.progress);
+                        break;
+                    default:
+                        break;
+                }
+            };
+        } else {
+            const chunks$ = this.files.asObservable().pipe(
+                mergeMap((item: FileUpload) => {
+                    const status$ = this.select('progress', item.id, 'status');
+                    const paused$ = status$.pipe(
+                        filter(status => status === UPLOAD_STATUS.Paused),
+                        tap(() => this.keepAlive.next(item.id))
+                    );
+                    const cancelled$ = status$.pipe(filter(status => status === UPLOAD_STATUS.Cancelled));
 
-        this.hold(chunks$);
+                    return onErrorResumeNext(
+                        this.select('progress', item.id).pipe(
+                            first(),
+                            switchMap(state =>
+                                concat(
+                                    of({ status: UPLOAD_STATUS.Request, errorMessage: null }),
+                                    this.journalService.getStorage(BigInt(item.fileSize)).pipe(
+                                        switchMap(storage =>
+                                            uploadFile({
+                                                storage,
+                                                item,
+                                                options: {
+                                                    concurrentChunksCount: this.concurrentChunksCount,
+                                                    chunkSize: this.chunkSize
+                                                },
+                                                state
+                                            })
+                                        )
+                                    )
+                                )
+                            ),
+                            tap(value => {
+                                this.updateProgress(item.id, value);
+                            }),
+                            takeUntil(merge(paused$, cancelled$))
+                        )
+                    );
+                }, this.concurrentFilesCount)
+            );
+
+            this.hold(chunks$);
+        }
     }
 
     private updateProgress(id: string, value: Partial<FileUploadState>) {
@@ -202,7 +232,13 @@ export class UploadService extends RxState<State> {
         );
     }
 
-    private uploadFile(item: FileUpload, options: UploadFileOptions, state: FileUploadState): Observable<Partial<FileUploadState>> {
+    async reloadComponent(self: boolean, urlToNavigateTo?: string) {
+        const url = self ? this.router.url : urlToNavigateTo;
+        await this.router.navigateByUrl('/', { skipLocationChange: true });
+        await this.router.navigate([`/${url}`]);
+    }
+
+    /*private uploadFile(item: FileUpload, options: UploadFileOptions, state: FileUploadState): Observable<Partial<FileUploadState>> {
         const assetKey: AssetKey = {
             id: item.id,
             name: item.file.name,
@@ -250,14 +286,14 @@ export class UploadService extends RxState<State> {
                             hasValidBatch
                                 ? { ...pick(state, ['loaded', 'progress', 'chunkIds', 'batch']), status: UPLOAD_STATUS.Processing }
                                 : {
-                                    loaded: 0,
-                                    progress: 0,
-                                    batch,
-                                    chunkIds: Array.from<bigint | null>({
-                                        length: chunkCount
-                                    }).fill(null),
-                                    status: UPLOAD_STATUS.Processing
-                                }
+                                      loaded: 0,
+                                      progress: 0,
+                                      batch,
+                                      chunkIds: Array.from<bigint | null>({
+                                          length: chunkCount
+                                      }).fill(null),
+                                      status: UPLOAD_STATUS.Processing
+                                  }
                         ) as WithRequiredProperty<Pick<FileUploadState, 'loaded' | 'chunkIds' | 'progress' | 'batch' | 'status'>, 'chunkIds' | 'batch'>;
 
                         const chunks$ = range(startIndex, chunkCount - startIndex).pipe(
@@ -338,19 +374,26 @@ export class UploadService extends RxState<State> {
                 });
             return () => subscription.unsubscribe();
         });
-    }
+    }*/
 
-    add(value: FileUpload | FileList) {
-        if (isPlainObject(value)) {
-            this.files.next(value as FileUpload);
-        } else {
-            const files = value as FileList;
-            for (let i = 0; i < files.length; i++) {
-                this.files.next({
-                    id: uuidv4(),
-                    parentId: this.fileListState.get('parentId') ?? undefined,
-                    file: files.item(i) as File
-                });
+    async add(value: FileUpload | FileList) {
+        const worker = this.get('worker');
+        const files = value as FileList;
+        for (let i = 0; i < files.length; i++) {
+            const file = files.item(i) as File;
+            const buffer = await file.arrayBuffer();
+            const item = {
+                id: uuidv4(),
+                name: file.name,
+                fileSize: file.size,
+                contentType: file.type,
+                parentId: this.fileListState.get('parentId') ?? undefined,
+                data: buffer
+            };
+            this.files.next(item);
+            if (worker) {
+                const uploadState = this.get('progress', item.id);
+                worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
             }
         }
     }
