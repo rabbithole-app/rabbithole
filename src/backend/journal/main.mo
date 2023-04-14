@@ -546,12 +546,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             case (?(l, r)) r # "/" # file_.name;
         };
         let now = Time.now();
-        let uuid = do {
-            let ae = AsyncSource.Source();
-            let id = await ae.new();
-            Text.map(UUID.toText(id), Prim.charToLower);
-        };
-        let file : File = { file_ and { id = uuid; createdAt = now; updatedAt = now } };
+        let file : File = { file_ and { createdAt = now; updatedAt = now } };
         // TODO: замена и удаление файлов из хранилища
         ignore files.replace(file, path);
         #ok(file);
@@ -690,7 +685,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
 
     let ic : IC.Self = actor "aaaaa-aa";
-    var creatingStorage : Bool = false;
+    var lockedStorageCallers : TrieSet.Set<Principal> = TrieSet.empty<Principal>();
 
     public shared ({ caller }) func getStorage(fileSize : Nat) : async ?BucketId {
         assert validateCaller(caller);
@@ -708,7 +703,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 break bucketsLoop;
             };
         };
-        switch (bucketId_, creatingStorage) {
+        switch (bucketId_, TrieSet.mem(lockedStorageCallers, caller, Principal.hash caller, Principal.equal)) {
             case (null, false) Option.make(await createStorageBucket(caller));
             case (?v, false) ?v;
             case (_) null;
@@ -717,7 +712,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // Создание канистры с хранилищем
     func createStorageBucket(caller : Principal) : async BucketId {
-        creatingStorage := true;
+        lockedStorageCallers := TrieSet.put(lockedStorageCallers, caller, Principal.hash caller, Principal.equal);
         let self : Principal = Principal.fromActor(this);
         let settings = {
             controllers = ?[self];
@@ -730,7 +725,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         ignore await (system StorageBucket.StorageBucket)(#install canister_id)(caller);
         storageBuckets := TrieSet.put<BucketId>(storageBuckets, canister_id, Principal.hash(canister_id), Principal.equal);
         ignore startBucketMonitor_(canister_id);
-        creatingStorage := false;
+        lockedStorageCallers := TrieSet.delete(lockedStorageCallers, caller, Principal.hash caller, Principal.equal);
         canister_id;
     };
 
@@ -1164,8 +1159,15 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         let freezingThresholdInCycles = await getFreezingThresholdInCycles(self);
         let balance = Cycles.balance();
         var cyclesShare : Nat = INVITE_CYCLE_SHARE;
+        let burnICP = Int64.less(
+            Int64.sub(
+                Int64.fromNat64(Nat64.fromNat(Nat.sub(balance, freezingThresholdInCycles))),
+                Int64.fromNat64(Nat64.fromNat(INVITE_CYCLE_SHARE))
+            ),
+            Int64.fromNat64(Nat64.fromNat(MANAGER_CYCLE_THRESHOLD))
+        );
         Debug.print("[invite] before create " # debug_show({ canisterId = self; balance; freezingThresholdInCycles }));
-        if (Nat.less(Nat.sub(Nat.sub(balance, freezingThresholdInCycles), INVITE_CYCLE_SHARE), MANAGER_CYCLE_THRESHOLD)) {
+        if (burnICP) {
             cyclesShare := switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
                 case (#ok amount) {
                     let result = await depositCycles(amount);

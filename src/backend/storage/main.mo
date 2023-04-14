@@ -20,6 +20,7 @@ import JournalTypes "../journal/types";
 import Utils "../utils/utils";
 import IC "../types/ic";
 import Debug "mo:base/Debug";
+import Iter "mo:base/Iter";
 
 shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = this {
     private let BATCH_EXPIRY_NANOS = 300_000_000_000;
@@ -33,7 +34,12 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
     type Chunk = StorageTypes.Chunk;
     type Batch = StorageTypes.Batch;
 
+    type HttpRequest = HTTP.HttpRequest;
+    type HttpResponse = HTTP.HttpResponse;
     type HeaderField = HTTP.HeaderField;
+    type StreamingCallbackHttpResponse = HTTP.StreamingCallbackHttpResponse;
+    type StreamingCallbackToken = HTTP.StreamingCallbackToken;
+    type StreamingStrategy = HTTP.StreamingStrategy;
 
     stable var assets : Trie.Trie<Text, Asset> = Trie.empty();
     var batches : HashMap.HashMap<Nat, Batch> = HashMap.HashMap<Nat, Batch>(10, Nat.equal, Hash.hash);
@@ -46,6 +52,124 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
     // таймер мониторинга циклов
     // private let timerId : ?Nat = null;
     // private let ic : IC.Self = actor "aaaaa-aa";
+
+    /**
+     * HTTP
+     */
+
+    public shared query ({ caller }) func http_request({ method : Text; url : Text } : HttpRequest) : async HttpResponse {
+        try {
+            if (Text.notEqual(method, "GET")) {
+                return {
+                    body = Text.encodeUtf8("Method Not Allowed.");
+                    headers = [];
+                    status_code = 405;
+                    streaming_strategy = null;
+                };
+            };
+
+            let result : Result.Result<Asset, Text> = getAssetForUrl(url);
+
+            switch (result) {
+                case (#ok { key : AssetKey; headers : [HeaderField]; encoding : AssetEncoding }) {
+                    return {
+                        body = encoding.contentChunks[0];
+                        headers;
+                        status_code = 200;
+                        streaming_strategy = createStrategy(key, encoding, headers);
+                    };
+                };
+                case (#err error) {};
+            };
+
+            return {
+                body = Text.encodeUtf8("Permission denied. Could not perform this operation.");
+                headers = [];
+                status_code = 403;
+                streaming_strategy = null;
+            };
+        } catch (err) {
+            return {
+                body = Text.encodeUtf8("Unexpected error: " # Error.message(err));
+                headers = [];
+                status_code = 500;
+                streaming_strategy = null;
+            };
+        };
+    };
+
+    public shared query ({ caller }) func http_request_streaming_callback(
+        streamingToken : StreamingCallbackToken
+    ) : async StreamingCallbackHttpResponse {
+        let result : Result.Result<Asset, Text> = getAsset(streamingToken.id);
+
+        switch (result) {
+            case (#ok { key : AssetKey; headers : [HeaderField]; encoding : AssetEncoding }) {
+                return {
+                    token = createToken(key, streamingToken.index, encoding, headers);
+                    body = encoding.contentChunks[streamingToken.index];
+                };
+            };
+            case (#err error) {
+                throw Error.reject("Streamed asset not found: " # error);
+            };
+        };
+    };
+
+    func createStrategy(key : AssetKey, encoding : AssetEncoding, headers : [HeaderField]) : ?StreamingStrategy {
+        let streamingToken : ?StreamingCallbackToken = createToken(key, 0, encoding, headers);
+
+        switch (streamingToken) {
+            case null null;
+            case (?streamingToken) {
+                // Hack: https://forum.dfinity.org/t/cryptic-error-from-icx-proxy/6944/8
+                // Issue: https://github.com/dfinity/candid/issues/273
+
+                let self : Principal = Principal.fromActor(this);
+                let canisterId : Text = Principal.toText(self);
+
+                let canister = actor (canisterId) : actor {
+                    http_request_streaming_callback : shared () -> async ();
+                };
+
+                return ?#Callback({
+                    token = streamingToken;
+                    callback = canister.http_request_streaming_callback;
+                });
+            };
+        };
+    };
+
+    func createToken(key : AssetKey, chunkIndex : Nat, encoding : AssetEncoding, headers : [HeaderField]) : ?StreamingCallbackToken {
+        if (chunkIndex + 1 >= encoding.contentChunks.size()) {
+            return null;
+        };
+
+        let streamingToken : ?StreamingCallbackToken = ?{
+            id = key.id;
+            headers;
+            index = chunkIndex + 1;
+            sha256 = null;
+        };
+
+        return streamingToken;
+    };
+
+    func getAssetForUrl(url : Text) : Result.Result<Asset, Text> {
+        if (Text.size(url) == 0) {
+            return #err "No url provided.";
+        };
+
+        let id = Text.trimStart(url, #char '/');
+        getAsset(id);
+    };
+
+    func getAsset(id : ID) : Result.Result<Asset, Text> {
+        switch (Trie.get<Text, Asset>(assets, Utils.keyText(id), Text.equal)) {
+            case (?asset) #ok asset;
+            case null #err "No asset.";
+        };
+    };
 
     /**
      * Upload
@@ -195,9 +319,7 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
             };
         };
 
-        Debug.print(debug_show({ bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId }));
-
-        switch (await journal.addFile({ bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId })) {
+        switch (await journal.addFile({ id = batch.key.id; bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId })) {
             case (#err message) {
                 return #err "message";
             };
@@ -227,11 +349,6 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
 
         Nat64.toNat(size) + reservedMemory;
     };
-
-    // public shared ({ caller }) func sendCyclesToInstaller() : () {
-    //     Cycles.add(1_000_000_000_000);
-    //     ignore ic.deposit_cycles({ canister_id = installer });
-    // };
 
     let version = "v4";
 

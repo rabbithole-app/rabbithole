@@ -4,6 +4,7 @@ import Nat8 "mo:base/Nat8";
 import Nat16 "mo:base/Nat16";
 
 module {
+    type ID = Text;
     public type HeaderField = (Text, Text);
 
     public type HttpRequest = {
@@ -28,8 +29,7 @@ module {
     };
 
     public type StreamingCallbackToken = {
-        fullPath : Text;
-        token : ?Text;
+        id : ID;
         headers : [HeaderField];
         sha256 : ?[Nat8];
 

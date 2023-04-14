@@ -4,8 +4,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { asyncScheduler, filter, finalize, merge, mergeMap, Observable, observeOn, onErrorResumeNext, repeat, share, skip, Subject, switchMap } from 'rxjs';
 import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
-import { selectSlice } from '@rx-angular/state/selections';
 import { isEqual, isNull, isUndefined, uniq } from 'lodash';
+import { TranslocoService } from '@ngneat/transloco';
 
 import { ProgressMessageSnackbarComponent } from '@features/file-list/components/progress-message-snackbar/progress-message-snackbar.component';
 import { ShowErrorsDialogComponent } from '@features/file-list/components/show-errors-dialog/show-errors-dialog.component';
@@ -33,6 +33,7 @@ type Task = {
 export class SnackbarProgressService extends RxState<State> {
     snackBar = inject(MatSnackBar);
     dialog = inject(MatDialog);
+    translocoService = inject(TranslocoService);
     private tasks = new Subject<{
         value: any;
         handler: (item: any) => Observable<unknown>;
@@ -68,17 +69,15 @@ export class SnackbarProgressService extends RxState<State> {
                 map(({ filename, done, failed, total, actions }) => ({ filename, done, failed, total, actions })),
                 filter(({ actions, done, failed, total }) => actions.length > 0 && total > 0),
                 distinctUntilChanged(isEqual),
-                // tap(console.log),
                 map(({ filename, done, failed, total, actions }) => {
                     const isPreparing = done === 0 && failed === 0;
                     const actionKey = actions.length === 1 ? actions[0] : 'common';
-                    const key = `file-list.notification.${actionKey}.${isPreparing ? 'prepare' : 'message'}`;
-                    return key;
-                    /*return this.translateService.instant(key, {
+                    const key = `fileList.notification.${actionKey}.${isPreparing ? 'prepare' : 'message'}`;
+                    return this.translocoService.translate(key, {
                         total,
                         current: done + failed,
                         filename
-                    });*/
+                    });
                 })
             )
         );
@@ -108,7 +107,6 @@ export class SnackbarProgressService extends RxState<State> {
                     );
                 }, this.concurrentTasksCount),
                 finalize(() => {
-                    console.log('finalize all');
                     this.snackBarRef?.dismiss();
                     this.resetProgress();
                     this.finalNotify();
@@ -139,11 +137,10 @@ export class SnackbarProgressService extends RxState<State> {
 
         if (isSuccess) {
             this.snackBar.open(
-                `file-list.notification.${actionKey}.success`,
-                /*this.translateService.instant(`file-list.notification.${actionKey}.success`, {
+                this.translocoService.translate(`fileList.notification.${actionKey}.success`, {
                     count: done,
                     filename
-                }),*/
+                }),
                 undefined,
                 { duration: 2000 }
             );
@@ -151,18 +148,14 @@ export class SnackbarProgressService extends RxState<State> {
             this.snackBar.open((errors || {})[filename as string], undefined, { duration: 3000 });
         } else if (hasSuccess && hasFailed) {
             snackBarRef = this.snackBar.open(
-                `file-list.notification.${actionKey}.warning`,
-                // this.translateService.instant(`file-list.notification.${actionKey}.warning`, { count: failed }),
-                'Details',
-                // this.translateService.instant('file-list.notification.actions.details'),
+                this.translocoService.translate(`fileList.notification.${actionKey}.warning`, { count: failed }),
+                this.translocoService.translate('fileList.notification.actions.details'),
                 { duration: 2500 }
             );
         } else if (isFailed) {
             snackBarRef = this.snackBar.open(
-                `file-list.notification.${actionKey}.failed`,
-                // this.translateService.instant(`file-list.notification.${actionKey}.failed`, { count: failed }),
-                'Details',
-                // this.translateService.instant('file-list.notification.actions.details'),
+                this.translocoService.translate(`fileList.notification.${actionKey}.failed`, { count: failed }),
+                this.translocoService.translate('fileList.notification.actions.details'),
                 { duration: 2500 }
             );
         }

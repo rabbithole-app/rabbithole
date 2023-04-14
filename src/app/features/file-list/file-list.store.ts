@@ -30,6 +30,11 @@ export interface FileListState {
     tree: string | null;
     version?: string;
     contextItemsTemplate: TemplateRef<HTMLElement>;
+
+    selectedSomeFile: boolean;
+    selectedSomeFolder: boolean;
+    selectedEveryFile: boolean;
+    selectedEveryFolder: boolean;
 }
 
 export const FILE_LIST_RX_STATE = new InjectionToken<RxState<FileListState>>('FILE_LIST_RX_STATE');
@@ -73,6 +78,16 @@ export function fileListStateFactory(bucketsService: BucketsService) {
     );
     state.connect(merge(loading$, tree$));
     state.set({ items: [], selected: [], loading: false, breadcrumbs: [], dragging: false });
+    state.connect(
+        state.select('selected').pipe(
+            map(items => ({
+                selectedSomeFile: items.some(({ type }) => type === 'file'),
+                selectedSomeFolder: items.some(({ type }) => type === 'folder'),
+                selectedEveryFile: items.every(({ type }) => type === 'file'),
+                selectedEveryFolder: items.every(({ type }) => type === 'folder')
+            }))
+        )
+    );
     return state;
 }
 

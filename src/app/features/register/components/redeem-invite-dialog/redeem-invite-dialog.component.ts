@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
 import { IfModule } from '@rx-angular/template/if';
-import { AsyncSubject, filter, map, Observable, takeUntil } from 'rxjs';
+import { AsyncSubject, filter, map, Observable, startWith, takeUntil } from 'rxjs';
 
 import { InviteValidator } from '@core/validators';
 import { addFASvgIcons } from '@core/utils';
@@ -46,6 +46,10 @@ export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
         asyncValidators: [this.inviteValidator.validate.bind(this.inviteValidator)]
     });
     loading$: Observable<boolean> = this.registerService.select('inviteStatus').pipe(map(status => status === InviteStatus.Redeeming));
+    pending$: Observable<boolean> = this.control.statusChanges.pipe(
+        map(status => status === 'PENDING'),
+        startWith(this.control.pending)
+    );
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     get errorMessage() {

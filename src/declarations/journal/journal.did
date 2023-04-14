@@ -182,6 +182,7 @@ type FileCreate =
  record {
    bucketId: BucketId__1;
    fileSize: nat;
+   id: ID;
    name: text;
    parentId: opt ID;
  };

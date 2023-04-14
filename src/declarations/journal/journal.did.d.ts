@@ -54,6 +54,7 @@ export interface File {
     parentId: [] | [ID];
 }
 export interface FileCreate {
+    id: ID;
     name: string;
     bucketId: BucketId__1;
     fileSize: bigint;

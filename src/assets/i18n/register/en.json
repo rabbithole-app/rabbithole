@@ -26,6 +26,7 @@
         "installJournal": "Installing a journal...",
         "transferUnusedFunds": "Transfer unused funds",
         "complete": "Complete",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "redirect": "Redirecting..."
     }
 }

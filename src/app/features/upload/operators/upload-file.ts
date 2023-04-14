@@ -1,20 +1,5 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
-import {
-    Observable,
-    catchError,
-    defer,
-    from,
-    iif,
-    last,
-    map,
-    mergeMap,
-    of,
-    range,
-    scan,
-    switchMap,
-    tap,
-    throwError
-} from 'rxjs';
+import { Observable, catchError, defer, from, iif, last, map, mergeMap, of, range, scan, switchMap, tap, throwError } from 'rxjs';
 import { addSeconds, differenceInSeconds } from 'date-fns';
 import { defaults, findIndex, has, isNull, pick } from 'lodash';
 
@@ -72,14 +57,14 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                         hasValidBatch
                             ? { ...pick(state, ['loaded', 'progress', 'chunkIds', 'batch']), status: UPLOAD_STATUS.Processing }
                             : {
-                                loaded: 0,
-                                progress: 0,
-                                batch,
-                                chunkIds: Array.from<bigint | null>({
-                                    length: chunkCount
-                                }).fill(null),
-                                status: UPLOAD_STATUS.Processing
-                            }
+                                  loaded: 0,
+                                  progress: 0,
+                                  batch,
+                                  chunkIds: Array.from<bigint | null>({
+                                      length: chunkCount
+                                  }).fill(null),
+                                  status: UPLOAD_STATUS.Processing
+                              }
                     ) as WithRequiredProperty<Pick<FileUploadState, 'loaded' | 'chunkIds' | 'progress' | 'batch' | 'status'>, 'chunkIds' | 'batch'>;
 
                     const chunks$ = range(startIndex, chunkCount - startIndex).pipe(

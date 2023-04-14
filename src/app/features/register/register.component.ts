@@ -73,6 +73,7 @@ export class RegisterComponent extends RxState<State> implements OnDestroy {
     profileService = inject(ProfileService);
     loadingCreateInvoice$: Observable<boolean> = this.registerService.select('loadingCreateInvoice');
     loadingCreateJournal$: Observable<boolean> = this.registerService.select('journalStatus').pipe(map(status => status === JournalStatus.Creating));
+    redirect$: Observable<boolean> = this.registerService.select('journalStatus').pipe(map(status => status === JournalStatus.Created));
     createInvoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_INVOICE] as keyof typeof Step);
     invoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.INVOICE] as keyof typeof Step);
     createJournalCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_JOURNAL] as keyof typeof Step);
@@ -85,7 +86,7 @@ export class RegisterComponent extends RxState<State> implements OnDestroy {
 
     constructor() {
         super();
-        addFASvgIcons(['check', 'envelope'], 'far');
+        addFASvgIcons(['check', 'envelope', 'database'], 'far');
         this.set({
             createInvoiceStateIcon: 'number',
             createJournalStateIcon: 'number',

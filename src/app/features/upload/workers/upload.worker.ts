@@ -111,7 +111,8 @@ function initStorage(fileSize: bigint): Observable<Bucket<StorageActor>> {
     return state.select('journal').pipe(
         first(),
         filter(actor => !isNull(actor)),
-        getStorage(fileSize),
+        map(actor => actor as NonNullable<typeof actor>),
+        switchMap(actor => getStorage(actor, fileSize)),
         withLatestFrom(state.select('storages')),
         switchMap(([bucketId, storages]) => {
             const canisterId = bucketId.toText();
@@ -174,7 +175,7 @@ const chunks$ = files.asObservable().pipe(
         ).pipe(
             tap(progress => {
                 postMessage({ action: 'progress', id: item.id, progress });
-            }),
+            })
             // takeUntil(merge(paused$, cancelled$))
         );
     }, CONCURRENT_FILES_COUNT)

@@ -29,7 +29,7 @@ interface State {
     imports: [IfModule, NgSwitch, NgSwitchDefault, NgSwitchCase, MatIconModule, MatProgressSpinnerModule, TranslocoModule, UploadComponent, MatButtonModule],
     templateUrl: './upload-trigger.component.html',
     styleUrls: ['./upload-trigger.component.scss'],
-    providers: [{ provide: TRANSLOCO_SCOPE, useValue: 'upload' }],
+    providers: [RxState, OverlayService, { provide: TRANSLOCO_SCOPE, useValue: 'upload' }],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UploadTriggerComponent {

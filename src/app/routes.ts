@@ -58,7 +58,7 @@ export const appRoutes: Route[] = [
             },
             {
                 path: '',
-                loadComponent: () => import('./features/upload/components/upload-trigger/upload-trigger.component').then(m => m.UploadTriggerComponent),
+                loadComponent: () => import('./layout/dashboard/components/user-menu/user-menu.component').then(m => m.UserMenuComponent),
                 outlet: 'header'
             },
             // { path: 'profile', loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule) },
@@ -90,12 +90,12 @@ export const appRoutes: Route[] = [
                 canMatch: [createProfileGuard],
                 loadComponent: () => import('./features/register/components/profile/profile.component').then(m => m.ProfileComponent)
             },
-            { path: '', canActivate: [registerGuard], loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) },
-            {
-                path: '',
-                loadComponent: () => import('./features/register/components/sidebar-content/sidebar-content.component').then(m => m.SidebarContentComponent),
-                outlet: 'sidebar'
-            }
+            { path: '', canActivate: [registerGuard], loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) }
+            // {
+            //     path: '',
+            //     loadComponent: () => import('./features/register/components/sidebar-content/sidebar-content.component').then(m => m.SidebarContentComponent),
+            //     outlet: 'sidebar'
+            // }
         ]
     },
     {

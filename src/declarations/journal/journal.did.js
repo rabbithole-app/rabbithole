@@ -1,8 +1,9 @@
 export const idlFactory = ({ IDL }) => {
     const AccountIdentifier = IDL.Vec(IDL.Nat8);
-    const BucketId__1 = IDL.Principal;
     const ID = IDL.Text;
+    const BucketId__1 = IDL.Principal;
     const FileCreate = IDL.Record({
+        id: ID,
         name: IDL.Text,
         bucketId: BucketId__1,
         fileSize: IDL.Nat,

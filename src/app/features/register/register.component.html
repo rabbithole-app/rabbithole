@@ -24,8 +24,7 @@
                 <ng-template matStepContent>
                     <div class="content">
                         <p [innerHTML]="t('steps.createInvoice.description', { xdr, usd })"></p>
-                        <ng-container
-                            *rxIf="loadingCreateInvoice$; then loadingButton; else createInvoiceButton; suspense loadingButton"></ng-container>
+                        <ng-container *rxIf="loadingCreateInvoice$; then loadingButton; else createInvoiceButton; suspense loadingButton"></ng-container>
                     </div>
                 </ng-template>
             </mat-step>
@@ -41,8 +40,13 @@
                 <ng-template matStepContent>
                     <div class="content">
                         <p [innerHTML]="t('steps.createJournal.description', { xdr, usd })"></p>
-                        <ng-container
-                            *rxIf="loadingCreateJournal$; then loadingButton; else createJournalButton; suspense loadingButton"></ng-container>
+                        <ng-container *rxIf="redirect$; then redirectButton; else stepAction"></ng-container>
+                        <ng-template #redirectButton>
+                            <button mat-raised-button disabled>{{ t('actions.redirect') }}</button>
+                        </ng-template>
+                        <ng-template #stepAction>
+                            <ng-container *rxIf="loadingCreateJournal$; then loadingButton; else createJournalButton; suspense loadingButton"></ng-container>
+                        </ng-template>
                     </div>
                 </ng-template>
             </mat-step>

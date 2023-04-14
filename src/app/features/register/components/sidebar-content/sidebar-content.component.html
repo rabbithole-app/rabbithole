@@ -1,14 +1,14 @@
 <ng-container *transloco="let t">
-    <button mat-button class="upload-button" [matTooltip]="t('invite.title')"
+    <button mat-button color="primary" class="upload-button" [matTooltip]="t('invite.title')"
     matTooltipClass="rh-tooltip"
     matTooltipPosition="after"
     [matTooltipDisabled]="isFull$ | push">
         <div class="mat-content-wrapper">
-            <mat-icon svgIcon="far:envelope"></mat-icon>
+            <mat-icon svgIcon="fab:twitter"></mat-icon>
             <span *rxIf="isFull$" @textAnimation>{{ t('sidebar.upload') }}</span>
         </div>
     </button>
-    <nav class="navigation">
+    <!-- <nav class="navigation">
         <a *ngFor="let item of navigation" [routerLink]="item.disabled ? null : [item.link]" class="navigation-link"
             rel="noopener noreferrer" routerLinkActive="active" queryParamsHandling="preserve" #rla="routerLinkActive"
             [matTooltip]="t(item.label)" matTooltipClass="rh-tooltip" matTooltipPosition="after"
@@ -16,5 +16,5 @@
             <mat-icon [svgIcon]="$any(rla.isActive ? item.activeIcon : item.icon)"></mat-icon>
             <span *rxIf="isFull$" @textAnimation>{{ t(item.label) }}</span>
         </a>
-    </nav>
+    </nav> -->
 </ng-container>

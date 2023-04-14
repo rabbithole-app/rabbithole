@@ -34,8 +34,6 @@ export class SidebarContentComponent {
     isFull$ = this.sidebarService.select('isFull').pipe(shareReplay(1));
 
     constructor() {
-        const icons = ['user-plus', 'paper-plane-top'];
-        addFASvgIcons([...icons, 'envelope'], 'far');
-        addFASvgIcons(icons, 'fas');
+        // addFASvgIcons(['twitter'], 'fab');
     }
 }

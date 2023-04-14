@@ -78,6 +78,7 @@ module {
     public type FileCreateError = EntryCreateError<File>;
 
     public type FileCreate = {
+        id : ID;
         name : Text;
         parentId : ?ID;
         // token : ?Text;

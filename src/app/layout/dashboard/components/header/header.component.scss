@@ -5,15 +5,11 @@
     grid-area: header;
     border-bottom: var(--header-border-bottom-width) solid var(--header-border-bottom-color);
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas: 'sidebar-toggle header-portal avatar';
+    grid-template-columns: auto 1fr;
+    grid-template-areas: 'sidebar-toggle header-portal';
     align-items: center;
     grid-column-gap: 1rem;
     padding: 0 1rem;
-    // @include mat.elevation(2);
-    app-avatar {
-        grid-area: avatar;
-    }
 }
 
 .sidebar-toggle {

@@ -6,7 +6,7 @@
             <input [formControl]="control" matInput placeholder="" />
             <!-- <mat-hint align="start">{{ t('invite.hint') }}</mat-hint> -->
             <mat-error *rxIf="control.invalid && (control.dirty || control.touched)">{{ errorMessage }}</mat-error>
-            <mat-spinner matSuffix diameter="20" *rxIf="control.pending"></mat-spinner>
+            <mat-spinner matSuffix diameter="20" *rxIf="pending$"></mat-spinner>
         </mat-form-field>
     </div>
     <div mat-dialog-actions align="end">

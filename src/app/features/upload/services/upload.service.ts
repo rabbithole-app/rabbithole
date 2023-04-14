@@ -16,8 +16,7 @@ interface State {
     items: FileUpload[];
     progress: Record<string, FileUploadState>;
     summary: Summary;
-    worker: Worker;
-    workerEnabled: boolean;
+    worker: Worker | null;
 }
 
 @Injectable()
@@ -55,6 +54,7 @@ export class UploadService extends RxState<State> {
         distinctUntilChanged(isEqual)
     );
     summary$: Observable<Summary> = this.select('summary');
+    readonly workerEnabled = false;
 
     constructor() {
         super();
@@ -67,8 +67,7 @@ export class UploadService extends RxState<State> {
             .subscribe(() => this.reloadComponent(true));
         this.set({
             items: [],
-            summary: this.summaryInitValue,
-            workerEnabled: false
+            summary: this.summaryInitValue
         });
         this.connect(this.files.asObservable(), (state, item) => {
             const chunkCount = Math.ceil(item.fileSize / this.chunkSize);
@@ -148,7 +147,7 @@ export class UploadService extends RxState<State> {
             )
         );
 
-        if (typeof Worker !== 'undefined' && this.get('workerEnabled')) {
+        if (typeof Worker !== 'undefined' && this.workerEnabled) {
             const worker = new Worker(new URL('../workers/upload.worker', import.meta.url), { type: 'module' });
             this.set({ worker });
 
@@ -234,8 +233,23 @@ export class UploadService extends RxState<State> {
 
     async reloadComponent(self: boolean, urlToNavigateTo?: string) {
         const url = self ? this.router.url : urlToNavigateTo;
-        await this.router.navigateByUrl('/', { skipLocationChange: true });
-        await this.router.navigate([`/${url}`]);
+        // если запрошено обновление корня, то переадресация на / не дает эффекта, поэтому открываем любой путь без журнала
+        await this.router.navigateByUrl('/settings', { skipLocationChange: true });
+        await this.router.navigate([url]);
+    }
+
+    terminate() {
+        const worker = this.get('worker');
+        if (worker) {
+            worker.terminate();
+        }
+
+        this.set({
+            items: [],
+            summary: this.summaryInitValue,
+            progress: {},
+            worker: null
+        });
     }
 
     /*private uploadFile(item: FileUpload, options: UploadFileOptions, state: FileUploadState): Observable<Partial<FileUploadState>> {

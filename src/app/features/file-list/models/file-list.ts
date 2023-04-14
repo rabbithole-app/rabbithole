@@ -21,11 +21,12 @@ export type Directory = {
 export type FileInfo = {
     id: string;
     name: string;
-    fullPath: string;
     type: 'file';
     fileSize: bigint;
     parentId?: string;
     path?: string;
+    bucketId: string;
+    downloadUrl: string;
 };
 
 export type DirectoryExtended = Directory &
@@ -43,7 +44,7 @@ export type DirectoryCreate = {
     parentId?: string;
 };
 
-export type MenuItemAction = 'open' | 'remove';
+export type MenuItemAction = 'open' | 'remove' | 'download';
 
 export interface FileListIconsConfig {
     namespace: string;

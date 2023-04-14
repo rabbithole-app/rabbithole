@@ -57,13 +57,6 @@
         "itemsPerPageLabel": "Items per page:",
         "rangeLabel": "Page {{ page }} of {{ amountPages }}"
     },
-    "file-list": {
-        "get": {
-            "errors": {
-                "notFound": "Directory not found"
-            }
-        }
-    },
     "common": {
         "cmc": {
             "notify": {
@@ -94,6 +87,74 @@
                 "copied": "Copied!"
             },
             "refresh": "Refresh"
+        }
+    },
+    "fileList": {
+        "context": {
+            "color": "Color: <strong>{{ color }}</strong>",
+            "createFolder": "Create folder",
+            "uploadFiles": "Upload files"
+        },
+        "actions": {
+            "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",
+            "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}"
+        },
+        "directory": {
+            "get": {
+                "answers": {
+                    "notFound": "Directory not found"
+                }
+            },
+            "create": {
+                "title": "Create directory",
+                "cancel": "Cancel",
+                "create": "Create",
+                "name": {
+                    "label": "Directory name",
+                    "errors": {
+                        "required": "This field is mandatory",
+                        "alreadyExists": "Directory with the same name already exists. Try another",
+                        "illegalCharacters": "Directory name contains illegal characters"
+                    }
+                },
+                "answers": {
+                    "notAuthorized": "Not authorized user",
+                    "alreadyExists": "Directory already exists",
+                    "ok": "Directory was successfully created"
+                }
+            }
+        },
+        "notification": {
+            "actions": {
+                "details": "Details",
+                "cancel": "Cancel"
+            },
+            "common": {
+                "prepare": "Processing {total, plural, =1 { {filename} } other {# files}}",
+                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
+                "warning": "An error occurred while processing {count, plural, =0 {} =1 {# file} other {# files}}",
+                "success": "Processed {count} files",
+                "failed": "An error occurred while processing {count, plural, =0 {} =1 {# file} other {# files}}"
+            },
+            "move": {
+                "prepare": "Preparing to move {total, plural, =1 { {filename} } other {# files}}",
+                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
+                "warning": "An error occurred while moving {count, plural, =0 {} =1 {# file} other {# files}}",
+                "success": "{count, plural, =0 {} =1 {File {filename} moved} other {Moved # files}}",
+                "failed": "An error occurred while moving {count, plural, =0 {} =1 {# file} other {# files}}"
+            },
+            "remove": {
+                "prepare": "Preparing to remove {total, plural, =1 { {filename} } other {# files}}",
+                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
+                "warning": "An error occurred while deleting {count, plural, =0 {} =1 {# file} other {# files}}",
+                "success": "{count, plural, =0 {} =1 {File {filename} removed} other {Removed # files}}",
+                "failed": "An error occurred while deleting {count, plural, =0 {} =1 {# file} other {# files}}"
+            }
+        },
+        "dialog": {
+            "show-errors": {
+                "title": "Errors"
+            }
         }
     }
 }

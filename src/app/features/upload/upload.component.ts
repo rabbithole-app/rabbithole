@@ -87,6 +87,7 @@ export class UploadComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.uploadService.terminate();
         this.destroyed.next();
         this.destroyed.complete();
     }

@@ -2,6 +2,7 @@ import { fromNullable } from '@dfinity/utils';
 import { isUndefined } from 'lodash';
 import { Directory, DirectoryColor as JournalDirectoryColor, File } from '@declarations/journal/journal.did.js';
 import { DirectoryColor, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { environment } from 'environments/environment';
 
 export const fromNullableOption = <T extends {}, K>(value: [] | [T], defaultValue: K): K => {
     let v: T | undefined = fromNullable(value);
@@ -21,6 +22,8 @@ export function toDirectoryExtended(directory: Directory): DirectoryExtended {
 }
 
 export function toFileExtended(file: File): FileInfoExtended {
-    // const host: string = environment.production ? `https://${file.bucketId.toText()}.raw.ic0.app` : `http://${file.bucketId.toText()}.localhost:8000`;
-    return { ...file, type: 'file', fullPath: file.id, parentId: fromNullable(file.parentId) } as FileInfoExtended;
+    const bucketId = file.bucketId.toText();
+    const host: string = environment.production ? `https://${bucketId}.raw.ic0.app` : `http://${bucketId}.localhost:8080`;
+    const downloadUrl = `${host}/${file.id}`;
+    return { ...file, bucketId, downloadUrl, type: 'file', parentId: fromNullable(file.parentId) } as FileInfoExtended;
 }

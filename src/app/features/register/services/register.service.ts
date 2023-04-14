@@ -29,6 +29,7 @@ import { CMCCanister } from '@dfinity/cmc';
 import { createAgent, fromNullable } from '@dfinity/utils';
 import { Principal } from '@dfinity/principal';
 import { get, has, isNull, isUndefined } from 'lodash';
+import { selectSlice } from '@rx-angular/state/selections';
 
 import { BucketsService, NotificationService, ProfileService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
@@ -86,7 +87,6 @@ export class RegisterService extends RxState<State> {
 
     constructor() {
         super();
-        console.log('RegisterService');
         this.set({
             token: ICPToken,
             amount: TokenAmount.fromE8s({ amount: 0n, token: ICPToken }),
@@ -101,11 +101,6 @@ export class RegisterService extends RxState<State> {
         if (typeof Worker !== 'undefined') {
             const worker = new Worker(new URL('../workers/register.worker', import.meta.url), { type: 'module' });
             this.set({ worker });
-
-            worker.onmessage = async ({ data }) => {
-                console.log('page got message:', data);
-            };
-            worker.postMessage('test');
         }
 
         const accountIdentifier$ = this.authState.select('actor').pipe(
@@ -165,7 +160,6 @@ export class RegisterService extends RxState<State> {
                     map(v => (v ? { invoice: prepareInvoice(v) } : { invoice: v }))
                 )
             ),
-            // tap(v => console.log('timer', v)),
             takeUntil(merge(paid$, complete$)),
             repeat({ delay: () => active$ })
         );
@@ -204,13 +198,13 @@ export class RegisterService extends RxState<State> {
                 switchMap(actor => actor.createProfile(profile)),
                 map(result => {
                     if (has(result, 'err.alreadyExists')) {
-                        throw Error(this.translateService.translate(`register.steps.createProfile.answers.alreadyExists`));
+                        throw Error(this.translateService.translate('createProfile.answers.alreadyExists'));
                     } else if (has(result, 'err.username')) {
                         let key = Object.keys(get(result, 'err.username') as unknown as UsernameError)[0]
                             .replace('illegalCharacters', 'pattern')
                             .replace('maxLength', 'maxlength')
                             .replace('minLength', 'minlength');
-                        throw Error(this.translateService.translate(`register.steps.createProfile.username.errors.${key}`));
+                        throw Error(this.translateService.translate(`createProfile.username.errors.${key}`));
                     }
 
                     return null;
@@ -223,15 +217,15 @@ export class RegisterService extends RxState<State> {
                     error: () => this.set({ userStatus: UserStatus.Unregistered }),
                     complete: () => {
                         this.set({ userStatus: UserStatus.Registered });
-                        this.notificationService.success(this.translateService.translate('register.steps.createProfile.messages.successfullyCreated'));
+                        this.notificationService.success(this.translateService.translate('createProfile.messages.successfullyCreated'));
                         this.profileService.update();
                     }
                 }),
                 delayWhen(() => this.profileService.select('profile').pipe(filter(v => !isNull(v))))
             )
             .subscribe({
-                complete: () => {
-                    this.router.navigate(['/drive']);
+                complete: async () => {
+                    await this.router.navigate(['/drive']);
                 }
             });
     }
@@ -265,7 +259,10 @@ export class RegisterService extends RxState<State> {
                 delayWhen(() => this.bucketsService.select('journal').pipe(filter(actor => !isNull(actor))))
             )
             .subscribe({
-                complete: () => this.router.navigate(['/register'])
+                complete: async () => {
+                    await this.router.navigateByUrl('/', { skipLocationChange: true });
+                    await this.router.navigate(['/register']);
+                }
             });
     }
 
@@ -296,10 +293,18 @@ export class RegisterService extends RxState<State> {
                         this.set({ journalStatus: JournalStatus.Created });
                     }
                 }),
-                delayWhen(() => this.bucketsService.select('journal').pipe(filter(actor => !isNull(actor))))
+                delayWhen(() =>
+                    this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(
+                        filter(({ loaded }) => loaded),
+                        map(({ journal }) => !isNull(journal))
+                    )
+                )
             )
             .subscribe({
-                complete: () => this.router.navigate(['/register'])
+                complete: async () => {
+                    await this.router.navigateByUrl('/', { skipLocationChange: true });
+                    await this.router.navigate(['/register']);
+                }
             });
     }
 }

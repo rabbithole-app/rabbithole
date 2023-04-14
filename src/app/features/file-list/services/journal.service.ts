@@ -1,10 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
-import { fromNullable, toNullable } from '@dfinity/utils';
-import { defer, EMPTY, first, from, iif, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, share, switchMap, tap, withLatestFrom, repeat } from 'rxjs/operators';
-import { get, has, isNil, isNull, isUndefined } from 'lodash';
+import { toNullable } from '@dfinity/utils';
+import { TranslocoService } from '@ngneat/transloco';
+import { defer, EMPTY, first, iif, Observable, of, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { get, has, isNil, isNull } from 'lodash';
+import { saveAs } from 'file-saver';
 
 import { createActor } from '@core/utils';
 import { AUTH_RX_STATE, Bucket } from '@core/stores';
@@ -12,10 +14,11 @@ import { BucketsService, NotificationService } from '@core/services';
 import { Directory, DirectoryMoveError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
-import { DirectoryExtended, JournalItem } from '@features/file-list/models';
+import { DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
 import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
+import { getStorage } from '@features/upload/operators';
 
 export interface BucketActor<T> {
     bucketId: Principal;
@@ -30,6 +33,7 @@ export class JournalService {
     private snackbarProgressService = inject(SnackbarProgressService);
     private fileListState = inject(FILE_LIST_RX_STATE);
     private authState = inject(AUTH_RX_STATE);
+    private translocoService = inject(TranslocoService);
 
     async createDirectory({ id, name, parentId }: { id: string; name: string; parentId?: string }) {
         const tempDirectory: DirectoryExtended = { id, name, parentId, type: 'folder', color: 'blue', children: undefined, loading: true, disabled: true };
@@ -48,7 +52,7 @@ export class JournalService {
             .subscribe({
                 error: () => this.fileListState.set('items', state => state.items.filter(item => item.id !== id)),
                 next: directory => this.fileListState.set('items', state => [...state.items.filter(item => item.id !== id), directory]),
-                complete: () => this.notificationService.success('Directory was successfully created!')
+                complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.answers.ok'))
             });
     }
 
@@ -97,6 +101,15 @@ export class JournalService {
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
             .subscribe(() => this.updateItems(id => selectedIds.includes(id), { disabled: false }));
+    }
+
+    download(selected: JournalItem[]) {
+        selected
+            .filter(({ type }) => type === 'file')
+            .map(v => v as FileInfoExtended)
+            .forEach(item => {
+                saveAs(item.downloadUrl, item.name);
+            });
     }
 
     remove(selected: JournalItem[]) {
@@ -149,23 +162,8 @@ export class JournalService {
         return this.bucketsService.select('journal').pipe(
             first(),
             filter(actor => !isNull(actor)),
-            switchMap(actor => {
-                const storage$ = from((actor as NonNullable<typeof actor>).getStorage(fileSize)).pipe(
-                    map(result => fromNullable<Principal>(result)),
-                    tap(v => console.log('shared source storage$', v)),
-                    share()
-                );
-                return storage$.pipe(
-                    repeat({
-                        delay: () =>
-                            storage$.pipe(
-                                filter(bucketId => isUndefined(bucketId)),
-                                tap(() => console.log('repeat request getStorage'))
-                            )
-                    }),
-                    map(bucketId => bucketId as Principal)
-                );
-            }),
+            map(actor => actor as NonNullable<typeof actor>),
+            switchMap(actor => getStorage(actor, fileSize)),
             withLatestFrom(this.bucketsService.select('storages'), this.authState.select('identity')),
             switchMap(([bucketId, storages, identity]) => {
                 const canisterId = bucketId.toText();

@@ -16,6 +16,7 @@ import { SETTINGS_RX_STATE } from '@core/stores';
 import { AuthService } from '@core/services';
 import { LogoComponent } from '../logo/logo.component';
 import { SidebarService } from '../../services/sidebar.service';
+import { addFASvgIcons } from '@core/utils';
 
 @Component({
     selector: 'app-sidebar',
@@ -35,6 +36,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
     sidebarService = inject(SidebarService);
     isFull$: Observable<boolean> = this.sidebarService.select('isFull').pipe(shareReplay(1));
     authService = inject(AuthService);
+
+    constructor() {
+        addFASvgIcons(['arrow-right-from-bracket'], 'far');
+    }
 
     @HostBinding('class.compact')
     get isCompact() {
