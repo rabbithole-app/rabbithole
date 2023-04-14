@@ -73,7 +73,13 @@ export class FileListComponent implements OnInit, OnDestroy {
 
     items$: Observable<JournalItem[]> = this.fileListState.select('items').pipe(observeOn(asapScheduler));
     selected$: Observable<JournalItem[]> = this.fileListState.select('selected');
-    contextMenuData$ = this.selected$.pipe(map(items => ({ items })));
+    contextMenuData$ = this.selected$.pipe(map(items => ({
+        items,
+        someFile: items.some(({ type }) => type === 'file'),
+        someFolder: items.some(({ type }) => type === 'folder'),
+        everyFile: items.every(({ type }) => type === 'file'),
+        everyFolder: items.every(({ type }) => type === 'folder')
+    })));
     hasItems$: Observable<boolean> = this.fileListState.select('items').pipe(map(items => items.length > 0));
     dragging$: Observable<boolean> = this.fileListState.select('dragging');
     @ViewChild('itemsTrigger', { read: MatMenuTrigger }) set itemsMenuTrigger(value: MatMenuTrigger) {
@@ -125,10 +131,10 @@ export class FileListComponent implements OnInit, OnDestroy {
 
     // @HostListener('contextmenu', ['$event'])
     handleContextMenu({ event, origin }: { event: MouseEvent; origin?: ElementRef }) {
-        this.selected$
+        this.contextMenuData$
             .pipe(
-                map(items => ({
-                    menuData: { items },
+                map(menuData => ({
+                    menuData,
                     trigger: this.itemsMenuTrigger,
                     origin,
                     point: {

@@ -6,16 +6,18 @@
     <ng-template #empty>
         <app-empty (contextmenu)="handleEmptyContextMenu($event)"></app-empty>
     </ng-template>
-    <button #itemsTrigger mat-button [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="contextMenuData$ | push" [matMenuTriggerRestoreFocus]="false"></button>
+    <ng-container *rxLet="contextMenuData$; let data">
+        <button #itemsTrigger mat-button [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false"></button>
+    </ng-container>
     <input type="file" class="file-input" (change)="handleFileSelected($event)" #fileUpload multiple />
     <mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">
-        <ng-template matMenuContent let-items="items">
+        <ng-template matMenuContent let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
             <ng-container [ngSwitch]="items.length">
                 <ng-container *ngSwitchCase="0">
                     <ng-container [ngTemplateOutlet]="emptyAreaTemplate"></ng-container>
                 </ng-container>
                 <ng-container *ngSwitchDefault>
-                    <ng-container [ngTemplateOutlet]="contextItemsTemplate" [ngTemplateOutletContext]="{ items: items }"></ng-container>
+                    <ng-container [ngTemplateOutlet]="contextItemsTemplate" [ngTemplateOutletContext]="{ items, everyFile, everyFolder, someFile, someFolder }"></ng-container>
                 </ng-container>
             </ng-container>
         </ng-template>
@@ -35,9 +37,9 @@
             <span>{{ 'sidebar.upload-folder' | translate }}</span>
         </button>-->
     </ng-template>
-    <ng-template #contextItemsTemplate let-items="items">
+    <ng-template #contextItemsTemplate let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
         <!--<h3 *ngFor="let item of items" class="mat-typography">{{ item.name }} [{{ item.id }}]</h3>-->
-        <!-- <ng-container *rxIf="fileListState.get('selectedEveryFolder')">
+        <ng-container *rxIf="everyFolder">
             <div class="choose-color">
                 <div class="label" [innerHTML]="t('context.color', { color: nextColor })"></div>
                 <div class="tag-colors">
@@ -52,14 +54,14 @@
                 </div>
             </div>
             <mat-divider></mat-divider>
-        </ng-container> -->
+        </ng-container>
         
         <!--<button mat-menu-item (click)="handleItemsAction('open')">
             <mat-icon svgIcon="far:trash-can"></mat-icon>
             &lt;!&ndash;<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>&ndash;&gt;
             <span>Open</span>
         </button>-->
-        <button mat-menu-item class="warn" (click)="handleItemsAction('download', items)">
+        <button *rxIf="everyFile" mat-menu-item class="warn" (click)="handleItemsAction('download', items)">
             <mat-icon svgIcon="far:download"></mat-icon>
             <span>{{ t('actions.download', { count: items?.length }) }}</span>
         </button>

@@ -117,7 +117,13 @@ export class BreadcrumbsComponent extends RxState<State> implements OnDestroy {
             this.contextMenuService.open({
                 origin: this.activeMenuRef,
                 trigger: this.contextMenuTrigger,
-                menuData: { items: [activeDirectory] }
+                menuData: {
+                    items: [activeDirectory],
+                    someFile: false,
+                    someFolder: true,
+                    everyFile: false,
+                    everyFolder: true
+                }
             });
         }
     }

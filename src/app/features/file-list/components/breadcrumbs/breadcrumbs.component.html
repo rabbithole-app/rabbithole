@@ -48,7 +48,7 @@
 </ng-container>
 <button id="current-dir-trigger" #currentMenuTrigger mat-button [matMenuTriggerFor]="currentDirectoryMenu"></button>
 <mat-menu #currentDirectoryMenu="matMenu" hasBackdrop="false" class="context-menu">
-    <ng-template matMenuContent let-items="items">
-        <ng-container [ngTemplateOutlet]="contextTemplate" [ngTemplateOutletContext]="{ items: items }"></ng-container>
+    <ng-template matMenuContent let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
+        <ng-container [ngTemplateOutlet]="contextTemplate" [ngTemplateOutletContext]="{ items, everyFile, everyFolder, someFile, someFolder }"></ng-container>
     </ng-template>
 </mat-menu>
