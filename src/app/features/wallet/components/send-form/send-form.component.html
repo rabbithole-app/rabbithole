@@ -11,8 +11,7 @@
                 <mat-icon svgIcon="far:arrow-up-to-line"></mat-icon>
             </button>
             <mat-error *ngIf="amountControl.invalid && (amountControl.dirty || amountControl.touched)">
-                <ng-container *ngIf="amountControl.hasError('required')">{{
-                    t('send.amount.errorMessages.required') }}</ng-container>
+                <span *ngIf="amountControl.hasError('required')" [innerHTML]="t('send.amount.errorMessages.required')"></span>
                 <ng-container *ngIf="amountControl.hasError('amount')">{{ t('send.amount.errorMessages.amount')
                     }}</ng-container>
             </mat-error>
@@ -24,9 +23,7 @@
             <input autocomplete="off" matInput [placeholder]="t('send.recipient.placeholder')"
                 formControlName="recipient" />
             <mat-error *ngIf="recipientControl.invalid && (recipientControl.dirty || recipientControl.touched)">
-                <ng-container *ngIf="recipientControl.hasError('required'); else invalidError">{{
-                    t('send.recipient.errorMessages.required') }}
-                </ng-container>
+                <span *ngIf="recipientControl.hasError('required'); else invalidError" [innerHTML]="t('send.recipient.errorMessages.required')"></span>
                 <ng-template #invalidError>
                     <ng-container *ngIf="recipientControl.hasError('invalid')">{{
                         t('send.recipient.errorMessages.invalid') }}</ng-container>

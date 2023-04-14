@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
-import { defer, EMPTY, first, iif, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { defer, EMPTY, first, from, iif, Observable, of, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { get, has, isNil, isNull } from 'lodash';
 import { saveAs } from 'file-saver';
 
@@ -34,6 +35,7 @@ export class JournalService {
     private fileListState = inject(FILE_LIST_RX_STATE);
     private authState = inject(AUTH_RX_STATE);
     private translocoService = inject(TranslocoService);
+    private httpClient = inject(HttpClient);
 
     async createDirectory({ id, name, parentId }: { id: string; name: string; parentId?: string }) {
         const tempDirectory: DirectoryExtended = { id, name, parentId, type: 'folder', color: 'blue', children: undefined, loading: true, disabled: true };
@@ -104,11 +106,21 @@ export class JournalService {
     }
 
     download(selected: JournalItem[]) {
-        selected
-            .filter(({ type }) => type === 'file')
-            .map(v => v as FileInfoExtended)
-            .forEach(item => {
-                saveAs(item.downloadUrl, item.name);
+        from(selected)
+            .pipe(
+                filter(({ type }) => type === 'file'),
+                map(v => v as FileInfoExtended),
+                mergeMap(item =>
+                    this.httpClient
+                        .get(item.downloadUrl, {
+                            observe: 'response',
+                            responseType: 'blob'
+                        })
+                        .pipe(map(response => ({ blob: response.body as Blob, name: item.name })))
+                )
+            )
+            .subscribe(({ blob, name }) => {
+                saveAs(blob, name);
             });
     }
 
