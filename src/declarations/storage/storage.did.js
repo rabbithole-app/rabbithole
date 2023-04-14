@@ -1,5 +1,6 @@
 export const idlFactory = ({ IDL }) => {
     const HeaderField__1 = IDL.Tuple(IDL.Text, IDL.Text);
+    const ID__2 = IDL.Text;
     const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
     const HttpRequest = IDL.Record({
         url: IDL.Text,
@@ -59,6 +60,7 @@ export const idlFactory = ({ IDL }) => {
             [],
             []
         ),
+        delete: IDL.Func([ID__2], [], []),
         getUsedMemorySize: IDL.Func([], [IDL.Nat], []),
         getVersion: IDL.Func([], [IDL.Text], ['query']),
         http_request: IDL.Func([HttpRequest], [HttpResponse], ['query']),

@@ -75,7 +75,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
     let MIN_CYCLE_SHARE = 250_000_000_000;
     let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
-    let INVITE_CYCLE_SHARE = 500_000_000_000;
+    let INVITE_CYCLE_SHARE = 1_000_000_000_000;
     let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
     let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
     let logger = Logger.new(10);
@@ -569,8 +569,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         switch (files.removeByRight(sourcePath)) {
             case null #err(#notFound);
             case (?(file, _)) {
-                let storageBucket : actor { delete : shared (params : { fullPath : Text; token : ?Text }) -> async () } = actor (Principal.toText(file.bucketId));
-                ignore storageBucket.delete({ fullPath = file.id; token = null });
+                let storageBucket : actor { delete : shared (id : ID) -> async () } = actor (Principal.toText(file.bucketId));
+                ignore storageBucket.delete(file.id);
                 #ok();
             };
         };

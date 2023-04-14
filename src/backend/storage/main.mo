@@ -377,4 +377,19 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
     //         Debug.print("[Storage] AfterCheck " # Error.message(err));
     //     };
     // };
+
+    public shared ({ caller }) func delete(id : ID) : async () {
+        if (Principal.notEqual(caller, installer)) {
+            throw Error.reject("User does not have the permission to delete an asset.");
+        };
+
+        let result : Result.Result<Asset, Text> = getAsset(id);
+
+        switch (result) {
+            case (#ok asset) {
+                assets := Trie.remove<Text, Asset>(assets, Utils.keyText id, Text.equal).0;
+            };
+            case (#err message) throw Error.reject("Asset cannot be deleted: " # message);
+        };
+    };
 };

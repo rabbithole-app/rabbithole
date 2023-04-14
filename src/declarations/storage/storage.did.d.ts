@@ -27,6 +27,7 @@ export interface HttpResponse {
 }
 export type ID = string;
 export type ID__1 = string;
+export type ID__2 = string;
 export interface StorageBucket {
     commitUpload: ActorMethod<
         [
@@ -38,6 +39,7 @@ export interface StorageBucket {
         ],
         undefined
     >;
+    delete: ActorMethod<[ID__2], undefined>;
     getUsedMemorySize: ActorMethod<[], bigint>;
     getVersion: ActorMethod<[], string>;
     http_request: ActorMethod<[HttpRequest], HttpResponse>;
