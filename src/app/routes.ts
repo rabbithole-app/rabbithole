@@ -2,9 +2,9 @@ import { Route } from '@angular/router';
 import { importProvidersFrom } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 
-import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard } from '@core/guards';
+import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard, dashboardGuard } from '@core/guards';
 import { fileListStateFactory, FILE_LIST_RX_STATE } from '@features/file-list';
-import { InvitesService } from '@features/invites/services/invites.service';
+import { InvitationsService } from '@features/invitations/services/invitations.service';
 import { RegisterService } from '@features/register/services/register.service';
 import { CanistersService } from '@features/canisters/services';
 import { WalletService } from '@features/wallet/services';
@@ -21,6 +21,7 @@ export const appRoutes: Route[] = [
         path: '',
         loadComponent: () => import('./layout/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [authGuard],
+        canActivateChild: [dashboardGuard],
         children: [
             {
                 path: 'drive',
@@ -38,7 +39,11 @@ export const appRoutes: Route[] = [
                     }
                 ]
             },
-            { path: 'invites', loadComponent: () => import('./features/invites/invites.component').then(m => m.InvitesComponent), providers: [InvitesService] },
+            {
+                path: 'invitations',
+                loadComponent: () => import('./features/invitations/invitations.component').then(m => m.InvitationsComponent),
+                providers: [InvitationsService]
+            },
             { path: 'account', loadComponent: () => import('./features/wallet/wallet.component').then(m => m.WalletComponent) },
             { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },
             {
@@ -103,5 +108,6 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./layout/login/login.component').then(m => m.LoginComponent),
         canActivate: [loginGuard]
     },
+    { path: '404', loadComponent: () => import('./core/components/not-found/not-found.component').then(m => m.NotFoundComponent) },
     { path: '**', redirectTo: '' }
 ];

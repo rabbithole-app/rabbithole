@@ -34,7 +34,7 @@ import { InviteStatus, RegisterService } from '@features/register/services/regis
     providers: [{ provide: TRANSLOCO_SCOPE, useValue: 'invite' }, InviteValidator]
 })
 export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     private inviteValidator = inject(InviteValidator);
     private registerService = inject(RegisterService);
     dialogRef = inject(MatDialogRef<RedeemInviteDialogComponent>);
@@ -55,7 +55,7 @@ export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
     get errorMessage() {
         if (this.control.errors) {
             const [key, value] = Object.entries(this.control.errors)[0];
-            return this.translateService.translate(`invite.invite.errors.${key}`, { ...value });
+            return this.translocoService.translate(`invite.invite.errors.${key}`, { ...value });
         }
 
         return '';

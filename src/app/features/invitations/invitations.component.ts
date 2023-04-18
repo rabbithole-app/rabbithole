@@ -4,12 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
+import { TranslocoModule } from '@ngneat/transloco';
 import { map, Observable } from 'rxjs';
 import { PushModule } from '@rx-angular/template/push';
 import { selectSlice } from '@rx-angular/state/selections';
 
-import { InvitesService } from './services/invites.service';
+import { InvitationsService } from './services/invitations.service';
 import { InvitesTableComponent } from './components/invites-table/invites-table.component';
 import { CreateInviteDialogComponent } from './components/create-invite-dialog/create-invite-dialog.component';
 import { addFASvgIcons } from '@core/utils';
@@ -17,24 +17,18 @@ import { Invite } from './models';
 import { prepareInvite } from './utils';
 
 @Component({
-    selector: 'app-invites',
+    selector: 'app-invitations',
     standalone: true,
     imports: [NgIf, TranslocoModule, InvitesTableComponent, MatButtonModule, MatDialogModule, MatProgressSpinnerModule, MatIconModule, PushModule],
-    templateUrl: './invites.component.html',
-    styleUrls: ['./invites.component.scss'],
-    providers: [
-        {
-            provide: TRANSLOCO_SCOPE,
-            useValue: 'invites'
-        }
-    ]
+    templateUrl: './invitations.component.html',
+    styleUrls: ['./invitations.component.scss']
 })
-export class InvitesComponent {
-    private invitesService = inject(InvitesService);
-    items$: Observable<Invite[]> = this.invitesService
+export class InvitationsComponent {
+    private invitationsService = inject(InvitationsService);
+    items$: Observable<Invite[]> = this.invitationsService
         .select(selectSlice(['items', 'deleting']))
         .pipe(map(({ items, deleting }) => items.map(item => ({ ...prepareInvite(item), loading: deleting[item.id] ?? false }))));
-    create$: Observable<boolean> = this.invitesService.select('loading', 'create');
+    create$: Observable<boolean> = this.invitationsService.select('loading', 'create');
     dialog = inject(MatDialog);
 
     constructor() {
@@ -48,7 +42,7 @@ export class InvitesComponent {
 
         dialogRef.afterClosed().subscribe(result => {
             if (result) {
-                this.invitesService.create(result);
+                this.invitationsService.create(result);
             }
         });
     }
@@ -56,7 +50,7 @@ export class InvitesComponent {
     handleAction(action: { type: string; id: string }) {
         switch (action.type) {
             case 'delete': {
-                this.invitesService.delete(action.id);
+                this.invitationsService.delete(action.id);
                 break;
             }
             default:

@@ -6,7 +6,7 @@ import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { defer, EMPTY, first, from, iif, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
-import { get, has, isNil, isNull } from 'lodash';
+import { get, has, isNil, isNull, orderBy } from 'lodash';
 import { saveAs } from 'file-saver';
 
 import { createActor } from '@core/utils';
@@ -39,7 +39,7 @@ export class JournalService {
 
     async createDirectory({ id, name, parentId }: { id: string; name: string; parentId?: string }) {
         const tempDirectory: DirectoryExtended = { id, name, parentId, type: 'folder', color: 'blue', children: undefined, loading: true, disabled: true };
-        this.fileListState.set('items', state => [...state.items, tempDirectory]);
+        this.fileListState.set('items', state => orderBy([...state.items, tempDirectory], [{ type: 'folder' }, 'name'], ['desc', 'asc']));
         this.wrapActionHandler(actor => actor.createDirectory({ id, name, parentId: toNullable(parentId) }))
             .pipe(
                 switchMap(result => {
@@ -53,7 +53,10 @@ export class JournalService {
             )
             .subscribe({
                 error: () => this.fileListState.set('items', state => state.items.filter(item => item.id !== id)),
-                next: directory => this.fileListState.set('items', state => [...state.items.filter(item => item.id !== id), directory]),
+                next: directory =>
+                    this.fileListState.set('items', state =>
+                        orderBy([...state.items.filter(item => item.id !== id), directory], [{ type: 'folder' }, 'name'], ['desc', 'asc'])
+                    ),
                 complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.answers.ok'))
             });
     }

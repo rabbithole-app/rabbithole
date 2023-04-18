@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -15,10 +16,9 @@ import { ru } from 'date-fns/locale';
 
 import { addFASvgIcons } from '@core/utils';
 import { EmptyComponent } from '@core/components/empty/empty.component';
-import { Invite } from '@features/invites/models';
+import { Invite } from '@features/invitations/models';
 import { CopyIDComponent } from '@core/components/copy-id/copy-id.component';
 import { RabbitholePaginatorIntl } from '@core/i18n/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
 
 @Component({
     selector: 'app-invites-table',
@@ -49,7 +49,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 export class InvitesTableComponent implements AfterViewInit {
     private translocoLocaleService = inject(TranslocoLocaleService);
     @ContentChild(MatNoDataRow) noDataRow!: MatNoDataRow;
-    @ViewChild(MatTable, { static: true }) table!: MatTable<Invite>;
+    @ViewChild(MatTable) table!: MatTable<Invite>;
     @ViewChild(MatPaginator) paginator!: MatPaginator;
     @ViewChild(MatSort) sort!: MatSort;
     dataSource = new MatTableDataSource<Invite>([]);

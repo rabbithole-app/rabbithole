@@ -17,7 +17,7 @@ export interface State {
     loaded: boolean;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ProfileService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     anonymous$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Anonymous));

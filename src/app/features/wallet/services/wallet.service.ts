@@ -47,7 +47,7 @@ interface State {
 export class WalletService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     private bucketsService = inject(BucketsService);
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     private notificationService = inject(NotificationService);
 
     constructor() {
@@ -55,7 +55,8 @@ export class WalletService extends RxState<State> {
         this.set({
             icpToken: ICPToken,
             icpAmount: TokenAmount.fromE8s({ amount: 0n, token: ICPToken }),
-            loadingBalance: true
+            loadingBalance: true,
+            loadingTransfer: false
         });
         const journalActor$ = this.bucketsService.select('journal').pipe(
             filter(actor => !isNull(actor)),
@@ -115,7 +116,7 @@ export class WalletService extends RxState<State> {
                                 if (key === 'InsufficientFunds') {
                                     value = `${formatICP(value.balance.e8s)} ICP`;
                                 }
-                                throw Error(this.translateService.translate(`common.ledger.transfer.errors.${key}`, { value }));
+                                throw Error(this.translocoService.translate(`common.ledger.transfer.errors.${key}`, { value }));
                             }
 
                             return result;
@@ -132,7 +133,7 @@ export class WalletService extends RxState<State> {
         );
         obs$.subscribe({
             complete: () => {
-                this.notificationService.success(this.translateService.translate('common.ledger.transfer.successfullySent'));
+                this.notificationService.success(this.translocoService.translate('common.ledger.transfer.successfullySent'));
                 this.checkBalance();
             }
         });

@@ -8,7 +8,7 @@
             <app-send-form [amount]="amount" [token]="token" [transactionFee]="transactionFee" (cancel)="set({ selectedTabIndex: Tabs.Start })" (review)="set({ selectedTabIndex: Tabs.Review })" [formControl]="sendControl"></app-send-form>
         </mat-tab>
         <mat-tab [label]="t('review.label')">
-            <ng-container *ngIf="review$ | push as data">
+            <ng-container *rxLet="review$; let data">
                 <app-review [data]="data" [loading]="loadingTransfer" (edit)="set({ selectedTabIndex: Tabs.Form })" (send)="handleSend()"></app-review>
             </ng-container>
         </mat-tab>

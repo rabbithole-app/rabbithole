@@ -22,7 +22,7 @@ interface State {
 }
 
 @Injectable()
-export class InvitesService extends RxState<State> {
+export class InvitationsService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     private bucketsService = inject(BucketsService);
     private notificationService = inject(NotificationService);

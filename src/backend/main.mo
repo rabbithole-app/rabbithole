@@ -188,7 +188,7 @@ actor Rabbithole {
 
     //SECTION - Journal managment
     /* -------------------------------------------------------------------------- */
-    /*                             JOURNAL MANADGMENT                             */
+    /*                             JOURNAL MANAGMENT                             */
     /* -------------------------------------------------------------------------- */
 
     public shared ({ caller }) func getJournalBucket() : async ?BucketId {
@@ -530,7 +530,7 @@ actor Rabbithole {
     /* -------------------------------------------------------------------------- */
 
     let INVITE_CHECK_INTERVAL_SECONDS = 3600; // 1 hour
-    let INVITE_REFUND_INTERVAL_SECONDS = 60; // 1 minute
+    let INVITE_REFUND_INTERVAL_SECONDS = 600; // 10 minutes
     let INVITE_REFUND_INTERVAL_NANOS = 60 * 1000_000_000; // 1 minute
     var invitesTimerId : ?TimerId = null;
     var invites : TrieMap.TrieMap<Text, Invite> = TrieMap.TrieMap(Text.equal, Text.hash);

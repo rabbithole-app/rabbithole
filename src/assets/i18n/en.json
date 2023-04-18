@@ -22,7 +22,7 @@
         "favorites": "Favorites",
         "trash": "Trash",
         "canisters": "Canisters",
-        "invites": "Invites"
+        "invitations": "Invitations"
     },
     "settings": {
         "title": "Settings",
@@ -155,6 +155,91 @@
             "show-errors": {
                 "title": "Errors"
             }
+        }
+    },
+    "wallet": {
+        "accountId": "Account ID",
+        "amount": "Amount",
+        "send": {
+            "token": {
+                "label": "Token"
+            },
+            "send": {
+                "label": "Send",
+                "amount": {
+                    "label": "Amount",
+                    "max": "Max",
+                    "errorMessages": {
+                        "required": "Amount is <strong>required</strong>",
+                        "amount": "Insufficient funds"
+                    },
+                    "hint": "{{ amount }} {{ tokenSymbol }} available to send (considering fees)"
+                },
+                "recipient": {
+                    "label": "Recipient",
+                    "placeholder": "Enter Principal ID or Account ID",
+                    "errorMessages": {
+                        "required": "Recipient is <strong>required</strong>",
+                        "invalid": "Invalid address"
+                    }
+                },
+                "actions": {
+                    "cancel": "Cancel",
+                    "review": "Review"
+                }
+            },
+            "review": {
+                "label": "Review",
+                "source": "Source",
+                "destination": "Destination",
+                "fee": "transaction fee",
+                "actions": {
+                    "edit": "Edit",
+                    "send": "Send"
+                }
+            }
+        }
+    },
+    "invites": {
+        "title": "Invitations",
+        "table": {
+            "id": "ID",
+            "cycles": "Cycles",
+            "status": "Status",
+            "createdAt": "Created at",
+            "expiredAt": "Expired at",
+            "actions": "Actions"
+        },
+        "create": {
+            "title": "Create invitation",
+            "description": "To create an invitation with a deposit of {{ tcycles }} TCycles, {{ icp }} ICP will be debited from your balance.",
+            "expires": {
+                "label": "Expires",
+                "errors": {
+                    "required": "Select an expiration date"
+                }
+            },
+            "actions": {
+                "cancel": "Cancel",
+                "create": "Create"
+            }
+        },
+        "delete": {
+            "errors": {
+                "expired": "Invitation expired",
+                "notFound": "Invitation not found",
+                "alreadyUsed": "Invitation already used",
+                "notPermission": "You don't have enough permissions"
+            }
+        },
+        "actions": {
+            "create": "Create invitation",
+            "loading": "Creating..."
+        },
+        "messages": {
+            "successfullyCreated": "Invitation successfully created",
+            "successfullyDeleted": "Invitation successfully deleted",
+            "copied": "Invitation code copied to clipboard"
         }
     }
 }

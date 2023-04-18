@@ -80,7 +80,7 @@ export class RegisterService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     private bucketsService = inject(BucketsService);
     private notificationService = inject(NotificationService);
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     private profileService = inject(ProfileService);
     private router = inject(Router);
     private readonly invoicePollingInterval = 1000;
@@ -198,13 +198,13 @@ export class RegisterService extends RxState<State> {
                 switchMap(actor => actor.createProfile(profile)),
                 map(result => {
                     if (has(result, 'err.alreadyExists')) {
-                        throw Error(this.translateService.translate('createProfile.answers.alreadyExists'));
+                        throw Error(this.translocoService.translate('createProfile.answers.alreadyExists'));
                     } else if (has(result, 'err.username')) {
                         let key = Object.keys(get(result, 'err.username') as unknown as UsernameError)[0]
                             .replace('illegalCharacters', 'pattern')
                             .replace('maxLength', 'maxlength')
                             .replace('minLength', 'minlength');
-                        throw Error(this.translateService.translate(`createProfile.username.errors.${key}`));
+                        throw Error(this.translocoService.translate(`createProfile.username.errors.${key}`));
                     }
 
                     return null;
@@ -217,14 +217,20 @@ export class RegisterService extends RxState<State> {
                     error: () => this.set({ userStatus: UserStatus.Unregistered }),
                     complete: () => {
                         this.set({ userStatus: UserStatus.Registered });
-                        this.notificationService.success(this.translateService.translate('createProfile.messages.successfullyCreated'));
+                        this.notificationService.success(this.translocoService.translate('createProfile.messages.successfullyCreated'));
                         this.profileService.update();
                     }
                 }),
-                delayWhen(() => this.profileService.select('profile').pipe(filter(v => !isNull(v))))
+                delayWhen(() =>
+                    this.profileService.select('profile').pipe(
+                        filter(v => !isNull(v)),
+                        tap(console.log)
+                    )
+                )
             )
             .subscribe({
                 complete: async () => {
+                    console.log('redirect');
                     await this.router.navigate(['/drive']);
                 }
             });
@@ -240,7 +246,7 @@ export class RegisterService extends RxState<State> {
                 map(response => {
                     if (has(response, 'err')) {
                         let key = Object.keys(get(response, 'err') as unknown as InviteError)[0];
-                        throw Error(this.translateService.translate(`invite.invite.errors.${key}`));
+                        throw Error(this.translocoService.translate(`invite.invite.errors.${key}`));
                     }
 
                     return response;
@@ -256,11 +262,13 @@ export class RegisterService extends RxState<State> {
                         this.set({ inviteStatus: InviteStatus.Redeemed });
                     }
                 }),
-                delayWhen(() => this.bucketsService.select('journal').pipe(filter(actor => !isNull(actor))))
+                delayWhen(() =>
+                    this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(filter(({ loaded, journal }) => loaded && !isNull(journal)))
+                )
             )
             .subscribe({
                 complete: async () => {
-                    await this.router.navigateByUrl('/', { skipLocationChange: true });
+                    await this.router.navigateByUrl('/404', { skipLocationChange: true });
                     await this.router.navigate(['/register']);
                 }
             });
@@ -277,7 +285,7 @@ export class RegisterService extends RxState<State> {
                 mapLedgerError(),
                 map(response => {
                     if (has(response, 'err.wrongStage')) {
-                        throw Error(this.translateService.translate('register.steps.createJournal.errors.wrongStage'));
+                        throw Error(this.translocoService.translate('register.steps.createJournal.errors.wrongStage'));
                     }
 
                     return response;
@@ -294,15 +302,12 @@ export class RegisterService extends RxState<State> {
                     }
                 }),
                 delayWhen(() =>
-                    this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(
-                        filter(({ loaded }) => loaded),
-                        map(({ journal }) => !isNull(journal))
-                    )
+                    this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(filter(({ loaded, journal }) => loaded && !isNull(journal)))
                 )
             )
             .subscribe({
                 complete: async () => {
-                    await this.router.navigateByUrl('/', { skipLocationChange: true });
+                    await this.router.navigateByUrl('/404', { skipLocationChange: true });
                     await this.router.navigate(['/register']);
                 }
             });

@@ -2,7 +2,7 @@ export const LEDGER_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
 export const CYCLES_MINTING_CANISTER_ID = 'rkp4c-7iaaa-aaaaa-aaaca-cai';
 
 export const AUTH_POPUP_WIDTH = 576;
-export const AUTH_POPUP_HEIGHT = 576;
+export const AUTH_POPUP_HEIGHT = 886;
 
 export const E8S_PER_TOKEN = 100_000_000n;
 export const IC_TRANSACTION_FEE_ICP = 10_000n;

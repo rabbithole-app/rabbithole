@@ -17,6 +17,7 @@ import { ReviewComponent } from '../review/review.component';
 import { SendFormComponent } from '../send-form/send-form.component';
 import { Tokens } from '@declarations/journal/journal.did';
 import { E8S_PER_TOKEN } from '@core/constants';
+import { LetModule } from '@rx-angular/template/let';
 
 enum Tabs {
     Start,
@@ -35,7 +36,7 @@ interface State {
 @Component({
     selector: 'app-send',
     standalone: true,
-    imports: [PushModule, NgIf, MatTabsModule, WalletItemComponent, TranslocoModule, SendFormComponent, ReviewComponent, ReactiveFormsModule],
+    imports: [PushModule, LetModule, MatTabsModule, WalletItemComponent, TranslocoModule, SendFormComponent, ReviewComponent, ReactiveFormsModule],
     templateUrl: './send.component.html',
     styleUrls: ['./send.component.scss'],
     providers: [AmountAsyncValidator, RxState],

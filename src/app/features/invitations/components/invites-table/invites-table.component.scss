@@ -28,12 +28,12 @@ table {
     }
 }
 
-.flex-line {
-    display: flex;
-    column-gap: 0.5rem;
-    white-space: nowrap;
-    align-items: center;
-}
+// .flex-line {
+//     display: flex;
+//     column-gap: 0.5rem;
+//     white-space: nowrap;
+//     align-items: center;
+// }
 
 mat-paginator {
     grid-area: paginator;

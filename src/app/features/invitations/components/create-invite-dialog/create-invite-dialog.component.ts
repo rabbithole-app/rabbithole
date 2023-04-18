@@ -34,14 +34,14 @@ export class CreateInviteDialogComponent implements OnInit, OnDestroy {
     private locale: Locale = inject(MAT_DATE_LOCALE);
     private adapter = inject(DateAdapter);
     dialogRef = inject(MatDialogRef<CreateInviteDialogComponent>);
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     private destroyed: AsyncSubject<void> = new AsyncSubject();
     minDate = startOfTomorrow();
     maxDate = add(this.minDate, { months: 1 });
     dateControl = new FormControl(add(this.minDate, { weeks: 1 }), [Validators.required]);
 
     ngOnInit(): void {
-        this.translateService.langChanges$.pipe(takeUntil(this.destroyed)).subscribe(lang => {
+        this.translocoService.langChanges$.pipe(takeUntil(this.destroyed)).subscribe(lang => {
             switch (lang) {
                 case 'ru': {
                     this.locale = ru;

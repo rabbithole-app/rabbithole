@@ -15,7 +15,6 @@ import { TRANSLOCO_SCOPE } from '@ngneat/transloco';
     selector: 'app-wallet',
     templateUrl: './wallet.component.html',
     styleUrls: ['./wallet.component.scss'],
-    providers: [{ provide: TRANSLOCO_SCOPE, useValue: 'wallet' }],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [PushModule, SendComponent, AccountComponent],
     host: {

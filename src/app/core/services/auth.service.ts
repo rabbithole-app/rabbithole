@@ -24,7 +24,7 @@ export class AuthService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     private router = inject(Router);
     private window = inject<Window>(WINDOW);
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     private snackBar = inject(MatSnackBar);
 
     anonymous$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Anonymous));
@@ -39,7 +39,7 @@ export class AuthService extends RxState<State> {
                 if (data === 'rabbitholeSignOutAuthTimer') {
                     await this.signOut();
                     const signedOutSnackBarRef = this.snackBar.openFromComponent(ClosableSnackbarComponent, {
-                        data: this.translateService.translate('application.signed-out')
+                        data: this.translocoService.translate('application.signed-out')
                     });
                     this.set({ signedOutSnackBarRef });
                 }

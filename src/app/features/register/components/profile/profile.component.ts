@@ -38,7 +38,7 @@ import { UniqueUsernameValidator } from '@core/validators';
 })
 export class ProfileComponent {
     private registerService = inject(RegisterService);
-    private translateService = inject(TranslocoService);
+    private translocoService = inject(TranslocoService);
     uniquerUsernameValidator = inject(UniqueUsernameValidator);
     private fb = inject(FormBuilder);
     registerForm = this.fb.group({
@@ -73,7 +73,7 @@ export class ProfileComponent {
     get usernameErrorMessage() {
         if (this.username?.errors) {
             const [key, value] = Object.entries(this.username.errors)[0];
-            return this.translateService.translate(`createProfile.username.errors.${key}`, { ...value });
+            return this.translocoService.translate(`createProfile.username.errors.${key}`, { ...value });
         }
 
         return '';

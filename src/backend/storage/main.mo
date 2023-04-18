@@ -48,6 +48,7 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
     var nextChunkID : Nat = 0;
     let journal : JournalTypes.Self = actor (Principal.toText(installer));
     let ic : IC.Self = actor "aaaaa-aa";
+    let defaultHeader : [HeaderField] = [("Access-Control-Allow-Origin", "*")];
 
     // таймер мониторинга циклов
     // private let timerId : ?Nat = null;
@@ -74,7 +75,7 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
                 case (#ok { key : AssetKey; headers : [HeaderField]; encoding : AssetEncoding }) {
                     return {
                         body = encoding.contentChunks[0];
-                        headers;
+                        headers = getHeaders(?headers);
                         status_code = 200;
                         streaming_strategy = createStrategy(key, encoding, headers);
                     };
@@ -319,7 +320,14 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
             };
         };
 
-        switch (await journal.addFile({ id = batch.key.id; bucketId = Principal.fromActor(this); name = batch.key.name; fileSize = batch.key.fileSize; parentId = batch.key.parentId })) {
+        let file = {
+            id = batch.key.id;
+            bucketId = Principal.fromActor(this);
+            name = batch.key.name;
+            fileSize = batch.key.fileSize;
+            parentId = batch.key.parentId;
+        };
+        switch (await journal.addFile(file)) {
             case (#err message) {
                 return #err "message";
             };
@@ -390,6 +398,17 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
                 assets := Trie.remove<Text, Asset>(assets, Utils.keyText id, Text.equal).0;
             };
             case (#err message) throw Error.reject("Asset cannot be deleted: " # message);
+        };
+    };
+
+    func getHeaders(headers : ?[HeaderField]) : [HeaderField] {
+        switch(headers) {
+            case null defaultHeader;
+            case (?v) {
+                let buffer = Buffer.fromArray<HeaderField>(defaultHeader);
+                buffer.append(Buffer.fromArray(v));
+                Buffer.toArray(buffer);
+            };
         };
     };
 };
