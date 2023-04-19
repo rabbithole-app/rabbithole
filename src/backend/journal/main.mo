@@ -75,7 +75,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
     let MIN_CYCLE_SHARE = 250_000_000_000;
     let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
-    let INVITE_CYCLE_SHARE = 1_000_000_000_000;
+    let INVITE_CYCLE_SHARE = 2_000_000_000_000;
     let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
     let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
     let logger = Logger.new(10);

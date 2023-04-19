@@ -99,9 +99,11 @@ export type UsernameError__1 = { illegalCharacters: null } | { alreadyExists: nu
 export interface _SERVICE {
     accountBalance: ActorMethod<[], Tokens>;
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
+    canInvite: ActorMethod<[], boolean>;
     checkInvite: ActorMethod<[ID], Result>;
     checkUsername: ActorMethod<[string], Result_5>;
     checkUsernameAvailability: ActorMethod<[string], boolean>;
+    createAdminInvite: ActorMethod<[], string>;
     createInvite: ActorMethod<[InviteCreate], undefined>;
     createInvoice: ActorMethod<[], Invoice>;
     createJournal: ActorMethod<[ID], Result_4>;

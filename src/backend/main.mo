@@ -620,6 +620,19 @@ actor Rabbithole {
         };
     };
 
+    public shared ({ caller }) func createAdminInvite() : async Text {
+        assert not Principal.isAnonymous(caller) and Utils.isAdmin(caller);
+        let id : ID = await generateId();
+        let now = Time.now();
+        let expiredAt = now + 604_800_000_000_000; // 1 week
+        let invite : Invite = { id; canisterId = caller; createdAt = now; expiredAt; owner = caller; status = #active; cycles = 2_000_000_000_000 };
+        invites.put(id, invite);
+        if (Option.isNull(invitesTimerId)) {
+            startMonitorInvites();
+        };
+        id;
+    };
+
     public shared ({ caller }) func redeemInvite(id : ID) : async Result.Result<(), InviteError> {
         assert not Principal.isAnonymous(caller);
         switch (invites.get(id)) {
@@ -682,6 +695,10 @@ actor Rabbithole {
             }
         };
         Buffer.toArray(buffer);
+    };
+
+    public query ({ caller }) func canInvite() : async Bool {
+        Utils.isAdmin(caller);
     };
 
     //SECTION - Utilites

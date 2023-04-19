@@ -168,9 +168,11 @@ type AccountIdentifier = blob;
 service : {
   accountBalance: () -> (Tokens);
   accountIdentifier: () -> (AccountIdentifier) query;
+  canInvite: () -> (bool) query;
   checkInvite: (ID) -> (Result) query;
   checkUsername: (text) -> (Result_5) query;
   checkUsernameAvailability: (text) -> (bool) query;
+  createAdminInvite: () -> (text);
   createInvite: (InviteCreate) -> ();
   createInvoice: () -> (Invoice);
   createJournal: (ID) -> (Result_4);

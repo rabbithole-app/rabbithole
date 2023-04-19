@@ -9,7 +9,7 @@
             <mat-icon svgIcon="far:user"></mat-icon>
             <span>{{ t('navigation.profile') }}</span>
         </button>
-        <button mat-menu-item routerLink="invitations">
+        <button *rxIf="canInvite$" mat-menu-item routerLink="invitations">
             <mat-icon svgIcon="far:envelope"></mat-icon>
             <span>{{ t('navigation.invitations') }}</span>
         </button>

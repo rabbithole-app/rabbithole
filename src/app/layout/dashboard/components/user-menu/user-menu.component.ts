@@ -4,7 +4,7 @@ import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { AsyncSubject, filter, map, switchMap, takeUntil } from 'rxjs';
+import { AsyncSubject, filter, map, startWith, switchMap, takeUntil } from 'rxjs';
 import { isUndefined } from 'lodash';
 
 import { AvatarComponent } from '../avatar/avatar.component';
@@ -14,6 +14,8 @@ import { addFASvgIcons } from '@core/utils';
 import { CustomOverlayRef } from '@core/components/overlay';
 import { UploadTriggerComponent } from '@features/upload/components/upload-trigger/upload-trigger.component';
 import { RouterLinkWithHref } from '@angular/router';
+import { AUTH_RX_STATE } from '@core/stores';
+import { IfModule } from '@rx-angular/template/if';
 
 interface State {
     openedMenu?: CustomOverlayRef;
@@ -22,7 +24,17 @@ interface State {
 @Component({
     selector: 'app-user-menu',
     standalone: true,
-    imports: [RouterLinkWithHref, MatDividerModule, MatMenuModule, AvatarComponent, MatIconModule, TranslocoModule, WalletComponent, UploadTriggerComponent],
+    imports: [
+        RouterLinkWithHref,
+        MatDividerModule,
+        MatMenuModule,
+        AvatarComponent,
+        MatIconModule,
+        TranslocoModule,
+        WalletComponent,
+        UploadTriggerComponent,
+        IfModule
+    ],
     providers: [RxState],
     templateUrl: './user-menu.component.html',
     styleUrls: ['./user-menu.component.scss'],
@@ -33,6 +45,8 @@ export class UserMenuComponent extends RxState<State> implements AfterViewInit {
     @ViewChild('menu', { read: MatMenu }) menu!: MatMenu;
     @ViewChild('trigger', { read: MatMenuTrigger }) trigger!: MatMenuTrigger;
     authService = inject(AuthService);
+    private authState = inject(AUTH_RX_STATE);
+    canInvite$ = this.authState.select('canInvite').pipe(startWith(false));
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     constructor() {

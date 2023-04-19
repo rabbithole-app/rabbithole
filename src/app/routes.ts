@@ -2,7 +2,7 @@ import { Route } from '@angular/router';
 import { importProvidersFrom } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 
-import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard, dashboardGuard } from '@core/guards';
+import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard, dashboardGuard, invitationsGuard } from '@core/guards';
 import { fileListStateFactory, FILE_LIST_RX_STATE } from '@features/file-list';
 import { InvitationsService } from '@features/invitations/services/invitations.service';
 import { RegisterService } from '@features/register/services/register.service';
@@ -42,7 +42,8 @@ export const appRoutes: Route[] = [
             {
                 path: 'invitations',
                 loadComponent: () => import('./features/invitations/invitations.component').then(m => m.InvitationsComponent),
-                providers: [InvitationsService]
+                providers: [InvitationsService],
+                canActivate: [invitationsGuard]
             },
             { path: 'account', loadComponent: () => import('./features/wallet/wallet.component').then(m => m.WalletComponent) },
             { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },

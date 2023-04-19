@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { RxState } from '@rx-angular/state';
 import { filter, from, merge, switchMap } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, repeat, takeUntil } from 'rxjs/operators';
 import { AuthClient } from '@dfinity/auth-client';
 import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 
@@ -22,10 +22,15 @@ export interface AuthState {
     identity: Identity;
     isAuthenticated: boolean;
     worker: Worker;
+    canInvite: boolean;
 }
 
 export const authStateFactory = () => {
     const state = new RxState<AuthState>();
+    state
+        .select('identity')
+        .pipe(map(identity => identity.getPrincipal().toText()))
+        .subscribe(principalId => console.info(`Principal ID: ${principalId}`));
     const init$ = from(createAuthClient()).pipe(
         switchMap(client =>
             from(client.isAuthenticated()).pipe(
@@ -67,7 +72,14 @@ export const authStateFactory = () => {
             );
         })
     );
-    state.connect(merge(init$, anonymous$, authenticated$));
+    const canInvite$ = authenticated$.pipe(
+        switchMap(() => state.select('actor')),
+        switchMap(actor => actor.canInvite()),
+        map(canInvite => ({ canInvite })),
+        takeUntil(anonymous$),
+        repeat()
+    );
+    state.connect(merge(init$, anonymous$, authenticated$, canInvite$));
 
     if (typeof Worker !== 'undefined') {
         const worker = new Worker(new URL('../workers/auth.worker', import.meta.url));

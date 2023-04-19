@@ -221,16 +221,10 @@ export class RegisterService extends RxState<State> {
                         this.profileService.update();
                     }
                 }),
-                delayWhen(() =>
-                    this.profileService.select('profile').pipe(
-                        filter(v => !isNull(v)),
-                        tap(console.log)
-                    )
-                )
+                delayWhen(() => this.profileService.select('profile').pipe(filter(v => !isNull(v))))
             )
             .subscribe({
                 complete: async () => {
-                    console.log('redirect');
                     await this.router.navigate(['/drive']);
                 }
             });

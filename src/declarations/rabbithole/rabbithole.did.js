@@ -135,9 +135,11 @@ export const idlFactory = ({ IDL }) => {
     return IDL.Service({
         accountBalance: IDL.Func([], [Tokens], []),
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
+        canInvite: IDL.Func([], [IDL.Bool], ['query']),
         checkInvite: IDL.Func([ID], [Result], ['query']),
         checkUsername: IDL.Func([IDL.Text], [Result_5], ['query']),
         checkUsernameAvailability: IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+        createAdminInvite: IDL.Func([], [IDL.Text], []),
         createInvite: IDL.Func([InviteCreate], [], []),
         createInvoice: IDL.Func([], [Invoice], []),
         createJournal: IDL.Func([ID], [Result_4], []),
