@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { RxState } from '@rx-angular/state';
 import { filter, from, merge, switchMap } from 'rxjs';
-import { map, repeat, takeUntil } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { AuthClient } from '@dfinity/auth-client';
 import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 
@@ -27,6 +27,7 @@ export interface AuthState {
 
 export const authStateFactory = () => {
     const state = new RxState<AuthState>();
+    state.set({ canInvite: false });
     state
         .select('identity')
         .pipe(map(identity => identity.getPrincipal().toText()))
@@ -72,12 +73,11 @@ export const authStateFactory = () => {
             );
         })
     );
-    const canInvite$ = authenticated$.pipe(
+    const canInvite$ = state.select('isAuthenticated').pipe(
+        filter(v => v),
         switchMap(() => state.select('actor')),
         switchMap(actor => actor.canInvite()),
-        map(canInvite => ({ canInvite })),
-        takeUntil(anonymous$),
-        repeat()
+        map(canInvite => ({ canInvite }))
     );
     state.connect(merge(init$, anonymous$, authenticated$, canInvite$));
 
