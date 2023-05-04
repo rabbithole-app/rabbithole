@@ -5,12 +5,13 @@
             <span *rxIf="isFull$" @textAnimation (@textAnimation.start)="sidebarService.animationStart($event)" (@textAnimation.done)="sidebarService.animationDone($event)">{{ t('sidebar.upload') }}</span>
         </div>
     </button>
+    <input type="file" class="file-input" (change)="handleFileSelected($event)" #fileUpload multiple />
     <mat-menu #menu="matMenu" class="upload-menu">
-        <button mat-menu-item (click)="browse()">
+        <button mat-menu-item (click)="fileUpload.click()">
             <mat-icon svgIcon="far:files" matListItemIcon></mat-icon>
             <span matListItemTitle>{{ t('sidebar.upload-files') }}</span>
         </button>
-        <button mat-menu-item (click)="browseDirectory()">
+        <button mat-menu-item (click)="browseDirectory()" disabled>
             <mat-icon svgIcon="far:folder-plus"></mat-icon>
             <span>{{ t('sidebar.upload-folder') }}</span>
         </button>

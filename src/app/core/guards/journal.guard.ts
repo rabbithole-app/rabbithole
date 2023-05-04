@@ -7,9 +7,7 @@ import { isNil } from 'lodash';
 
 export const journalGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
     const router = inject(Router);
-    return hasJournalGuard(next, state).pipe(
-        map(hasJournal => (hasJournal ? true : router.createUrlTree(['/register'])))
-    )
+    return hasJournalGuard(next, state).pipe(map(hasJournal => (hasJournal ? true : router.createUrlTree(['/register']))));
 };
 
 export const hasJournalGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot) =>

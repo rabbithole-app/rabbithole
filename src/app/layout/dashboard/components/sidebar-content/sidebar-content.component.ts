@@ -15,6 +15,7 @@ import { SETTINGS_RX_STATE } from '@core/stores';
 import { addFASvgIcons } from '@core/utils';
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { SidebarService } from '../../services/sidebar.service';
+import { UploadService } from '@features/upload/services';
 
 @Component({
     selector: 'app-sidebar-content',
@@ -46,6 +47,7 @@ export class SidebarContentComponent {
     ];
     settingsState = inject(SETTINGS_RX_STATE);
     sidebarService = inject(SidebarService);
+    uploadService = inject(UploadService);
     isFull$ = this.sidebarService.select('isFull').pipe(shareReplay(1));
 
     constructor() {
@@ -54,11 +56,13 @@ export class SidebarContentComponent {
         addFASvgIcons(icons, 'fas');
     }
 
-    browse() {
-        console.log('browse files');
-    }
-
     browseDirectory() {
         console.log('browse directory');
+    }
+
+    handleFileSelected(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const files: FileList = input.files as FileList;
+        this.uploadService.add(files);
     }
 }

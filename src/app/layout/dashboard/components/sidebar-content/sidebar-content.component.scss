@@ -113,3 +113,7 @@ nav.navigation {
 button.mat-mdc-button-base.upload-button {
     @include mixins.button-content-wrapper;
 }
+
+.file-input {
+    display: none;
+}
