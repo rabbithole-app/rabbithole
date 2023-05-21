@@ -1,16 +1,18 @@
-import { inject, Injectable, NgZone } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RxState } from '@rx-angular/state';
-import { filter, first, from, mergeMap, Observable, of, onErrorResumeNext, Subject, switchMap, merge, timer, concat } from 'rxjs';
-import { connect, debounceTime, distinctUntilChanged, map, shareReplay, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
-import { defaults, entries, isEqual, isPlainObject, uniqBy, values } from 'lodash';
+import { from, mergeMap, Observable, of, onErrorResumeNext, Subject, merge, timer, forkJoin } from 'rxjs';
+import { filter, first, concatWith, connect, debounceTime, distinctUntilChanged, switchMap, exhaustMap, map, shareReplay, skip, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
+import { defaults, entries, isEqual, isPlainObject, isUndefined, uniqBy, values } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { arrayBufferToUint8Array } from '@dfinity/utils';
+import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
 
 import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
-import { JournalService } from '@features/file-list/services';
 import { FILE_LIST_RX_STATE } from '@features/file-list';
 import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
 import { uploadFile } from '../operators';
+import { BucketsService } from '@core/services';
 
 interface State {
     items: FileUpload[];
@@ -22,11 +24,10 @@ interface State {
 @Injectable()
 export class UploadService extends RxState<State> {
     private fileListState = inject(FILE_LIST_RX_STATE);
-    private journalService = inject(JournalService);
+    #bucketService = inject(BucketsService);
     private router = inject(Router);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
-    private keepAlive: Subject<string> = new Subject<string>();
-    private readonly zone = inject(NgZone);
+    private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
 
     readonly concurrentFilesCount = CONCURRENT_FILES_COUNT;
     readonly concurrentChunksCount = CONCURRENT_CHUNKS_COUNT;
@@ -54,7 +55,7 @@ export class UploadService extends RxState<State> {
         distinctUntilChanged(isEqual)
     );
     summary$: Observable<Summary> = this.select('summary');
-    readonly workerEnabled = false;
+    readonly workerEnabled = true;
 
     constructor() {
         super();
@@ -164,43 +165,85 @@ export class UploadService extends RxState<State> {
             const chunks$ = this.files.asObservable().pipe(
                 mergeMap((item: FileUpload) => {
                     const status$ = this.select('progress', item.id, 'status');
-                    const paused$ = status$.pipe(
-                        filter(status => status === UPLOAD_STATUS.Paused),
-                        tap(() => this.keepAlive.next(item.id))
-                    );
+                    const paused$ = status$.pipe(filter(status => status === UPLOAD_STATUS.Paused));
                     const cancelled$ = status$.pipe(filter(status => status === UPLOAD_STATUS.Cancelled));
 
                     return onErrorResumeNext(
                         this.select('progress', item.id).pipe(
                             first(),
-                            switchMap(state =>
-                                concat(
-                                    of({ status: UPLOAD_STATUS.Request, errorMessage: null }),
-                                    this.journalService.getStorage(BigInt(item.fileSize)).pipe(
-                                        switchMap(storage =>
-                                            uploadFile({
-                                                storage,
-                                                item,
-                                                options: {
-                                                    concurrentChunksCount: this.concurrentChunksCount,
-                                                    chunkSize: this.chunkSize
-                                                },
-                                                state
-                                            })
+                            switchMap(state => 
+                                of({ status: UPLOAD_STATUS.Request, errorMessage: null }).pipe(
+                                    concatWith(
+                                        forkJoin([
+                                            from(crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data))).pipe(map(arrayBufferToUint8Array)),
+                                            this.#bucketService.getStorageBySize(BigInt(item.fileSize))
+                                        ]).pipe(
+                                            switchMap(([sha256, storage]) => 
+                                                uploadFile({
+                                                    storage,
+                                                    item: { ...item, sha256 },
+                                                    options: {
+                                                        concurrentChunksCount: this.concurrentChunksCount,
+                                                        chunkSize: this.chunkSize
+                                                    },
+                                                    state
+                                                }).pipe(
+                                                    withLatestFrom(this.select('progress', item.id)),
+                                                    map(([value, fileProgress]) => {
+                                                        if (value.loaded) {
+                                                            let loaded = fileProgress.loaded ?? 0;
+                                                            let progress = fileProgress.progress ?? 0;
+                                                            loaded += value.loaded;
+                                                            progress = Math.ceil((loaded / item.fileSize) * 100);
+                                                            return { ...value, loaded, progress };
+                                                        }
+                        
+                                                        return value;
+                                                    })
+                                                )
+                                            )
                                         )
                                     )
                                 )
                             ),
-                            tap(value => {
-                                this.updateProgress(item.id, value);
-                            }),
+                            tap(value => this.updateProgress(item.id, value)),
                             takeUntil(merge(paused$, cancelled$))
                         )
                     );
                 }, this.concurrentFilesCount)
             );
 
+            const keepAlive$ = this.keepAlive.asObservable().pipe(
+                mergeMap(({ id, canisterId }) => {
+                    const off$ = this.select('progress', id, 'status').pipe(
+                        skip(1),
+                        filter(status => ![UPLOAD_STATUS.Failed, UPLOAD_STATUS.Cancelled].includes(status))
+                    );
+                    return this.select('progress', id, 'batch').pipe(
+                        first(),
+                        filter(batch => !isUndefined(batch) && isDate(batch.expiredAt)),
+                        map(batch => batch as NonNullable<typeof batch>),
+                        switchMap(batch =>
+                            timer(differenceInMilliseconds(batch.expiredAt, addSeconds(Date.now(), 5)), 60000).pipe(
+                                switchMap(() => this.#bucketService.getStorage(canisterId)),
+                                exhaustMap(({ actor }) => actor.batchAlive(batch.id)),
+                                tap(() =>
+                                    this.updateProgress(id, {
+                                        batch: {
+                                            id: batch.id,
+                                            expiredAt: addSeconds(Date.now(), 25)
+                                        }
+                                    })
+                                )
+                            )
+                        ),
+                        takeUntil(off$)
+                    );
+                })
+            );
+
             this.hold(chunks$);
+            this.hold(keepAlive$);
         }
     }
 
@@ -252,144 +295,6 @@ export class UploadService extends RxState<State> {
         });
     }
 
-    /*private uploadFile(item: FileUpload, options: UploadFileOptions, state: FileUploadState): Observable<Partial<FileUploadState>> {
-        const assetKey: AssetKey = {
-            id: item.id,
-            name: item.file.name,
-            parentId: toNullable<string>(item.parentId),
-            fileSize: BigInt(item.file.size)
-        };
-        return new Observable(subscriber => {
-            const hasSameCanisterId = (canisterId: string) => canisterId === state.storage?.canisterId;
-            const hasValidBatch = has(state, 'batch.id') && differenceInSeconds((state.batch as BatchInfo).expiredAt, Date.now()) > 0;
-            const opts = defaults({}, options);
-            const chunkCount = Math.ceil(item.file.size / opts.chunkSize);
-            subscriber.next({ status: UPLOAD_STATUS.Request, errorMessage: null });
-            const subscription = this.journalService
-                .getStorage(assetKey.fileSize)
-                .pipe(
-                    tap(storage => subscriber.next({ storage, status: UPLOAD_STATUS.Init })),
-                    switchMap(storage =>
-                        iif(
-                            () => hasSameCanisterId(storage.canisterId) && hasValidBatch,
-                            of(pick(state, ['storage', 'batch'])),
-                            defer(() => storage.actor.initUpload(assetKey)).pipe(
-                                map(({ batchId }) => ({
-                                    storage,
-                                    batch: {
-                                        id: batchId,
-                                        expiredAt: addSeconds(Date.now(), this.batchExpirySeconds)
-                                    }
-                                }))
-                            )
-                        ).pipe(
-                            tap(({ batch }) =>
-                                subscriber.next({
-                                    batch,
-                                    status: UPLOAD_STATUS.Processing
-                                })
-                            )
-                        )
-                    ),
-                    map(value => value as Required<Pick<FileUploadState, 'batch' | 'storage'>>),
-                    switchMap(({ storage, batch }) => {
-                        const firstNullIndex = findIndex(state.chunkIds, isNull);
-                        const startIndex = firstNullIndex > -1 && hasValidBatch ? firstNullIndex : 0;
-
-                        const initState = (
-                            hasValidBatch
-                                ? { ...pick(state, ['loaded', 'progress', 'chunkIds', 'batch']), status: UPLOAD_STATUS.Processing }
-                                : {
-                                      loaded: 0,
-                                      progress: 0,
-                                      batch,
-                                      chunkIds: Array.from<bigint | null>({
-                                          length: chunkCount
-                                      }).fill(null),
-                                      status: UPLOAD_STATUS.Processing
-                                  }
-                        ) as WithRequiredProperty<Pick<FileUploadState, 'loaded' | 'chunkIds' | 'progress' | 'batch' | 'status'>, 'chunkIds' | 'batch'>;
-
-                        const chunks$ = range(startIndex, chunkCount - startIndex).pipe(
-                            mergeMap(index => {
-                                const startByte = index * opts.chunkSize;
-                                const endByte = Math.min(item.file.size, startByte + opts.chunkSize);
-                                const chunk = item.file.slice(startByte, endByte);
-                                return from(chunk.arrayBuffer()).pipe(
-                                    switchMap(chunkBuffer =>
-                                        storage.actor.uploadChunk({
-                                            batchId: batch.id,
-                                            content: arrayBufferToUint8Array(chunkBuffer)
-                                        })
-                                    ),
-                                    map(({ chunkId }) => ({
-                                        chunkSize: chunk.size,
-                                        chunkId,
-                                        index
-                                    }))
-                                );
-                            }, opts.concurrentChunksCount),
-                            scan((acc, next) => {
-                                acc.chunkIds[next.index] = next.chunkId;
-                                const loaded = acc.loaded + next.chunkSize;
-
-                                return {
-                                    ...acc,
-                                    loaded,
-                                    progress: Math.ceil((loaded / item.file.size) * 100),
-                                    batch: {
-                                        ...acc.batch,
-                                        expiredAt: addSeconds(Date.now(), 25)
-                                    }
-                                };
-                            }, initState),
-                            tap(value => subscriber.next(value))
-                        );
-
-                        return iif(() => firstNullIndex === -1 && hasValidBatch, of(initState), chunks$).pipe(
-                            tap({
-                                complete: () => subscriber.next({ status: UPLOAD_STATUS.Finalize })
-                            }),
-                            last(),
-                            switchMap(({ chunkIds, batch }) =>
-                                storage.actor.commitUpload({
-                                    batchId: batch.id,
-                                    chunkIds: chunkIds as bigint[],
-                                    headers: [
-                                        ['Content-Type', item.file.type],
-                                        ['accept-ranges', 'bytes']
-                                    ]
-                                })
-                            )
-                        );
-                    })
-                )
-                .subscribe({
-                    next(value) {
-                        subscriber.next(value);
-                    },
-                    error: err => {
-                        console.error(err);
-                        const res = err.message.match(/(?:Body|Reject text): (.+)/);
-                        const errorMessage = isNull(res) ? err.message : res[1];
-                        subscriber.next({
-                            status: UPLOAD_STATUS.Failed,
-                            errorMessage
-                        });
-                        subscriber.error(err);
-                    },
-                    complete: () => {
-                        subscriber.next({
-                            parentId: item.parentId,
-                            status: UPLOAD_STATUS.Done
-                        });
-                        subscriber.complete();
-                    }
-                });
-            return () => subscription.unsubscribe();
-        });
-    }*/
-
     async add(value: FileUpload | FileList) {
         const worker = this.get('worker');
         const files = value as FileList;
@@ -424,25 +329,44 @@ export class UploadService extends RxState<State> {
     }
 
     retry(id: string) {
-        const item = this.get('items').find(item => item.id === id);
-        if (item) {
+        const { worker, items } = this.get();
+        const item = items.find(item => item.id === id);
+        if (worker) {
+            worker.postMessage({ action: 'retry', id });
+        } else if (item) {
             this.files.next(item);
         }
     }
 
     pause(id: string) {
-        this.updateProgress(id, { status: UPLOAD_STATUS.Paused });
+        const { worker, items, progress } = this.get();
+        const item = items.find(item => item.id === id);
+        const canisterId = progress[id]?.canisterId;
+        if (worker) {
+            worker.postMessage({ action: 'pause', id });
+        } else if (item && canisterId) {
+            this.updateProgress(id, { status: UPLOAD_STATUS.Paused });
+            this.keepAlive.next({ id: item.id, canisterId });
+        }
     }
 
     resume(id: string) {
-        const item = this.get('items').find(item => item.id === id);
-        if (item) {
+        const { worker, items } = this.get();
+        const item = items.find(item => item.id === id);
+        if (worker) {
+            worker.postMessage({ action: 'resume', id });
+        } else if (item) {
             this.files.next(item);
         }
     }
 
     cancel(id: string) {
-        this.updateProgress(id, { status: UPLOAD_STATUS.Cancelled });
+        const worker = this.get('worker');
+        if (worker) {
+            worker.postMessage({ action: 'cancel', id });
+        } else {
+            this.updateProgress(id, { status: UPLOAD_STATUS.Cancelled });
+        }
     }
 
     cancelAll() {

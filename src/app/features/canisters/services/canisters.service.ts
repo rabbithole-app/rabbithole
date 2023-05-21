@@ -15,7 +15,7 @@ interface State {
     storages: CanisterDetailsRaw[];
     journalLoading: boolean;
     storagesLoading: boolean;
-    storageVersion: string;
+    storageVersion: bigint;
 }
 
 @Injectable()
@@ -86,7 +86,7 @@ export class CanistersService extends RxState<State> {
             this.bucketsService.select('storages').pipe(
                 filter(storages => storages.length > 0),
                 map(storages => storages[0]),
-                switchMap(({ actor }) => actor.getVersion()),
+                switchMap(({ actor }) => actor.version()),
                 catchError(err => {
                     console.error(err);
                     return EMPTY;

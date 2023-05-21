@@ -9,13 +9,23 @@ import { PushModule } from '@rx-angular/template/push';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { trigger } from '@angular/animations';
-import { shareReplay, tap } from 'rxjs';
+import { Observable, map, shareReplay, tap } from 'rxjs';
 
 import { SETTINGS_RX_STATE } from '@core/stores';
 import { addFASvgIcons } from '@core/utils';
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { SidebarService } from '../../services/sidebar.service';
 import { UploadService } from '@features/upload/services';
+import { ForModule } from '@rx-angular/template/for';
+
+type NavigationItem = {
+    link: string;
+    label: string;
+    icon: string;
+    activeIcon: string;
+    disabled?: boolean;
+    visibleInExpertMode?: boolean;
+};
 
 @Component({
     selector: 'app-sidebar-content',
@@ -30,7 +40,8 @@ import { UploadService } from '@features/upload/services';
         PushModule,
         IfModule,
         MatButtonModule,
-        MatMenuModule
+        MatMenuModule,
+        ForModule
     ],
     templateUrl: './sidebar-content.component.html',
     styleUrls: ['./sidebar-content.component.scss'],
@@ -38,14 +49,17 @@ import { UploadService } from '@features/upload/services';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarContentComponent {
-    readonly navigation = [
+    readonly navigation: NavigationItem[] = [
         { link: 'drive', label: 'navigation.my-files', icon: 'far:house', activeIcon: 'fas:house' },
-        { link: 'canisters', label: 'navigation.canisters', icon: 'far:database', activeIcon: 'fas:database' },
+        { link: 'canisters', label: 'navigation.canisters', icon: 'far:database', activeIcon: 'fas:database', visibleInExpertMode: true },
         { link: 'shared', label: 'navigation.shared', icon: 'far:share', activeIcon: 'fas:share', disabled: true },
         { link: 'favorites', label: 'navigation.favorites', icon: 'far:star', activeIcon: 'fas:star', disabled: true },
         { link: 'trash', label: 'navigation.trash', icon: 'far:trash-can', activeIcon: 'fas:trash-can', disabled: true }
     ];
     settingsState = inject(SETTINGS_RX_STATE);
+    navigation$: Observable<NavigationItem[]> = this.settingsState
+        .select('expertMode')
+        .pipe(map(expertMode => (expertMode ? this.navigation : this.navigation.filter(({ visibleInExpertMode }) => !visibleInExpertMode))));
     sidebarService = inject(SidebarService);
     uploadService = inject(UploadService);
     isFull$ = this.sidebarService.select('isFull').pipe(shareReplay(1));
@@ -64,5 +78,9 @@ export class SidebarContentComponent {
         const input = event.target as HTMLInputElement;
         const files: FileList = input.files as FileList;
         this.uploadService.add(files);
+    }
+
+    trackNavItem(index: number, item: NavigationItem) {
+        return item.link;
     }
 }

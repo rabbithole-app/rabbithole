@@ -22,12 +22,10 @@ export interface AuthState {
     identity: Identity;
     isAuthenticated: boolean;
     worker: Worker;
-    canInvite: boolean;
 }
 
 export const authStateFactory = () => {
     const state = new RxState<AuthState>();
-    state.set({ canInvite: false });
     state
         .select('identity')
         .pipe(map(identity => identity.getPrincipal().toText()))
@@ -73,13 +71,7 @@ export const authStateFactory = () => {
             );
         })
     );
-    const canInvite$ = state.select('isAuthenticated').pipe(
-        filter(v => v),
-        switchMap(() => state.select('actor')),
-        switchMap(actor => actor.canInvite()),
-        map(canInvite => ({ canInvite }))
-    );
-    state.connect(merge(init$, anonymous$, authenticated$, canInvite$));
+    state.connect(merge(init$, anonymous$, authenticated$));
 
     if (typeof Worker !== 'undefined') {
         const worker = new Worker(new URL('../workers/auth.worker', import.meta.url));

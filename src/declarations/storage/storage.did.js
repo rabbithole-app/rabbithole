@@ -1,7 +1,44 @@
 export const idlFactory = ({ IDL }) => {
-    const HeaderField__1 = IDL.Tuple(IDL.Text, IDL.Text);
-    const ID__2 = IDL.Text;
+    const RawTree = IDL.Rec();
     const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
+    const CommitBatch = IDL.Record({
+        headers: IDL.Vec(HeaderField),
+        chunkIds: IDL.Vec(IDL.Nat),
+        batchId: IDL.Nat
+    });
+    const ID__3 = IDL.Text;
+    const Time = IDL.Int;
+    const BucketId = IDL.Principal;
+    const File = IDL.Record({
+        id: ID__3,
+        name: IDL.Text,
+        createdAt: Time,
+        bucketId: BucketId,
+        fileSize: IDL.Nat,
+        updatedAt: Time,
+        parentId: IDL.Opt(ID__3)
+    });
+    const FileCreateError = IDL.Variant({
+        illegalCharacters: IDL.Null,
+        alreadyExists: File
+    });
+    const CommitUploadError = IDL.Variant({
+        chunkWrongBatch: IDL.Nat,
+        empty: IDL.Null,
+        batchNotFound: IDL.Null,
+        addFile: FileCreateError,
+        chunkNotFound: IDL.Nat,
+        batchExpired: IDL.Null
+    });
+    const Result = IDL.Variant({ ok: IDL.Null, err: CommitUploadError });
+    const ID__2 = IDL.Text;
+    const Key = IDL.Vec(IDL.Nat8);
+    RawTree.fill(
+        IDL.Variant({
+            subtree: IDL.Vec(IDL.Tuple(Key, RawTree)),
+            value: IDL.Vec(IDL.Nat8)
+        })
+    );
     const HttpRequest = IDL.Record({
         url: IDL.Text,
         method: IDL.Text,
@@ -15,10 +52,14 @@ export const idlFactory = ({ IDL }) => {
         headers: IDL.Vec(HeaderField),
         index: IDL.Nat
     });
+    const StreamingCallbackHttpResponse__1 = IDL.Record({
+        token: IDL.Opt(StreamingCallbackToken__1),
+        body: IDL.Vec(IDL.Nat8)
+    });
     const StreamingStrategy = IDL.Variant({
         Callback: IDL.Record({
             token: StreamingCallbackToken__1,
-            callback: IDL.Func([], [], [])
+            callback: IDL.Func([StreamingCallbackToken__1], [StreamingCallbackHttpResponse__1], ['query'])
         })
     });
     const HttpResponse = IDL.Record({
@@ -39,36 +80,35 @@ export const idlFactory = ({ IDL }) => {
     });
     const ID = IDL.Text;
     const AssetKey = IDL.Record({
-        id: ID,
+        sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
         name: IDL.Text,
         fileSize: IDL.Nat,
         parentId: IDL.Opt(ID)
     });
+    const InitUpload = IDL.Record({ batchId: IDL.Nat });
     const Chunk = IDL.Record({
         content: IDL.Vec(IDL.Nat8),
         batchId: IDL.Nat
     });
-    const StorageBucket = IDL.Service({
-        commitUpload: IDL.Func(
-            [
-                IDL.Record({
-                    headers: IDL.Vec(HeaderField__1),
-                    chunkIds: IDL.Vec(IDL.Nat),
-                    batchId: IDL.Nat
-                })
-            ],
-            [],
-            []
-        ),
+    const UploadChunk = IDL.Record({ chunkId: IDL.Nat });
+    const Storage = IDL.Service({
+        batchAlive: IDL.Func([IDL.Nat], [], []),
+        commitUpload: IDL.Func([CommitBatch, IDL.Bool], [Result], []),
         delete: IDL.Func([ID__2], [], []),
+        getAssetsTotalSize: IDL.Func([], [IDL.Nat], ['query']),
+        getCertTree: IDL.Func([], [RawTree], ['query']),
+        getHeapSize: IDL.Func([], [IDL.Nat], ['query']),
+        getMaxLiveSize: IDL.Func([], [IDL.Nat], ['query']),
+        getMemorySize: IDL.Func([], [IDL.Nat], ['query']),
+        getStableMemorySize: IDL.Func([], [IDL.Nat], []),
         getUsedMemorySize: IDL.Func([], [IDL.Nat], []),
-        getVersion: IDL.Func([], [IDL.Text], ['query']),
         http_request: IDL.Func([HttpRequest], [HttpResponse], ['query']),
         http_request_streaming_callback: IDL.Func([StreamingCallbackToken], [StreamingCallbackHttpResponse], ['query']),
-        initUpload: IDL.Func([AssetKey], [IDL.Record({ batchId: IDL.Nat })], []),
-        uploadChunk: IDL.Func([Chunk], [IDL.Record({ chunkId: IDL.Nat })], [])
+        initUpload: IDL.Func([AssetKey], [InitUpload], []),
+        uploadChunk: IDL.Func([Chunk], [UploadChunk], []),
+        version: IDL.Func([], [IDL.Nat], ['query'])
     });
-    return StorageBucket;
+    return Storage;
 };
 export const init = ({ IDL }) => {
     return [IDL.Principal];

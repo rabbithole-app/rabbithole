@@ -3,6 +3,7 @@
 import { IDL } from '@dfinity/candid';
 import { Command, InvalidArgumentError, Option } from 'commander';
 import { Listr } from 'listr2';
+import { Principal } from '@dfinity/principal';
 import { defer, Observable, map, from, switchMap, concat, concatMap, range } from 'rxjs';
 import { loadWasm } from './utils/code.utils.mjs';
 import { rabbitholeActorIC, rabbitholeActorLocal } from './actors/rabbithole.actors.mjs';
@@ -11,6 +12,7 @@ import { journalActorIC, journalActorLocal } from './actors/journal.actors.mjs';
 const program = new Command();
 program
     .addOption(new Option('-l, --list', 'Show only the list of canisters').default(false).conflicts(['concurrent']))
+    .addOption(new Option('--canister-id <canisterId>', 'Install code to specific canister id').conflicts(['concurrent']).argParser(parsePrincipal))
     .addOption(new Option('-t, --type <type>', 'User canister type. By default, the type of canisters is journal').default('journal').choices(['journal', 'storage']))
     .addOption(new Option('-m, --mode <mode>', 'Specifies the type of deployment. You can set the canister deployment modes to install, reinstall, or upgrade.').default('upgrade').choices(['upgrade', 'install', 'reinstall']))
     .addOption(
@@ -25,6 +27,15 @@ program
     );
 
 program.parse(process.argv);
+
+function parsePrincipal(principal) {
+    try {
+        Principal.fromText(principal);
+        return principal;
+    } catch (_) {
+        throw new InvalidArgumentError('Not a principal.');
+    }
+};
 
 function myParseInt(value) {
     // parseInt takes a string and a radix
@@ -49,8 +60,18 @@ function myParseInt(value) {
         },
         {
             title: 'Get list of journal canisters',
-            task: async ctx => {
+            task: async (ctx, task) => {
                 ctx.list = await ctx.actor.listBuckets('journal');
+
+                if (opts.canisterId) {
+                    ctx.list = ctx.list.filter(([_, bucketId]) => bucketId.toText() === opts.canisterId);
+                }
+                if (opts.list) {
+                    return task.newListr(
+                        ctx.list.map(([_, bucketId]) => ({ title: bucketId.toText(), task: () => {} })),
+                        { rendererOptions: { collapseSubtasks: false } }
+                    );
+                }
             }
         },
         {
@@ -70,8 +91,8 @@ function myParseInt(value) {
             },
             enabled: () => opts.type === 'storage' && !opts.list,
             task: (ctx, task) => 
-                task.newListr(ctx.list.map(([_, bucketId]) => {
-                    return {
+                task.newListr(
+                    ctx.list.map(([_, bucketId]) => ({
                         title: bucketId.toText(),
                         task: () => new Observable(subscriber => {
                             subscriber.next('Create actor');
@@ -109,8 +130,9 @@ function myParseInt(value) {
                             ).subscribe(subscriber);
                             return () => subscription.unsubscribe();
                         })
-                    }
-                }), { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapse: false } })
+                    })),
+                    { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapseSubtasks: false } }
+                )
         },
         {
             title: `Upgrading canisters`,
@@ -121,8 +143,8 @@ function myParseInt(value) {
             },
             enabled: () => opts.type === 'journal' && !opts.list,
             task: async (ctx, task) => 
-                task.newListr(ctx.list.map(([owner, bucketId]) => {
-                    return {
+                task.newListr(
+                    ctx.list.map(([owner, bucketId]) => ({
                         title: bucketId.toText(),
                         task: () => defer(() => {
                             const arg = IDL.encode([IDL.Principal], [owner]);
@@ -133,8 +155,9 @@ function myParseInt(value) {
                                 mode: { [opts.mode]: null }
                             }));
                         })
-                    }
-                }), { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapse: false } })
+                    })),
+                    { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapseSubtasks: false } }
+                )
         }
     ]);
 

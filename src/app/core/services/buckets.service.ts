@@ -5,10 +5,13 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import {
     catchError,
+    combineLatest,
     combineLatestWith,
     concat,
     connect,
     defer,
+    filter,
+    first,
     from,
     iif,
     map,
@@ -19,11 +22,12 @@ import {
     startWith,
     Subject,
     switchMap,
+    tap,
     throwError,
     toArray
 } from 'rxjs';
 import { fromNullable } from '@dfinity/utils';
-import { isUndefined } from 'lodash';
+import { isNull, isUndefined } from 'lodash';
 
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
@@ -31,6 +35,7 @@ import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 import { AUTH_RX_STATE } from 'app/core/stores/auth';
 import { createActor } from 'app/core/utils/create-actor';
+import { getStorageBySize } from '@features/upload/operators';
 
 type Bucket<T> = {
     actor: ActorSubclass<T>;
@@ -115,5 +120,31 @@ export class BucketsService extends RxState<State> {
 
     update() {
         this.updateJournal.next();
+    }
+
+    getStorage(canisterId: string): Observable<Bucket<StorageActor>> {
+        return combineLatest([this.select('storages'), this.authState.select('identity')]).pipe(
+            switchMap(([storages, identity]) => {
+                const found: Bucket<StorageActor> | undefined = storages.find(value => canisterId === value.canisterId);
+                if (found) {
+                    return of(found);
+                } else {
+                    return createActor<StorageActor>({ canisterId, idlFactory: storageIdlFactory, identity }).pipe(
+                        map(actor => ({ actor, canisterId })),
+                        tap(storage => this.set('storages', state => ([...state.storages, storage])))
+                    );
+                }
+            })
+        );
+    }
+
+    getStorageBySize(fileSize: bigint): Observable<Bucket<StorageActor>> {
+        return this.select('journal').pipe(
+            first(),
+            filter(actor => !isNull(actor)),
+            map(actor => actor as NonNullable<typeof actor>),
+            switchMap(actor => getStorageBySize(actor, fileSize)),
+            switchMap(bucketId => this.getStorage(bucketId.toText()))
+        );
     }
 }

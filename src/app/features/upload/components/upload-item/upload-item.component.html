@@ -11,7 +11,7 @@
         class="cancel"
         mat-icon-button
         (click)="handleCancel($event)"
-        *ngIf="status === UploadStatus.Processing"
+        *ngIf="[UploadStatus.Processing, UploadStatus.Init, UploadStatus.Request].includes(status)"
         matTooltip="Cancel"
         matTooltipPosition="below">
         <mat-icon svgIcon="far:xmark"></mat-icon>
@@ -48,10 +48,6 @@
     </div>
 </div>
 <mat-progress-bar
-    *ngIf="
-        [UploadStatus.Queue, UploadStatus.Init, UploadStatus.Finalize, UploadStatus.Request, UploadStatus.Processing, UploadStatus.Paused].includes(
-            $any(status)
-        )
-    "
+    *ngIf="status !== UploadStatus.Failed"
     [mode]="status === UploadStatus.Queue ? 'indeterminate' : 'determinate'"
     [value]="progress"></mat-progress-bar>

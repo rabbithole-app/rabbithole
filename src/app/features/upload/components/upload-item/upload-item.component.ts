@@ -16,6 +16,7 @@ import { addFASvgIcons } from '@core/utils';
 interface State {
     data: FileUploadState;
     status: UPLOAD_STATUS;
+    // buttons: Record<'pause' | 'resume' | 'cancel' | 'repeat', boolean>;
 }
 
 @Component({
@@ -56,7 +57,7 @@ export class UploadItemComponent {
     }
     @HostBinding('class.pausable')
     @Input()
-    pausable = false;
+    pausable = true;
     @Output() pauseUpload: EventEmitter<void> = new EventEmitter<void>();
     @Output() resumeUpload: EventEmitter<void> = new EventEmitter<void>();
     @Output() repeatUpload: EventEmitter<void> = new EventEmitter<void>();

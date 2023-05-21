@@ -2,7 +2,6 @@ import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Types = "../types/types";
 import IC = "../types/ic";
-import StorageTypes = "../storage/types";
 
 module {
     type BucketId = Types.BucketId;

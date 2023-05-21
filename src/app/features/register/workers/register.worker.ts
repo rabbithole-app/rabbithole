@@ -12,7 +12,6 @@ interface State {
     actor: ActorSubclass<RabbitholeActor>;
 }
 const state = new RxState<State>();
-state.select().subscribe(console.log);
 
 addEventListener('message', ({ data }: MessageEvent) => {
     console.log('register worker:', data);

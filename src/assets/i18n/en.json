@@ -31,6 +31,9 @@
         },
         "theme": {
             "label": "Theme"
+        },
+        "expertMode": {
+            "label": "Expert mode"
         }
     },
     "table": {

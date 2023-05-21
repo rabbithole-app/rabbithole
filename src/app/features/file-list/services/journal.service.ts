@@ -1,25 +1,19 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
-import { defer, EMPTY, first, from, iif, Observable, of, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
-import { get, has, isNil, isNull, orderBy } from 'lodash';
+import { defer, EMPTY, iif, Observable, of, throwError } from 'rxjs';
+import { first, catchError, switchMap, tap } from 'rxjs/operators';
+import { get, has, isNil, orderBy } from 'lodash';
 import { saveAs } from 'file-saver';
 
-import { createActor } from '@core/utils';
-import { AUTH_RX_STATE, Bucket } from '@core/stores';
 import { BucketsService, NotificationService } from '@core/services';
 import { Directory, DirectoryMoveError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
-import { idlFactory as storageIdlFactory } from 'declarations/storage';
-import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 import { DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
 import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
-import { getStorage } from '@features/upload/operators';
 
 export interface BucketActor<T> {
     bucketId: Principal;
@@ -33,9 +27,7 @@ export class JournalService {
     private notificationService = inject(NotificationService);
     private snackbarProgressService = inject(SnackbarProgressService);
     private fileListState = inject(FILE_LIST_RX_STATE);
-    private authState = inject(AUTH_RX_STATE);
     private translocoService = inject(TranslocoService);
-    private httpClient = inject(HttpClient);
 
     async createDirectory({ id, name, parentId }: { id: string; name: string; parentId?: string }) {
         const tempDirectory: DirectoryExtended = { id, name, parentId, type: 'folder', color: 'blue', children: undefined, loading: true, disabled: true };
@@ -108,22 +100,12 @@ export class JournalService {
             .subscribe(() => this.updateItems(id => selectedIds.includes(id), { disabled: false }));
     }
 
-    download(selected: JournalItem[]) {
-        from(selected)
-            .pipe(
-                filter(({ type }) => type === 'file'),
-                map(v => v as FileInfoExtended),
-                mergeMap(item =>
-                    this.httpClient
-                        .get(item.downloadUrl, {
-                            observe: 'response',
-                            responseType: 'blob'
-                        })
-                        .pipe(map(response => ({ blob: response.body as Blob, name: item.name })))
-                )
-            )
-            .subscribe(({ blob, name }) => {
-                saveAs(blob, name);
+    async download(selected: JournalItem[]) {
+        selected
+            .filter(({ type }) => type === 'file')
+            .map(v => v as FileInfoExtended)
+            .forEach(async ({ downloadUrl, name }) => {
+                saveAs(downloadUrl, name);
             });
     }
 
@@ -171,28 +153,6 @@ export class JournalService {
 
     private updateBreadcrumbs(iteratee: (id: string) => boolean, value: Partial<DirectoryExtended>) {
         this.fileListState.set('breadcrumbs', state => state.breadcrumbs.map(item => (iteratee(item.id) ? { ...item, ...value } : item)));
-    }
-
-    getStorage(fileSize: bigint): Observable<Bucket<StorageActor>> {
-        return this.bucketsService.select('journal').pipe(
-            first(),
-            filter(actor => !isNull(actor)),
-            map(actor => actor as NonNullable<typeof actor>),
-            switchMap(actor => getStorage(actor, fileSize)),
-            withLatestFrom(this.bucketsService.select('storages'), this.authState.select('identity')),
-            switchMap(([bucketId, storages, identity]) => {
-                const canisterId = bucketId.toText();
-                const found: Bucket<StorageActor> | undefined = storages.find(value => canisterId === value.canisterId);
-                if (found) {
-                    return of(found);
-                } else {
-                    return createActor<StorageActor>({ identity, idlFactory: storageIdlFactory, canisterId }).pipe(
-                        map(actor => ({ actor, canisterId })),
-                        tap(value => this.bucketsService.set('storages', state => [...state.storages, value]))
-                    );
-                }
-            })
-        );
     }
 
     /*

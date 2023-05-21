@@ -11,13 +11,14 @@ import { map, takeUntil } from 'rxjs/operators';
 
 import { ROUTE_ANIMATIONS_ELEMENTS } from '@core/animations';
 import { SETTINGS_RX_STATE, SettingsState } from '@core/stores';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
     selector: 'app-settings',
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, MatFormFieldModule, MatSelectModule, MatOptionModule, ReactiveFormsModule, TranslocoModule],
+    imports: [CommonModule, MatFormFieldModule, MatSelectModule, MatOptionModule, ReactiveFormsModule, TranslocoModule, MatSlideToggleModule],
     standalone: true
 })
 export class SettingsComponent implements OnInit, OnDestroy {
@@ -28,19 +29,20 @@ export class SettingsComponent implements OnInit, OnDestroy {
     ];
     readonly languages = [
         { value: 'en', label: 'English' },
-        // { value: 'de', label: 'Deutsch' },
-        { value: 'ru', label: 'Русский' }
+        { value: 'de', label: 'Deutsch', disabled: true },
+        { value: 'ru', label: 'Русский', disabled: true }
     ];
     settingsState = inject(SETTINGS_RX_STATE);
     settingsForm = new FormGroup({
         language: new FormControl('en'),
-        theme: new FormControl({ value: 'light-theme', disabled: true })
+        theme: new FormControl({ value: 'light-theme', disabled: true }),
+        expertMode: new FormControl(false)
     });
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     ngOnInit(): void {
         this.settingsState
-            .select(selectSlice(['language', 'theme']))
+            .select(selectSlice(['language', 'theme', 'expertMode']))
             .pipe(takeUntil(this.destroyed))
             .subscribe(state => {
                 this.settingsForm.setValue(state, { emitEvent: false });

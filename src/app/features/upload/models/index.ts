@@ -1,5 +1,4 @@
 import { ActorSubclass } from '@dfinity/agent';
-import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 
 export type Bucket<T> = {
     actor: ActorSubclass<T>;
@@ -29,6 +28,7 @@ export type FileUpload = {
     name: string;
     fileSize: number;
     contentType: string;
+    sha256?: Uint8Array;
 };
 
 export type BatchInfo = {
@@ -44,7 +44,7 @@ export type ChunkUpload = Pick<FileUpload, 'id' | 'data'> & {
 export type FileUploadState = {
     id: string;
     name: string;
-    storage?: Bucket<StorageActor>;
+    canisterId?: string;
     loaded: number;
     total: number;
     batch?: BatchInfo;

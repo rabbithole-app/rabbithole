@@ -1,6 +1,5 @@
-import CRC32 "./CRC32";
-import SHA224 "./SHA224";
-
+import CRC32 "mo:hash/CRC32";
+import SHA256 "mo:mrr/Sha256";
 import Array "mo:base/Array";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
@@ -27,14 +26,16 @@ module {
     };
 
     public func accountIdentifier(principal : Principal, subaccount : Subaccount) : AccountIdentifier {
-        let hash = SHA224.Digest();
-        hash.write([0x0A]);
-        hash.write(Blob.toArray(Text.encodeUtf8("account-id")));
-        hash.write(Blob.toArray(Principal.toBlob(principal)));
-        hash.write(Blob.toArray(subaccount));
-        let hashSum = hash.sum();
-        let crc32Bytes = beBytes(CRC32.ofArray(hashSum));
-        Blob.fromArray(Array.append(crc32Bytes, hashSum));
+        let hash = SHA256.Digest(#sha224);
+        hash.writeArray([0x0A]);
+        hash.writeBlob(Text.encodeUtf8("account-id"));
+        hash.writeBlob(Principal.toBlob(principal));
+        hash.writeBlob(subaccount);
+        let hashSum : [Nat8] = Blob.toArray(hash.sum());
+        let crc32Bytes : [Nat8] = beBytes(CRC32.checksum(hashSum));
+        let buffer = Buffer.fromArray<Nat8>(crc32Bytes);
+        buffer.append(Buffer.fromArray(hashSum));
+        Blob.fromArray(Buffer.toArray(buffer));
     };
 
     public func validateAccountIdentifier(accountIdentifier : AccountIdentifier) : Bool {
@@ -44,16 +45,18 @@ module {
         let a = Blob.toArray(accountIdentifier);
         let accIdPart = Array.tabulate(28, func(i : Nat) : Nat8 { a[i + 4] });
         let checksumPart = Array.tabulate(4, func(i : Nat) : Nat8 { a[i] });
-        let crc32 = CRC32.ofArray(accIdPart);
+        let crc32 = CRC32.checksum(accIdPart);
         Array.equal(beBytes(crc32), checksumPart, Nat8.equal);
     };
 
     public func principalToSubaccount(principal : Principal) : Blob {
-        let idHash = SHA224.Digest();
-        idHash.write(Blob.toArray(Principal.toBlob(principal)));
-        let hashSum = idHash.sum();
-        let crc32Bytes = beBytes(CRC32.ofArray(hashSum));
-        Blob.fromArray(Array.append(crc32Bytes, hashSum));
+        let idHash = SHA256.Digest(#sha224);
+        idHash.writeBlob(Principal.toBlob(principal));
+        let hashSum : [Nat8] = Blob.toArray(idHash.sum());
+        let crc32Bytes : [Nat8] = beBytes(CRC32.checksum(hashSum));
+        let buffer = Buffer.fromArray<Nat8>(crc32Bytes);
+        buffer.append(Buffer.fromArray(hashSum));
+        Blob.fromArray(Buffer.toArray(buffer));
     };
 
     public func canisterToSubaccount(id : Principal) : Blob {

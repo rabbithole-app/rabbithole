@@ -2,20 +2,20 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ViewChild, ViewConta
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLinkWithHref } from '@angular/router';
+import { IfModule } from '@rx-angular/template/if';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { AsyncSubject, filter, map, startWith, switchMap, takeUntil } from 'rxjs';
+import { AsyncSubject, filter, map, switchMap, takeUntil } from 'rxjs';
 import { isUndefined } from 'lodash';
 
 import { AvatarComponent } from '../avatar/avatar.component';
-import { AuthService } from '@core/services';
+import { AuthService, ProfileService } from '@core/services';
 import { WalletComponent } from '@features/wallet/wallet.component';
 import { addFASvgIcons } from '@core/utils';
 import { CustomOverlayRef } from '@core/components/overlay';
 import { UploadTriggerComponent } from '@features/upload/components/upload-trigger/upload-trigger.component';
-import { RouterLinkWithHref } from '@angular/router';
-import { AUTH_RX_STATE } from '@core/stores';
-import { IfModule } from '@rx-angular/template/if';
+import { SETTINGS_RX_STATE } from '@core/stores';
 
 interface State {
     openedMenu?: CustomOverlayRef;
@@ -45,8 +45,10 @@ export class UserMenuComponent extends RxState<State> implements AfterViewInit {
     @ViewChild('menu', { read: MatMenu }) menu!: MatMenu;
     @ViewChild('trigger', { read: MatMenuTrigger }) trigger!: MatMenuTrigger;
     authService = inject(AuthService);
-    private authState = inject(AUTH_RX_STATE);
-    canInvite$ = this.authState.select('canInvite').pipe(startWith(false));
+    private settingsState = inject(SETTINGS_RX_STATE);
+    expertMode$ = this.settingsState.select('expertMode');
+    private profileService = inject(ProfileService);
+    canInvite$ = this.profileService.select('canInvite');
     private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     constructor() {

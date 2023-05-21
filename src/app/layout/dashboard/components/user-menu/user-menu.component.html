@@ -17,7 +17,7 @@
             <mat-icon svgIcon="far:gear"></mat-icon>
             <span>{{ t('navigation.settings') }}</span>
         </button>
-        <button mat-menu-item routerLink="canisters">
+        <button mat-menu-item routerLink="canisters" *rxIf="expertMode$">
             <mat-icon svgIcon="far:database"></mat-icon>
             <span>{{ t('navigation.canisters') }}</span>
         </button>

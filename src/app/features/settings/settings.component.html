@@ -1,23 +1,24 @@
-<ng-container *transloco='let t'>
+<ng-container *transloco='let t; read "settings"'>
     <div class="mat-typography" [ngClass]="routeAnimationsElements">
-        <h1>{{ t('settings.title') }}</h1>
+        <h1>{{ t('title') }}</h1>
         <form class="grid-form" [formGroup]="settingsForm">
             <mat-form-field>
-                <mat-label>{{ t('settings.language.label') }}</mat-label>
+                <mat-label>{{ t('language.label') }}</mat-label>
                 <mat-select formControlName="language" name="language">
-                    <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                    <mat-option *ngFor="let lang of languages" [value]="lang.value" [disabled]="lang.disabled ?? false">
                         {{ lang.label }}
                     </mat-option>
                 </mat-select>
             </mat-form-field>
             <mat-form-field>
-                <mat-label>{{ t('settings.theme.label') }}</mat-label>
+                <mat-label>{{ t('theme.label') }}</mat-label>
                 <mat-select formControlName="theme" name="theme">
                     <mat-option *ngFor="let theme of themes" [value]="theme.value">
                         {{ theme.label }}
                     </mat-option>
                 </mat-select>
             </mat-form-field>
+            <mat-slide-toggle color="primary" formControlName="expertMode">{{ t('expertMode.label') }}</mat-slide-toggle>
         </form>
     </div>
 </ng-container>

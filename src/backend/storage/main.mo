@@ -1,124 +1,146 @@
-import Nat64 "mo:base/Nat64";
-import Hash "mo:base/Hash";
-import Principal "mo:base/Principal";
-import Error "mo:base/Error";
-import Option "mo:base/Option";
-import Text "mo:base/Text";
-import Buffer "mo:base/Buffer";
-import Result "mo:base/Result";
-import HashMap "mo:base/HashMap";
-import Nat "mo:base/Nat";
-import Time "mo:base/Time";
-import Trie "mo:base/Trie";
 import StableMemory "mo:base/ExperimentalStableMemory";
-import Cycles "mo:base/ExperimentalCycles";
-
-import StorageTypes "types";
+import Result "mo:base/Result";
 import Types "../types/types";
+import StorageTypes "types";
 import HTTP "../types/http";
 import JournalTypes "../journal/types";
 import Utils "../utils/utils";
-import IC "../types/ic";
-import Debug "mo:base/Debug";
+import Blob "mo:base/Blob";
+import Time "mo:base/Time";
+import Principal "mo:base/Principal";
+import Error "mo:base/Error";
+import Nat32 "mo:base/Nat32";
+import { recurringTimer; cancelTimer } "mo:base/Timer";
+import HashMap "mo:base/HashMap";
+import Hash "mo:base/Hash";
+import Map "mo:hashmap/Map";
+import Buffer "mo:base/Buffer";
+import Nat "mo:base/Nat";
+import Prelude "mo:base/Prelude";
+import Array "mo:base/Array";
 import Iter "mo:base/Iter";
+import TrieSet "mo:base/TrieSet";
+import CRC32 "mo:hash/CRC32";
+import Option "mo:base/Option";
+import Text "mo:base/Text";
+import Nat8 "mo:base/Nat8";
+import Nat64 "mo:base/Nat64";
+import Debug "mo:base/Debug";
+import Float "mo:base/Float";
+import Prim "mo:prim";
+import Trie "mo:base/Trie";
 
-shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = this {
-    private let BATCH_EXPIRY_NANOS = 300_000_000_000;
-    // минимальное кол-во циклов до вступления канистры в состояние заморозки, при котором необходимо пополнять канистру
-    private let CYCLE_THRESHOLD = 250_000_000_000;
+import CBOR "mo:cbor/Decoder";
+import CertTree "mo:ic-certification/CertTree";
+import ReqData "mo:ic-certification/ReqData";
+import CanisterSigs "mo:ic-certification/CanisterSigs";
+import MerkleTree "mo:ic-certification/MerkleTree";
+import CertifiedData "mo:base/CertifiedData";
+import SHA256 "mo:mrr/Sha256";
+import Hex "mo:encoding/Hex";
 
-    type Asset = StorageTypes.Asset;
-    type AssetKey = StorageTypes.AssetKey;
-    type ID = Types.ID;
+shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
+	type ID = Types.ID;
+	type Asset = StorageTypes.Asset;
+	type AssetKey = StorageTypes.AssetKey;
     type AssetEncoding = StorageTypes.AssetEncoding;
-    type Chunk = StorageTypes.Chunk;
-    type Batch = StorageTypes.Batch;
-
-    type HttpRequest = HTTP.HttpRequest;
+	type Chunk = StorageTypes.Chunk;
+	type Batch = StorageTypes.Batch;
+	type CommitBatch = StorageTypes.CommitBatch;
+	type UploadChunk = StorageTypes.UploadChunk;
+	type InitUpload = StorageTypes.InitUpload;
+	type CommitUploadError = StorageTypes.CommitUploadError;
+	type HttpRequest = HTTP.HttpRequest;
     type HttpResponse = HTTP.HttpResponse;
     type HeaderField = HTTP.HeaderField;
     type StreamingCallbackHttpResponse = HTTP.StreamingCallbackHttpResponse;
     type StreamingCallbackToken = HTTP.StreamingCallbackToken;
     type StreamingStrategy = HTTP.StreamingStrategy;
 
-    stable var assets : Trie.Trie<Text, Asset> = Trie.empty();
-    var batches : HashMap.HashMap<Nat, Batch> = HashMap.HashMap<Nat, Batch>(10, Nat.equal, Hash.hash);
-    var chunks : HashMap.HashMap<Nat, Chunk> = HashMap.HashMap<Nat, Chunk>(10, Nat.equal, Hash.hash);
-    var nextBatchID : Nat = 0;
-    var nextChunkID : Nat = 0;
-    let journal : JournalTypes.Self = actor (Principal.toText(installer));
-    let ic : IC.Self = actor "aaaaa-aa";
-    let defaultHeader : [HeaderField] = [("Access-Control-Allow-Origin", "*")];
+	let VERSION : Nat = 4;
+	let BATCH_EXPIRY_NANOS = 300_000_000_000; // 5 minutes
+	// let CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS : Nat = 3600; // 1 hour
+	
+	var nextBatchID : Nat = 0;
+	var nextChunkID : Nat = 0;
 
-    // таймер мониторинга циклов
-    // private let timerId : ?Nat = null;
-    // private let ic : IC.Self = actor "aaaaa-aa";
+	let { nhash; thash } = Map;
+    stable var assets : Trie.Trie<ID, Asset> = Trie.empty();
+	var batches : Map.Map<Nat, Batch> = Map.new<Nat, Batch>(nhash);
+    var chunks : Map.Map<Nat, Chunk> = Map.new<Nat, Chunk>(nhash);
+	let journal : JournalTypes.Self = actor (Principal.toText(installer));
+    // let hashesQueue : Queue.Queue<{ chunkId : Nat }> = Queue.Queue<{}>();
+
+    stable let certStore : CertTree.Store = CertTree.newStore();
+    let ct = CertTree.Ops(certStore);
+    let csm = CanisterSigs.Manager(ct, null);
+
+    public query func getCertTree() : async MerkleTree.RawTree {
+        MerkleTree.structure(certStore.tree);
+    };
+	
+	public query func version() : async Nat { VERSION };
 
     /**
      * HTTP
      */
 
-    public shared query ({ caller }) func http_request({ method : Text; url : Text } : HttpRequest) : async HttpResponse {
+    public query ({ caller }) func http_request({ method : Text; url : Text } : HttpRequest) : async HttpResponse {
         try {
             if (Text.notEqual(method, "GET")) {
                 return {
                     body = Text.encodeUtf8("Method Not Allowed.");
-                    headers = [];
+                    headers = getHeaders(null);
                     status_code = 405;
                     streaming_strategy = null;
                 };
             };
 
-            let result : Result.Result<Asset, Text> = getAssetForUrl(url);
-
-            switch (result) {
-                case (#ok { key : AssetKey; headers : [HeaderField]; encoding : AssetEncoding }) {
-                    return {
-                        body = encoding.contentChunks[0];
-                        headers = getHeaders(?headers);
-                        status_code = 200;
-                        streaming_strategy = createStrategy(key, encoding, headers);
-                    };
-                };
-                case (#err error) {};
-            };
-
-            return {
+            let #ok(asset)  = getAssetByURL(url) else return {
                 body = Text.encodeUtf8("Permission denied. Could not perform this operation.");
-                headers = [];
+                headers = getHeaders(null);
                 status_code = 403;
                 streaming_strategy = null;
+            };
+            
+            {
+                body = asset.encoding.contentChunks[0];
+                headers = getHeaders(?asset);
+                status_code = 200;
+                streaming_strategy = createStrategy(asset);
             };
         } catch (err) {
             return {
                 body = Text.encodeUtf8("Unexpected error: " # Error.message(err));
-                headers = [];
+                headers = getHeaders(null);
                 status_code = 500;
                 streaming_strategy = null;
             };
         };
     };
 
-    public shared query ({ caller }) func http_request_streaming_callback(
-        streamingToken : StreamingCallbackToken
-    ) : async StreamingCallbackHttpResponse {
-        let result : Result.Result<Asset, Text> = getAsset(streamingToken.id);
-
-        switch (result) {
-            case (#ok { key : AssetKey; headers : [HeaderField]; encoding : AssetEncoding }) {
-                return {
-                    token = createToken(key, streamingToken.index, encoding, headers);
-                    body = encoding.contentChunks[streamingToken.index];
-                };
-            };
-            case (#err error) {
-                throw Error.reject("Streamed asset not found: " # error);
-            };
-        };
+    public query ({ caller }) func http_request_streaming_callback(streamingToken : StreamingCallbackToken) : async StreamingCallbackHttpResponse {
+        let #ok(asset) = getAsset(streamingToken.id) else throw Error.reject("Streamed asset not found");
+        let token : ?StreamingCallbackToken = createToken(asset, streamingToken.index);
+        { token; body = asset.encoding.contentChunks[streamingToken.index] };
     };
 
-    func createStrategy(key : AssetKey, encoding : AssetEncoding, headers : [HeaderField]) : ?StreamingStrategy {
-        let streamingToken : ?StreamingCallbackToken = createToken(key, 0, encoding, headers);
+    func getAssetByURL(url : Text) : Result.Result<Asset, { #noUrl; #notFound }> {
+        if (Text.size(url) == 0) {
+            return #err(#noUrl);
+        };
+
+        let id = Text.trimStart(url, #char '/');
+        getAsset(id);
+    };
+
+    func getAsset(id : ID) : Result.Result<Asset, { #notFound }> {
+        let ?asset = Trie.get(assets, Utils.keyText(id), Text.equal) else return #err(#notFound);
+        #ok asset;
+    };
+
+    func createStrategy(asset : Asset) : ?StreamingStrategy {
+        let streamingToken : ?StreamingCallbackToken = createToken(asset, 0);
 
         switch (streamingToken) {
             case null null;
@@ -130,10 +152,10 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
                 let canisterId : Text = Principal.toText(self);
 
                 let canister = actor (canisterId) : actor {
-                    http_request_streaming_callback : shared () -> async ();
+                    http_request_streaming_callback : query StreamingCallbackToken -> async StreamingCallbackHttpResponse;
                 };
 
-                return ?#Callback({
+                ?#Callback({
                     token = streamingToken;
                     callback = canister.http_request_streaming_callback;
                 });
@@ -141,176 +163,107 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
         };
     };
 
-    func createToken(key : AssetKey, chunkIndex : Nat, encoding : AssetEncoding, headers : [HeaderField]) : ?StreamingCallbackToken {
-        if (chunkIndex + 1 >= encoding.contentChunks.size()) {
+    func createToken({ id; key; encoding; headers } : Asset, chunkIndex : Nat) : ?StreamingCallbackToken {
+        let index = chunkIndex + 1;
+        if (index >= encoding.contentChunks.size()) {
             return null;
         };
 
         let streamingToken : ?StreamingCallbackToken = ?{
-            id = key.id;
+            id;
             headers;
-            index = chunkIndex + 1;
-            sha256 = null;
+            index;
+            sha256 = key.sha256;
         };
-
-        return streamingToken;
+        streamingToken;
     };
 
-    func getAssetForUrl(url : Text) : Result.Result<Asset, Text> {
-        if (Text.size(url) == 0) {
-            return #err "No url provided.";
-        };
-
-        let id = Text.trimStart(url, #char '/');
-        getAsset(id);
-    };
-
-    func getAsset(id : ID) : Result.Result<Asset, Text> {
-        switch (Trie.get<Text, Asset>(assets, Utils.keyText(id), Text.equal)) {
-            case (?asset) #ok asset;
-            case null #err "No asset.";
-        };
-    };
-
-    /**
+	/**
      * Upload
      */
 
-    public shared ({ caller }) func initUpload(key : AssetKey) : async ({ batchId : Nat }) {
+    public shared ({ caller }) func initUpload(key : AssetKey) : async InitUpload {
         if (Principal.notEqual(caller, owner)) {
-            throw Error.reject("User does not have the permission to upload data.");
+            throw Error.reject("User does not have the permission to upload data. Caller: " # Principal.toText(caller));
         };
 
-        nextBatchID := nextBatchID + 1;
-        let now : Time.Time = Time.now();
-        clearExpiredBatches();
-        let batch = { key; expiresAt = now + BATCH_EXPIRY_NANOS };
-        batches.put(nextBatchID, batch);
-        // let manager : actor { initUpload : shared (batch : Batch) -> async () } = actor (Principal.toText(installer));
-        // ignore manager.initUpload(batch);
-        // activateTimer();
+        // let exists = label v : Bool {
+        //     for ((id, asset) in Trie.iter<ID, Asset>(assets)) {
+        //         switch (key.sha256, asset.key.sha256) {
+        //             case (?h1, ?h2) if (Array.equal(h1, h2, Nat8.equal)) break v true;
+        //             case _ {};
+        //         };
+        //     };
+        //     false;
+        // };
+		// if (exists) {
+		// 	throw Error.reject("Asset already exists.");
+		// };
 
-        return { batchId = nextBatchID };
+        nextBatchID := Nat.add(nextBatchID, 1);
+        let now : Time.Time = Time.now();
+		clearExpiredBatches();
+		ignore Map.put(batches, nhash, nextBatchID, { key; expiresAt = now + BATCH_EXPIRY_NANOS });
+        { batchId = nextBatchID };
     };
 
-    // private func activateTimer(): () {
-    //     switch timerId {
-    //         case null {
-    //             timerId := ?setTimer(Nat64.fromIntWrap(Time.now()) + 60_000_000_000, true, monitorCycles);
-    //         };
-    //         case (?_) {};
-    //     };
-    // };
+    public shared ({ caller }) func batchAlive(id : Nat) : async () {
+        if (Principal.notEqual(caller, owner)) {
+            throw Error.reject("User does not have the permission to keep batch alive.");
+        };
 
-    // private func setTimer(delayNanos : Nat64, recurring : Bool, job : () -> async ()) : (id : Nat) { 0 };
-    // private func cancelTimer(id : Nat) : () {};
+        let ?batch : ?Batch = Map.get(batches, nhash, id) else throw Error.reject("Batch not found.");
+        ignore Map.put(batches, nhash, id, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
+    };
 
-    // private func monitorCycles() : async () {
-    //     let self : Principal = Principal.fromActor(this);
-    //     let status = await ic.canister_status({ canister_id = self });
-    //     // let value = {
-    //     //     canister with cycles = status.cycles;
-    //     //     idleCyclesBurnedPerDay = status.idle_cycles_burned_per_day;
-    //     //     freezingThreshold = status.settings.freezing_threshold;
-    //     //     freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-    //     //     lastChecked = now;
-    //     // };
-    //     ();
-    // };
-
-    public shared ({ caller }) func uploadChunk(chunk : Chunk) : async ({ chunkId : Nat }) {
+	public shared ({ caller }) func uploadChunk(chunk : Chunk) : async UploadChunk {
         if (Principal.notEqual(caller, owner)) {
             throw Error.reject("User does not have the permission to a upload any chunks of content.");
         };
 
-        switch (batches.get(chunk.batchId)) {
-            case null throw Error.reject("Batch not found.");
-            case (?batch) {
-                // Extend batch timeout
-                batches.put(chunk.batchId, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
-                nextChunkID := nextChunkID + 1;
-                chunks.put(nextChunkID, chunk);
-
-                return { chunkId = nextChunkID };
-            };
-        };
+        let ?batch : ?Batch = Map.get(batches, nhash, chunk.batchId) else throw Error.reject("Batch not found.");
+        nextChunkID := nextChunkID + 1;
+        ignore Map.put(batches, nhash, chunk.batchId, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
+        ignore Map.put(chunks, nhash, nextChunkID, chunk);
+        { chunkId = nextChunkID };
     };
 
-    public shared ({ caller }) func commitUpload({ batchId; chunkIds; headers } : { batchId : Nat; headers : [HeaderField]; chunkIds : [Nat] }) : async () {
+	public shared ({ caller }) func commitUpload({ batchId; chunkIds; headers } : CommitBatch, notifyJournal : Bool) : async Result.Result<(), CommitUploadError> {
         if (Principal.notEqual(caller, owner)) {
             throw Error.reject("User does not have the permission to commit an upload.");
         };
 
-        let ?batch = batches.get(batchId) else throw Error.reject("No batch to commit.");
-        switch (await commitChunks({ batchId; batch; chunkIds; headers })) {
-            case (#err message) throw Error.reject(message);
-            case (#ok) {};
-        };
-    };
-
-    func clearBatch({ batchId : Nat; chunkIds : [Nat] } : { batchId : Nat; chunkIds : [Nat] }) : () {
-        for (chunkId in chunkIds.vals()) {
-            chunks.delete(chunkId);
-        };
-
-        batches.delete(batchId);
-    };
-
-    func clearExpiredBatches() : () {
-        let now : Time.Time = Time.now();
-
-        // Remove expired batches
-        for ((batchId : Nat, batch : Batch) in batches.entries()) {
-            if (now > batch.expiresAt) {
-                batches.delete(batchId);
-            };
-        };
-
-        // Remove chunk without existing batches (those we just deleted above)
-        for ((chunkId : Nat, chunk : Chunk) in chunks.entries()) {
-            if (Option.isNull(batches.get(chunk.batchId))) {
-                chunks.delete(chunkId);
-            };
-        };
-    };
-
-    func commitChunks({ batchId; batch; chunkIds; headers } : { batchId : Nat; batch : Batch; headers : [HeaderField]; chunkIds : [Nat] }) : async Result.Result<(), Text> {
-        // Test batch is not expired
+        let ?batch = Map.get(batches, nhash, batchId) else return #err(#batchNotFound);
+		// Test batch is not expired
         let now : Time.Time = Time.now();
         if (now > batch.expiresAt) {
             clearExpiredBatches();
-            return #err "Batch did not complete in time. Chunks cannot be commited.";
+            return #err(#batchExpired);
         };
 
         let contentChunks : Buffer.Buffer<Blob> = Buffer.Buffer(1);
-
         for (chunkId in chunkIds.vals()) {
-            let chunk : ?Chunk = chunks.get(chunkId);
+            let ?chunk : ?Chunk = Map.get(chunks, nhash, chunkId) else return #err(#chunkNotFound chunkId);
 
-            switch (chunk) {
-                case (?chunk) {
-                    if (Nat.notEqual(batchId, chunk.batchId)) {
-                        return #err "Chunk not included in the provided batch";
-                    };
-
-                    contentChunks.add(chunk.content);
-                };
-                case null {
-                    return #err "Chunk does not exist.";
-                };
+            if (Nat.notEqual(batchId, chunk.batchId)) {
+                return #err(#chunkWrongBatch chunkId);
             };
-        };
 
+            contentChunks.add(chunk.content);
+        };
+        
         if (contentChunks.size() <= 0) {
-            return #err "No chunk to commit.";
+            return #err(#empty);
         };
 
         var totalLength = 0;
         for (chunk in contentChunks.vals()) {
             totalLength += chunk.size();
         };
-
-        let asset = {
+        
+        let id : ID = await Utils.generateId();
+		let asset : Asset = {
+            id;
             key = batch.key;
             headers;
             encoding = {
@@ -319,96 +272,182 @@ shared ({ caller = installer }) actor class StorageBucket(owner : Principal) = t
                 totalLength;
             };
         };
+        contentChunks.clear();
+        if (notifyJournal) {
+            let file = { batch.key and { id; bucketId = Principal.fromActor(this) } };
+            switch (await journal.addFile(file)) {
+                case (#err err) {
+                    return #err(#addFile err);
+                };
+                case (#ok _) {};
+            };
+        };
 
-        let file = {
-            id = batch.key.id;
-            bucketId = Principal.fromActor(this);
-            name = batch.key.name;
-            fileSize = batch.key.fileSize;
-            parentId = batch.key.parentId;
-        };
-        switch (await journal.addFile(file)) {
-            case (#err message) {
-                return #err "message";
+        switch(batch.key.sha256) {
+            case (?v) {
+                // insert into CertTree
+                ct.put(["http_assets", Text.encodeUtf8("/" # id)], Blob.fromArray(v));
+                ct.setCertifiedData();
             };
-            case (#ok _) {
-                assets := Trie.put<Text, Asset>(assets, Utils.keyText(batch.key.id), Text.equal, asset).0;
-                clearBatch({ batchId; chunkIds });
-                #ok();
-            };
+            case _ {};
         };
+        assets := Trie.put<ID, Asset>(assets, Utils.keyText(id), Text.equal, asset).0;
+        clearBatch({ batchId; chunkIds });
+        #ok();
     };
 
-    public shared ({ caller }) func getUsedMemorySize() : async Nat {
-        if (Principal.notEqual(caller, installer)) {
+	func clearExpiredBatches() : () {
+		let now : Time.Time = Time.now();
+		batches := Map.mapFilter<Nat, Batch, Batch>(batches, nhash, func(batchId : Nat, batch : Batch) : ?Batch {
+			if (now > batch.expiresAt) null else ?batch;
+		});
+        chunks := Map.mapFilter<Nat, Chunk, Chunk>(chunks, nhash, func(chunkId : Nat, chunk : Chunk) : ?Chunk {
+            if (Map.has(batches, nhash, chunk.batchId)) ?chunk else null;
+        });
+	};
+
+	func clearBatch({ batchId; chunkIds } : { batchId : Nat; chunkIds : [Nat] }) : () {
+        for (chunkId in chunkIds.vals()) {
+            Map.delete(chunks, nhash, chunkId);
+        };
+
+        Map.delete(batches, nhash, batchId);
+	};
+
+	public shared ({ caller }) func getUsedMemorySize() : async Nat {
+        if (Principal.notEqual(caller, installer) and not Utils.isAdmin(caller)) {
             throw Error.reject("User does not have the permission to get the size of stable memory.");
         };
 
         let stableVarInfo = StableMemory.stableVarQuery();
         let { size } = await stableVarInfo();
-
         let reservedMemory : Nat = do {
-            var size : Nat = 0;
-            for ({ key } in batches.vals()) {
-                size += key.fileSize;
+            var sum : Nat = 0;
+            for ({ key } in Map.vals(batches)) {
+                sum += key.fileSize;
             };
-            size;
+            sum;
         };
 
         Nat64.toNat(size) + reservedMemory;
     };
 
-    let version = "v4";
+	// func startBatchMonitor() : () {
+	// 	switch(batchTimerId) {
+	// 		case null batchTimerId := ?recurringTimer(#seconds CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS, clearExpiredBatches);
+	// 		case (?id) {};
+	// 	};
+	// };
 
-    public query ({ caller }) func getVersion() : async Text {
-        version;
-    };
-
-    // system func timer(set : Nat64 -> ()) : async () {
-    //     set(Nat64.fromIntWrap(Time.now()) + 20_000_000_000); // 20 seconds from now
-    //     ignore checkBalance();
-    // };
-
-    // private func checkBalance() : async () {
-    //     try {
-    //         let self = Principal.fromActor(this);
-    //         let status = await ic.canister_status({ canister_id = self });
-    //         let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-    //         let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
-    //         let amount : Nat = Nat.max(CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
-    //         Debug.print("[Storage] AfterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
-    //         if (availableCycles <= amount) {
-    //             Debug.print("[Storage] EnqueueTopUp " # debug_show ({ canisterId = self }));
-    //             ignore journal.topupCanister({ canisterId = self; amount });
-    //         };
-    //     } catch (err) {
-    //         Debug.print("[Storage] AfterCheck " # Error.message(err));
-    //     };
-    // };
+	// func stopBatchMonitor() : () {
+	// 	switch(batchTimerId) {
+	// 		case null {};
+	// 		case (?id) cancelTimer(id);
+	// 	};
+	// };
 
     public shared ({ caller }) func delete(id : ID) : async () {
         if (Principal.notEqual(caller, installer)) {
             throw Error.reject("User does not have the permission to delete an asset.");
         };
 
-        let result : Result.Result<Asset, Text> = getAsset(id);
-
-        switch (result) {
-            case (#ok asset) {
-                assets := Trie.remove<Text, Asset>(assets, Utils.keyText id, Text.equal).0;
-            };
-            case (#err message) throw Error.reject("Asset cannot be deleted: " # message);
-        };
+        // remove from CertTree
+        ct.delete(["http_assets", Text.encodeUtf8("/" # id)]);
+        ct.setCertifiedData();
+        assets := Trie.remove<ID, Asset>(assets, Utils.keyText(id), Text.equal).0;
     };
 
-    func getHeaders(headers : ?[HeaderField]) : [HeaderField] {
-        switch(headers) {
-            case null defaultHeader;
-            case (?v) {
-                let buffer = Buffer.fromArray<HeaderField>(defaultHeader);
-                buffer.append(Buffer.fromArray(v));
-                Buffer.toArray(buffer);
+    // Source: NNS-dapp
+    /// List of recommended security headers as per https://owasp.org/www-project-secure-headers/
+    /// These headers enable browser security features (like limit access to platform apis and set
+    /// iFrame policies, etc.).
+    let securityHeaders : [HeaderField] = [
+        ("X-Frame-Options", "DENY"),
+        ("X-Content-Type-Options", "nosniff"),
+        ("Strict-Transport-Security", "max-age=31536000; includeSubDomains"),
+        // "Referrer-Policy: no-referrer" would be more strict, but breaks local dev deployment
+        // same-origin is still ok from a security perspective
+        ("Referrer-Policy", "same-origin")
+    ];
+
+    let defaultHeaders : [HeaderField] = [
+        ("Access-Control-Allow-Origin", "*")
+    ];
+
+    func getHeaders(asset : ?Asset) : [HeaderField] {
+        let buffer = Buffer.fromArray<HeaderField>(securityHeaders);
+        let defaultHeadersBuffer = Buffer.fromArray<HeaderField>(defaultHeaders);
+        buffer.append(defaultHeadersBuffer);
+        defaultHeadersBuffer.clear();
+        switch(asset) {
+            case null buffer.add(certificationHeader("/"));
+            case (?{ id; headers; key }) {
+                let headersBuffer = Buffer.fromArray<HeaderField>(headers);
+                buffer.append(headersBuffer);
+                headersBuffer.clear();
+                buffer.add(certificationHeader("/" # id));
+                buffer.add(("Content-Length", Nat.toText(key.fileSize)));
+                buffer.add(("Content-Disposition", "attachment; filename=\"" # key.name # "\""));
+                buffer.add(("Cache-Control", "private, max-age=0"));
             };
         };
+        let headers = Buffer.toArray(buffer);
+        buffer.clear();
+        headers;
     };
-};
+
+    /*
+    The other use of the tree is when calculating the ic-certificate header. This header
+    contains the certificate obtained from the system, which we just pass through,
+    and a witness calculated from hash tree that reveals the hash of the current
+    value of the main page.
+    */
+
+    func certificationHeader(url : Text) : HeaderField {
+        let witness = ct.reveal(["http_assets", Text.encodeUtf8(url)]);
+        let encoded = ct.encodeWitness(witness);
+        let cert = switch (CertifiedData.getCertificate()) {
+            case (?c) c;
+            case null {
+                // unfortunately, we cannot do
+                //   throw Error.reject("getCertificate failed. Call this as a query call!")
+                // here, because this function isn’t async, but we can’t make it async
+                // because it is called from a query (and it would do the wrong thing) :-(
+                //
+                // So just return erronous data instead
+                "getCertificate failed. Call this as a query call!" : Blob
+            }
+        };
+        ("ic-certificate", "certificate=:" # Utils.base64(cert) # ":, " # "tree=:" # Utils.base64(encoded) # ":");
+    };
+
+    public query ({ caller }) func getHeapSize() : async Nat {
+        Prim.rts_heap_size();
+    };
+
+    public query ({ caller }) func getMaxLiveSize() : async Nat {
+        Prim.rts_max_live_size();
+    };
+
+    public query ({ caller }) func getMemorySize() : async Nat {
+        Prim.rts_memory_size();
+    };
+
+    public query ({ caller }) func getAssetsTotalSize() : async Nat {
+        var size : Nat = 0;
+        for ((_, asset) in Trie.iter(assets)) {
+            size += asset.key.fileSize;
+        };
+        size;
+    };
+
+    public shared ({ caller }) func getStableMemorySize() : async Nat {
+        let stableVarInfo = StableMemory.stableVarQuery();
+        let { size } = await stableVarInfo();
+        Nat64.toNat(size);
+    };
+
+    system func preupgrade() {
+        csm.pruneAll();
+    }
+}

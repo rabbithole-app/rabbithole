@@ -17,7 +17,7 @@
         </button>
     </mat-menu>
     <nav class="navigation">
-        <a *ngFor="let item of navigation" [routerLink]="item.disabled ? null : [item.link]" class="navigation-link"
+        <a *rxFor="let item of navigation$; trackBy: trackNavItem" [routerLink]="item.disabled ? null : [item.link]" class="navigation-link"
             rel="noopener noreferrer" routerLinkActive="active" queryParamsHandling="preserve" #rla="routerLinkActive"
             [matTooltip]="t(item.label)" matTooltipClass="rh-tooltip" matTooltipPosition="after"
             [matTooltipDisabled]="isFull$ | push" [class.disabled]="item.disabled ?? false">

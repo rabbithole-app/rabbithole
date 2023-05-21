@@ -27,8 +27,6 @@ import Trie "mo:base/Trie";
 import TrieSet "mo:base/TrieSet";
 import { recurringTimer; cancelTimer } "mo:base/Timer";
 
-import AsyncSource "mo:uuid/async/SourceV4";
-import UUID "mo:uuid/UUID";
 import BiHashMap "mo:bimap/BiHashMap";
 import BiMap "mo:bimap/BiMap";
 
@@ -69,7 +67,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type Tokens = LedgerTypes.Tokens;
     type InviteCreate = Types.InviteCreate;
 
-    let STORAGE_BUCKET_CAPACITY = 4 * 1024 * 1024 * 1024;
+    let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
     let CYCLE_SHARE = 500_000_000_000;
     let CHECK_INTERVAL_NANOS : Nat = 60_000_000_000; // 1 minute
     // let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
@@ -81,7 +79,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     let logger = Logger.new(10);
     let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
     let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
-
     // var files : HashMap.HashMap<ID, [File]> = HashMap.HashMap<ID, [File]>(10, Text.equal, Text.hash);
     func equal(a : JournalEntry, b : JournalEntry) : Bool { Text.equal(a.id, b.id) };
     func hash({ id } : JournalEntry) : Hash.Hash { Text.hash(id) };
@@ -397,12 +394,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         for (dirname in dirnames) {
             let name = Text.trim(dirname, #text " ");
             if (Text.notEqual(name, "")) {
-                let uuid = do {
-                    let ae = AsyncSource.Source();
-                    let id = await ae.new();
-                    Text.map(UUID.toText(id), Prim.charToLower);
-                };
-                let directory = { id = uuid; name; parentId };
+                let id = await Utils.generateId();
+                let directory = { id; name; parentId };
 
                 switch (await createDirectory_(caller, directory)) {
                     case (#ok(res)) parentId := ?res.id;
@@ -676,16 +669,10 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    // let version = "v5";
-
-    // public query ({ caller }) func getVersion() : async Text {
-    //     version;
-    // };
-
     stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
 
     let ic : IC.Self = actor "aaaaa-aa";
-    var lockedStorageCallers : TrieSet.Set<Principal> = TrieSet.empty<Principal>();
+    var lockedStorageCreating : Bool = false;
 
     public shared ({ caller }) func getStorage(fileSize : Nat) : async ?BucketId {
         assert validateCaller(caller);
@@ -694,6 +681,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     // Инициализация storage-канистры, если у caller еще нет канистры или все канистры заполнены, то создаем канистру
     func getBucketWithAvailableCapacity(caller : Principal, fileSize : Nat) : async ?BucketId {
+        if lockedStorageCreating return null;
         var bucketId_ : ?BucketId = null;
         label bucketsLoop for (bucketId in Iter.fromArray(TrieSet.toArray(storageBuckets))) {
             let storageBucket : actor { getUsedMemorySize : shared () -> async Nat } = actor (Principal.toText(bucketId));
@@ -703,16 +691,20 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 break bucketsLoop;
             };
         };
-        switch (bucketId_, TrieSet.mem(lockedStorageCallers, caller, Principal.hash caller, Principal.equal)) {
-            case (null, false) Option.make(await createStorageBucket(caller));
-            case (?v, false) ?v;
-            case (_) null;
+        if (Option.isSome(bucketId_)) return bucketId_;
+        lockedStorageCreating := true;
+        try {
+            let newBucket : BucketId = await createStorageBucket(caller);
+            lockedStorageCreating := false;
+            ?newBucket;
+        } catch err {
+            lockedStorageCreating := false;
+            throw err;
         };
     };
 
     // Создание канистры с хранилищем
     func createStorageBucket(caller : Principal) : async BucketId {
-        lockedStorageCallers := TrieSet.put(lockedStorageCallers, caller, Principal.hash caller, Principal.equal);
         let self : Principal = Principal.fromActor(this);
         let settings = {
             controllers = ?[self];
@@ -722,16 +714,15 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
         Cycles.add(CYCLE_SHARE);
         let { canister_id } = await ic.create_canister({ settings = ?settings });
-        ignore await (system StorageBucket.StorageBucket)(#install canister_id)(caller);
+        ignore await (system StorageBucket.Storage)(#install canister_id)(caller);
         storageBuckets := TrieSet.put<BucketId>(storageBuckets, canister_id, Principal.hash(canister_id), Principal.equal);
         ignore startBucketMonitor_(canister_id);
-        lockedStorageCallers := TrieSet.delete(lockedStorageCallers, caller, Principal.hash caller, Principal.equal);
         canister_id;
     };
 
     // Удаление канистры пользователя
     func deleteStorageBucket(caller : Principal, bucketId : BucketId) : async Result.Result<(), Text> {
-        switch (TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal)) {
+        switch (isStorage(bucketId)) {
             case false #err("Bucket " # Principal.toText(bucketId) # " not found. " # Principal.toText(caller));
             case true {
                 try {
@@ -826,10 +817,10 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
 
         for (bucketId in Iter.fromArray(TrieSet.toArray<BucketId>(storageBuckets))) {
-            // let storageBucket : StorageBucket.StorageBucket = actor (Principal.toText(bucketId));
-            // ignore await (system StorageBucket.StorageBucket)(#upgrade storageBucket)(owner);
+            // let storageBucket : StorageBucket.Storage = actor (Principal.toText(bucketId));
+            // ignore await (system StorageBucket.Storage)(#upgrade storageBucket)(owner);
 
-            ignore ic.install_code({
+            await ic.install_code({
                 arg = to_candid (owner);
                 wasm_module = Blob.fromArray(storageWasm);
                 mode = #upgrade;

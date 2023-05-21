@@ -17,12 +17,14 @@ export interface SettingsState {
     language: Language;
     theme: Theme;
     sidebarMode: SidebarMode;
+    expertMode: boolean;
 }
 
 export const initialSettingsState: SettingsState = {
     language: 'en',
     theme: 'light-theme',
-    sidebarMode: 'full'
+    sidebarMode: 'full',
+    expertMode: false
 };
 
 export function settingsStateFactory() {

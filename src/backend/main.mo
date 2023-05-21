@@ -11,8 +11,6 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import TrieMap "mo:base/TrieMap";
 
-import AsyncSource "mo:uuid/async/SourceV4";
-import UUID "mo:uuid/UUID";
 import IC "types/ic";
 import Types "types/types";
 import JournalBucket "journal/main";
@@ -301,7 +299,7 @@ actor Rabbithole {
                 let balance = await Ledger.account_balance({ account });
                 let amount : LedgerTypes.Tokens = await cyclesToICPE8s(CYCLE_SHARE);
                 let stage : InvoiceStage = if (Nat64.greaterOrEqual(balance.e8s, amount.e8s)) #paid else #active;
-                let id : ID = await generateId();
+                let id : ID = await Utils.generateId();
                 let now : Time.Time = Time.now();
                 let timerId : Nat = Timer.recurringTimer(
                     #seconds INVOICE_CHECK_INTERVAL_SECONDS,
@@ -612,7 +610,7 @@ actor Rabbithole {
     public shared ({ caller }) func createInvite(value : InviteCreate) : async () {
         assert not Principal.isAnonymous(caller) and isJournal(caller);
         let cycles = Cycles.accept(value.cycles);
-        let id : ID = await generateId();
+        let id : ID = await Utils.generateId();
         let invite : Invite = { { value with cycles } and { id; canisterId = caller; createdAt = Time.now(); status = #active } };
         invites.put(id, invite);
         if (Option.isNull(invitesTimerId)) {
@@ -622,7 +620,7 @@ actor Rabbithole {
 
     public shared ({ caller }) func createAdminInvite() : async Text {
         assert not Principal.isAnonymous(caller) and Utils.isAdmin(caller);
-        let id : ID = await generateId();
+        let id : ID = await Utils.generateId();
         let now = Time.now();
         let expiredAt = now + 604_800_000_000_000; // 1 week
         let invite : Invite = { id; canisterId = caller; createdAt = now; expiredAt; owner = caller; status = #active; cycles = 2_000_000_000_000 };
@@ -727,12 +725,6 @@ actor Rabbithole {
     func accountIdentifier_(caller : Principal) : A.AccountIdentifier {
         let subaccount : A.Subaccount = A.principalToSubaccount(caller);
         A.accountIdentifier(Principal.fromActor(Rabbithole), subaccount);
-    };
-
-    func generateId() : async ID {
-        let ae = AsyncSource.Source();
-        let id = await ae.new();
-        Text.map(UUID.toText(id), Prim.charToLower);
     };
 
     func cyclesToICPE8s(cyclesAmount : Nat) : async LedgerTypes.Tokens {

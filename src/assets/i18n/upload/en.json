@@ -27,5 +27,14 @@
         "responses": {
             "noPermission": "User does not have the permission to upload data."
         }
+    },
+    "commit": {
+        "errors": {
+            "chunkWrongBatch": "Chunk {{value}} not included in the provided batch",
+            "batchNotFound": "No batch to commit.",
+            "batchExpired": "Batch did not complete in time. Chunks cannot be commited.",
+            "chunkNotFound": "Chunk does not exist.",
+            "addFile": "addFile error"
+        }
     }
 }

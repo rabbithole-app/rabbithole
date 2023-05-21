@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
-import { first, Observable, filter, defer, iif, of, Subject } from 'rxjs';
-import { combineLatestWith, map, startWith, switchMap } from 'rxjs/operators';
+import { first, Observable, filter, defer, iif, of, Subject, EMPTY, merge } from 'rxjs';
+import { catchError, combineLatestWith, map, startWith, switchMap } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { fromNullable } from '@dfinity/utils';
@@ -9,17 +9,20 @@ import { has } from 'lodash';
 
 import { AuthStatus, AUTH_RX_STATE } from '@core/stores';
 import { Profile } from '@core/models/profile';
+import { NotificationService } from './notification.service';
 
 type CanisterResult = { ok: null } | { err: any };
 
 export interface State {
     profile: Profile | null;
     loaded: boolean;
+    canInvite: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
+    private notificationService = inject(NotificationService);
     anonymous$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Anonymous));
     initialized$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Initialized));
     private updateProfile: Subject<void> = new Subject<void>();
@@ -34,9 +37,27 @@ export class ProfileService extends RxState<State> {
                     defer(() => actor.getProfile()).pipe(map(profile => ({ profile: fromNullable(profile) ?? null, loaded: true }))),
                     of({ profile: null, loaded: false })
                 )
-            )
+            ),
+            catchError(err => {
+                this.notificationService.error(err.message);
+                return EMPTY;
+            })
         );
-        this.connect(profile$);
+        const canInvite$ = this.authState.select(selectSlice(['actor', 'isAuthenticated'])).pipe(
+            switchMap(({ actor, isAuthenticated }) =>
+                iif(
+                    () => isAuthenticated,
+                    defer(() => actor.canInvite()),
+                    of(false)
+                )
+            ),
+            catchError(err => {
+                this.notificationService.error(err.message);
+                return EMPTY;
+            }),
+            map(canInvite => ({ canInvite }))
+        );
+        this.connect(merge(profile$, canInvite$));
     }
 
     checkUsername(username: string): Observable<CanisterResult> {

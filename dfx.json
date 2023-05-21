@@ -22,7 +22,8 @@
     },
     "storage": {
       "main": "src/backend/storage/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "args": "--incremental-gc"
     }
   },
   "defaults": {
