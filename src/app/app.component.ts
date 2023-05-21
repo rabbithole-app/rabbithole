@@ -3,8 +3,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouteConfigLoadEnd, RouteConfigLoadStart, Router, RouterModule } from '@angular/router';
 import { AuthService } from '@core/services';
 import { FETCH_INTERCEPTOR } from '@core/tokens';
-import { FetchInterceptor } from '@mswjs/interceptors/lib/interceptors/fetch';
-import { IfModule } from '@rx-angular/template/if';
+import { concatStringStream } from '@core/utils';
+import { FetchInterceptor } from '@mswjs/interceptors/fetch';
+import { RxIf } from '@rx-angular/template/if';
 import { Observable, startWith } from 'rxjs';
 import { distinctUntilChanged, filter, first, map, merge } from 'rxjs';
 
@@ -29,7 +30,7 @@ import { distinctUntilChanged, filter, first, map, merge } from 'rxjs';
         `
     ],
     standalone: true,
-    imports: [RouterModule, IfModule, MatProgressSpinnerModule],
+    imports: [RouterModule, RxIf, MatProgressSpinnerModule],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
@@ -49,9 +50,12 @@ export class AppComponent {
     ).pipe(distinctUntilChanged(), startWith(true));
 
     constructor(@Inject(FETCH_INTERCEPTOR) interceptor: FetchInterceptor) {
-        interceptor.on('response', (request, response) => {
-            if (response.status === 403 && response.body?.includes('Failed to authenticate request')) {
-                this.authService.signOut();
+        interceptor.on('response', async (response, request) => {
+            if (response.status === 403 && response.body) {
+                const result = await concatStringStream(response.body);
+                if (result.includes('Failed to authenticate request')) {
+                    this.authService.signOut();
+                }
             }
         });
     }

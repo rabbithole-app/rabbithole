@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <ul class="links" *ngIf="items$ | async as links">
     <li class="links__item">
         <a
@@ -33,22 +34,25 @@
         dndDropzone
         (drop)="handleDrop($event)"
         (dragleave)="handleDragleave($event)"
-        (dragenter)="handleDragenter($event, $any(last.parentId || 'root'))">
+        (dragenter)="handleDragenter($event, $any(last.parentId || 'root'))"
+        [attr.aria-label]="t('breadcrumbs.back')"
+        >
         <mat-icon svgIcon="far:arrow-left"></mat-icon>
     </button>
     <div class="active">
         <span>{{ last.name }}</span>
         <mat-spinner [diameter]='16' *ngIf="last.loading ?? false; else activeMenuTemplate"></mat-spinner>
         <ng-template #activeMenuTemplate>
-            <button #activeMenu mat-icon-button (click)="handleActiveClick($event)">
+            <button #activeMenu mat-icon-button (click)="handleActiveClick($event)" [attr.aria-label]="t('breadcrumbs.menu')">
                 <mat-icon svgIcon="far:ellipsis-vertical"></mat-icon>
             </button>
         </ng-template>
     </div>
 </ng-container>
-<button id="current-dir-trigger" #currentMenuTrigger mat-button [matMenuTriggerFor]="currentDirectoryMenu"></button>
+<button id="current-dir-trigger" #currentMenuTrigger [matMenuTriggerFor]="currentDirectoryMenu" aria-hidden="true"></button>
 <mat-menu #currentDirectoryMenu="matMenu" hasBackdrop="false" class="context-menu">
     <ng-template matMenuContent let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
-        <ng-container [ngTemplateOutlet]="contextTemplate" [ngTemplateOutletContext]="{ items, everyFile, everyFolder, someFile, someFolder }"></ng-container>
+        <ng-container [ngTemplateOutlet]="contextTemplate" [ngTemplateOutletContext]="$any({ items, everyFile, everyFolder, someFile, someFolder })"></ng-container>
     </ng-template>
 </mat-menu>
+</ng-container>

@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { AsyncSubject, filter, map, Observable, startWith, takeUntil } from 'rxjs';
 
 import { InviteValidator } from '@core/validators';
@@ -22,7 +22,7 @@ import { InviteStatus, RegisterService } from '@features/register/services/regis
         TranslocoModule,
         MatInputModule,
         ReactiveFormsModule,
-        IfModule,
+        RxIf,
         MatProgressSpinnerModule,
         MatIconModule,
         MatButtonModule,

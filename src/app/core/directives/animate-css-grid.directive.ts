@@ -1,8 +1,6 @@
-import { AfterViewInit, Directive, ElementRef, EventEmitter, inject, Input, OnDestroy, Output } from '@angular/core';
+import { computed, Directive, effect, ElementRef, EventEmitter, inject, Input, OnDestroy, Output, Signal, signal, WritableSignal } from '@angular/core';
 import { wrapGrid } from 'animate-css-grid';
 import { WrapGridArguments, PopmotionEasing } from 'animate-css-grid/dist/types';
-import { AsyncSubject, ReplaySubject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 export interface WrapGridConfig {
     duration?: number;
@@ -14,52 +12,47 @@ export interface WrapGridConfig {
     selector: '[appAnimateCssGrid]',
     standalone: true
 })
-export class AnimateCssGridDirective implements AfterViewInit, OnDestroy {
-    private elementRef = inject(ElementRef);
-    @Input() appAnimateCssGrid: WrapGridConfig = {};
+export class AnimateCssGridDirective implements OnDestroy {
+    readonly #elementRef = inject(ElementRef);
+    #animationEnabled : WritableSignal<boolean> = signal(true);
+    #config: WritableSignal<WrapGridArguments> = signal({
+        onStart: animatedChildren => this.animationStart.emit(animatedChildren),
+        onEnd: animatedChildren => this.animationEnd.emit(animatedChildren)
+    });
+    @Input() set appAnimateCssGrid(value: WrapGridConfig) {
+        this.#config.update(config => ({ ...config, ...value }));
+    };
     @Input() set appAnimateCssGridDisabled(value: boolean) {
-        this.animationDisabled.next(value);
+        this.#animationEnabled.set(!value);
     }
     @Output() animationStart = new EventEmitter<HTMLElement[]>();
     @Output() animationEnd = new EventEmitter<HTMLElement[]>();
 
-    private gridWrapper!: { unwrapGrid: () => void; forceGridAnimation: () => void };
-    private animationDisabled: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
+    #gridWrapper: Signal<{ unwrapGrid: () => void; forceGridAnimation: () => void } | null> = computed(() => {
+        if (this.#animationEnabled()) {
+            return wrapGrid(this.#elementRef.nativeElement, this.#config());
+        }
 
-    ngAfterViewInit(): void {
-        const config: WrapGridArguments = {
-            ...this.appAnimateCssGrid,
-            onStart: animatedChildren => this.animationStart.emit(animatedChildren),
-            onEnd: animatedChildren => this.animationEnd.emit(animatedChildren)
-        };
-        this.animationDisabled
-            .asObservable()
-            .pipe(takeUntil(this.destroyed))
-            .subscribe(disabled => {
-                if (disabled) {
-                    this.unwrapGrid();
-                } else {
-                    this.gridWrapper = wrapGrid(this.elementRef.nativeElement, config);
-                }
-            });
+        return null;
+    });
+
+    constructor() {
+        effect(() => {
+            if (!this.#animationEnabled()) {
+                this.unwrapGrid();
+            }
+        });
     }
 
     unwrapGrid(): void {
-        if (this.gridWrapper) {
-            this.gridWrapper.unwrapGrid();
-        }
+        this.#gridWrapper()?.unwrapGrid();
     }
 
     forceGridAnimation(): void {
-        if (this.gridWrapper) {
-            this.gridWrapper.forceGridAnimation();
-        }
+        this.#gridWrapper()?.forceGridAnimation();
     }
 
     ngOnDestroy(): void {
         this.unwrapGrid();
-        this.destroyed.next();
-        this.destroyed.complete();
     }
 }

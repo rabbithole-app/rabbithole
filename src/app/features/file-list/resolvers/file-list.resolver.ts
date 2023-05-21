@@ -23,12 +23,12 @@ export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterSta
                 iif(
                     () => isNull(journal),
                     throwError(() => new Error()),
-                    from((journal as NonNullable<typeof journal>).getJournal(toNullable(path ?? undefined)))
+                    from((journal as NonNullable<typeof journal>).getJournal(toNullable(path || undefined)))
                 ).pipe(
                     map(response => {
                         if (has(response, 'err')) {
                             const err = Object.keys(get(response, 'err') as unknown as JournalError)[0];
-                            const message = translocoService.translate(`file-list.get.errors.${err}`);
+                            const message = translocoService.translate(`fileList.directory.get.errors.${err}`);
                             throw new Error(message);
                         }
 

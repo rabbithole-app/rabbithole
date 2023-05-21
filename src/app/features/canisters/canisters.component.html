@@ -1,13 +1,13 @@
 <ng-container *transloco="let t; read: 'canisters'">
     <header class="mat-h1">
         <h1>{{ t('journals') }}</h1>
-        <mat-spinner diameter="20" *rxIf="journalLoading$"></mat-spinner>
+        <mat-spinner [attr.aria-label]="t('journals')" diameter="20" *rxIf="journalLoading$"></mat-spinner>
     </header>
     <app-canisters-table [data]="journalStatus$ | push"></app-canisters-table>
     <br />
     <header class="mat-h1">
         <h1>{{ t('storages') }}</h1>
-        <mat-spinner diameter="20" *rxIf="storagesLoading$"></mat-spinner>
+        <mat-spinner [attr.aria-label]="t('storages')" diameter="20" *rxIf="storagesLoading$"></mat-spinner>
     </header>
     <app-canisters-table [data]="storageStatus$ | push" (action)="handleAction($event)"></app-canisters-table>
 </ng-container>

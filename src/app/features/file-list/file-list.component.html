@@ -7,9 +7,8 @@
         <app-empty (contextmenu)="handleEmptyContextMenu($event)"></app-empty>
     </ng-template>
     <ng-container *rxLet="contextMenuData$; let data">
-        <button #itemsTrigger mat-button [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false"></button>
+        <button #itemsTrigger [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false" aria-hidden="true"></button>
     </ng-container>
-    <input type="file" class="file-input" (change)="handleFileSelected($event)" #fileUpload multiple />
     <mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">
         <ng-template matMenuContent let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
             <ng-container [ngSwitch]="items.length">
@@ -28,7 +27,7 @@
             <span>{{ t('context.createFolder') }}</span>
         </button>
         <mat-divider></mat-divider>
-        <button mat-menu-item (click)="fileUpload.click()">
+        <button mat-menu-item (click)="uploadService.showOpenFilePicker()">
             <mat-icon svgIcon="far:files"></mat-icon>
             <span>{{ t('context.uploadFiles') }}</span>
         </button>

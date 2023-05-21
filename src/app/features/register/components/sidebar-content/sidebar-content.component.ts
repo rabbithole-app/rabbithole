@@ -6,8 +6,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule } from '@ngneat/transloco';
-import { PushModule } from '@rx-angular/template/push';
-import { IfModule } from '@rx-angular/template/if';
+import { PushPipe } from '@rx-angular/template/push';
+import { RxIf } from '@rx-angular/template/if';
 import { shareReplay } from 'rxjs';
 
 import { SETTINGS_RX_STATE } from '@core/stores';
@@ -18,7 +18,7 @@ import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 @Component({
     selector: 'app-sidebar-content',
     standalone: true,
-    imports: [NgForOf, TranslocoModule, RouterLinkWithHref, RouterLinkActive, MatTooltipModule, PushModule, MatIconModule, IfModule, MatButtonModule],
+    imports: [NgForOf, TranslocoModule, RouterLinkWithHref, RouterLinkActive, MatTooltipModule, PushPipe, MatIconModule, RxIf, MatButtonModule],
     templateUrl: './sidebar-content.component.html',
     styleUrls: ['../../../../layout/dashboard/components/sidebar-content/sidebar-content.component.scss'],
     animations: [trigger('textAnimation', SIDEBAR_TEXT_ANIMATION)],

@@ -2,7 +2,7 @@
     <ng-container *rxIf="uploadService.summary$ as summary">
         <ng-container [ngSwitch]="summary.status">
             <ng-container *ngSwitchCase="uploadStatus.Queue">
-                <button class="trigger" #triggerButton mat-icon-button (click)="sidebarService.toggleDrawer()">
+                <button class="trigger" #triggerButton mat-icon-button (click)="sidebarService.toggleDrawer()" [attr.aria-label]="t('label')">
                     <mat-icon svgIcon="far:cloud-arrow-up"></mat-icon>
                 </button>
             </ng-container>

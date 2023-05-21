@@ -80,7 +80,7 @@
             "customWebpackConfig": {
               "path": "./custom-webpack.config.js"
             },
-            "allowedCommonJsDependencies": ["lodash", "borc", "js-sha256", "simple-cbor", "base64-arraybuffer", "buffer", "tweetnacl", "flat", "animate-css-grid", "buffer-crc32", "@mswjs/interceptors/lib/interceptors/fetch", "@messageformat/core", "file-saver"],
+            "allowedCommonJsDependencies": ["lodash", "borc", "js-sha256", "simple-cbor", "base64-arraybuffer", "buffer", "tweetnacl", "flat", "animate-css-grid", "buffer-crc32", "@mswjs/interceptors/fetch", "@messageformat/core", "file-saver"],
             "scripts": [],
             "stylePreprocessorOptions": {
               "includePaths": ["src/styles"]

@@ -3,8 +3,8 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
 import { MatButtonModule } from '@angular/material/button';
-import { PushModule } from '@rx-angular/template/push';
-import { IfModule } from '@rx-angular/template/if';
+import { PushPipe } from '@rx-angular/template/push';
+import { RxIf } from '@rx-angular/template/if';
 import { from, map, Observable, switchMap, toArray } from 'rxjs';
 
 import { CanistersService } from './services';
@@ -17,7 +17,7 @@ import { JournalService, SnackbarProgressService } from '@features/file-list/ser
     standalone: true,
     templateUrl: './canisters.component.html',
     styleUrls: ['./canisters.component.scss'],
-    imports: [PushModule, IfModule, MatButtonModule, CanistersTableComponent, MatDialogModule, MatProgressSpinnerModule, TranslocoModule],
+    imports: [PushPipe, RxIf, MatButtonModule, CanistersTableComponent, MatDialogModule, MatProgressSpinnerModule, TranslocoModule],
     providers: [JournalService, SnackbarProgressService, { provide: TRANSLOCO_SCOPE, useValue: 'canisters' }],
     changeDetection: ChangeDetectionStrategy.OnPush
 })

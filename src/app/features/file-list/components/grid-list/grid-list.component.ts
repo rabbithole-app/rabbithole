@@ -1,6 +1,5 @@
 import {
     Component,
-    OnInit,
     ChangeDetectionStrategy,
     QueryList,
     HostListener,
@@ -16,7 +15,11 @@ import {
     Inject,
     Renderer2,
     ChangeDetectorRef,
-    inject
+    inject,
+    signal,
+    WritableSignal,
+    computed,
+    Signal
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
@@ -29,13 +32,10 @@ import { selectSlice } from '@rx-angular/state/selections';
 import { RxEffects } from '@rx-angular/state/effects';
 import {
     animationFrameScheduler,
-    AsyncSubject,
     BehaviorSubject,
     EMPTY,
-    first,
     fromEvent,
     iif,
-    mapTo,
     merge,
     Observable,
     observeOn,
@@ -45,17 +45,15 @@ import {
     switchMap,
     timer
 } from 'rxjs';
-import { filter, map, pluck, startWith, take, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, pluck,takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { GridListItemComponent } from '@features/file-list/components/grid-list-item/grid-list-item.component';
 import { DirectoryExtended, JournalItem } from '@features/file-list/models';
-
 import { DragPreviewComponent } from '@features/file-list/components/drag-preview/drag-preview.component';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-
 import { AnimateCssGridDirective } from '@core/directives';
-import { toNullable } from '@dfinity/utils';
 import { addSvgIcons } from '@features/file-list/utils';
 import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
 import { OverlayService } from '@core/services';
@@ -95,7 +93,7 @@ interface State {
     imports: [CommonModule, GridListItemComponent, DragPreviewComponent, DndModule, AnimateCssGridDirective],
     standalone: true
 })
-export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
+export class GridListComponent implements OnDestroy, AfterViewInit {
     @Input() set items(items: JournalItem[] | null) {
         this.state.set({ items: items ?? [] });
     }
@@ -106,17 +104,20 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild(AnimateCssGridDirective) animatedGrid!: AnimateCssGridDirective;
     @ViewChild('dragPreview', { read: DragPreviewComponent }) dragPreview!: DragPreviewComponent;
     @ViewChild('dragPreviewGhost', { read: ElementRef, static: true }) private dragPreviewGhost!: ElementRef;
-    // @ViewChildren(GridListItemComponent) listItems!: QueryList<GridListItemComponent>;
-    @ViewChildren(GridListItemComponent) private gridListItems!: QueryList<GridListItemComponent>;
+    @ViewChildren(GridListItemComponent) private set gridListItems (value: QueryList<GridListItemComponent>) {
+        this.#gridListItems.set(value);
+    };
+    #gridListItems: WritableSignal<QueryList<GridListItemComponent>> = signal(new QueryList());
     @HostBinding('attr.role') role = 'list';
 
     dragSelected$: Observable<Partial<JournalItem>[]> = of([]);
     selected: SelectionModel<string> = new SelectionModel<string>(true, []);
     private hostResizeObserver!: ResizeObserver;
-    private keyManager!: ActiveDescendantKeyManager<GridListItemComponent>;
+    #keyManager: Signal<ActiveDescendantKeyManager<GridListItemComponent>> = computed(() =>
+        new ActiveDescendantKeyManager<GridListItemComponent>(this.#gridListItems()).withWrap().skipPredicate(item => item.disabled)
+    );
     private dropEntered: Subject<JournalItem['id']> = new Subject<JournalItem['id']>();
     private dropExited: Subject<void> = new Subject<void>();
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     private fileListState = inject(FILE_LIST_RX_STATE);
     private route = inject(ActivatedRoute);
     private journalService = inject(JournalService);
@@ -167,6 +168,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
                 )
             )
         );
+        this.init();
     }
 
     static isContextDisabled(event: MouseEvent): boolean {
@@ -190,7 +192,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
      */
     @HostListener('keydown', ['$event'])
     onKeydown(event: KeyboardEvent) {
-        const activeItemIndex = this.keyManager.activeItemIndex as number | null;
+        const activeItemIndex = this.#keyManager().activeItemIndex as number | null;
         let column = 0;
         let row = 0;
         const chunkedGridItems = this.state.get().chunkedGridItems;
@@ -209,13 +211,13 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
                 ]);
 
                 if (index > -1) {
-                    this.keyManager.setActiveItem(index);
+                    this.#keyManager().setActiveItem(index);
                 }
 
                 break;
             }
             case 'ArrowRight': {
-                this.keyManager.setNextItemActive();
+                this.#keyManager().setNextItemActive();
                 break;
             }
             case 'ArrowDown': {
@@ -232,13 +234,13 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
                 ]);
 
                 if (index > -1) {
-                    this.keyManager.setActiveItem(index);
+                    this.#keyManager().setActiveItem(index);
                 }
 
                 break;
             }
             case 'ArrowLeft': {
-                this.keyManager.setPreviousItemActive();
+                this.#keyManager().setPreviousItemActive();
                 break;
             }
             case 'Enter': {
@@ -254,7 +256,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
         }
     }
 
-    ngOnInit(): void {
+    init(): void {
         this.hostResizeObserver = new ResizeObserver(entries => {
             const width = entries[0].contentRect.width;
             const columns = Math.floor((width + GRID_CELL_COLUMN_GAP) / (GRID_CELL_WIDTH + GRID_CELL_COLUMN_GAP));
@@ -270,14 +272,14 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
                     value
                         ? EMPTY
                         : fromEvent(this.document, 'click', { passive: true }).pipe(
-                              pluck('target'),
+                              map(e => e.target),
                               map(target =>
-                                  this.gridListItems.some(item => item.element.nativeElement === target || item.element.nativeElement.contains(target))
+                                  this.#gridListItems().some(item => item.element.nativeElement === target || item.element.nativeElement.contains(target))
                               ),
                               filter(clickInside => !clickInside)
                           )
                 ),
-                takeUntil(this.destroyed)
+                takeUntilDestroyed()
             )
             .subscribe(outside => {
                 this.selected.clear();
@@ -294,7 +296,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
                         takeUntil(this.dropExited)
                     )
                 ),
-                takeUntil(this.destroyed)
+                takeUntilDestroyed()
             )
             .subscribe(id => {
                 console.log('navigate', id);
@@ -310,7 +312,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
         );
         this.dragSelected$ = selected$.pipe(map(items => items.map(item => pick(item, ['id', 'type', 'extension']))));
 
-        selected$.pipe(takeUntil(this.destroyed)).subscribe(selected => {
+        selected$.pipe(takeUntilDestroyed()).subscribe(selected => {
             this.fileListState.set({ selected });
         });
 
@@ -356,9 +358,6 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
             )
         );
         this.rxEffectsIds.push(this.rxEffects.register(this.state.select('columns'), () => this.animatedGrid?.forceGridAnimation()));
-        this.gridListItems.changes.pipe(startWith(this.gridListItems), takeUntil(this.destroyed)).subscribe(value => {
-            this.keyManager = new ActiveDescendantKeyManager<GridListItemComponent>(value).withWrap().skipPredicate(item => item.disabled);
-        });
 
         // при начале выделения в случае если открыто контекстное меню, закрываем его
         /*this.selecting
@@ -376,8 +375,6 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy(): void {
-        this.destroyed.next();
-        this.destroyed.complete();
         this.hostResizeObserver.unobserve(this.element.nativeElement);
         this.rxEffectsIds.forEach(effectId => this.rxEffects.unregister(effectId));
     }
@@ -452,7 +449,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
             this.selected.select(item.id);
         }
 
-        const component = this.gridListItems.find(item => item.element.nativeElement === event.target || item.element.nativeElement.contains(event.target));
+        const component = this.#gridListItems().find(item => item.element.nativeElement === event.target || item.element.nativeElement.contains(event.target));
 
         this.openContext.emit({
             event,
@@ -504,7 +501,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     handleDragleave(event: DragEvent) {
         event.preventDefault();
-        const component = this.gridListItems.find(value => value.element.nativeElement === event.target);
+        const component = this.#gridListItems().find(value => value.element.nativeElement === event.target);
 
         if (component) {
             if (this.checkDropList(component.data.id)) {
@@ -516,7 +513,7 @@ export class GridListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     handleDragenter(event: DragEvent) {
         event.preventDefault();
-        const component = this.gridListItems.find(value => value.element.nativeElement === event.target);
+        const component = this.#gridListItems().find(value => value.element.nativeElement === event.target);
 
         if (component) {
             const id = component.data.id;

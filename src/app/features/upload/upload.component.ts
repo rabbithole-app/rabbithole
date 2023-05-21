@@ -7,7 +7,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { AsyncSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 
 import { FileUploadState, UPLOAD_STATUS } from './models';
 import { UploadService } from './services';
@@ -28,7 +28,7 @@ interface State {
     styleUrls: ['./upload.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [CommonModule, MatButtonModule, MatIconModule, MatTabsModule, UploadItemComponent, EmptyComponent, TranslocoModule, PushModule],
+    imports: [CommonModule, MatButtonModule, MatIconModule, MatTabsModule, UploadItemComponent, EmptyComponent, TranslocoModule, PushPipe],
     providers: [RxState, { provide: TRANSLOCO_SCOPE, useValue: 'upload' }]
 })
 export class UploadComponent implements OnDestroy {

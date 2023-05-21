@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { FetchInterceptor } from '@mswjs/interceptors/lib/interceptors/fetch';
+import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 
 export const FETCH_INTERCEPTOR = new InjectionToken<FetchInterceptor>('FETCH_INTERCEPTOR', {
     providedIn: 'root',

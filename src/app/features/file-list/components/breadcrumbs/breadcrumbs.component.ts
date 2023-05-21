@@ -7,10 +7,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DndModule } from 'ngx-drag-drop';
 import { RxState } from '@rx-angular/state';
-import { AsyncSubject, Observable, switchMap, windowToggle } from 'rxjs';
-import { filter, map, takeUntil, withLatestFrom } from 'rxjs/operators';
-import { compact, dropRight, isEmpty, isNil, isNull, isString, isUndefined, last } from 'lodash';
-import { toNullable } from '@dfinity/utils';
+import { Observable, switchMap, windowToggle } from 'rxjs';
+import { filter, map, withLatestFrom } from 'rxjs/operators';
+import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslocoModule } from '@ngneat/transloco';
 
 import { addFASvgIcons } from '@core/utils';
 import { DirectoryExtended } from '@features/file-list/models';
@@ -31,11 +32,11 @@ interface State {
     styleUrls: ['./breadcrumbs.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     // TODO проверить можно ли импортировать не весь DndModule, а только pipe dndDropzone
-    imports: [CommonModule, RouterModule, MatMenuModule, MatButtonModule, MatIconModule, DndModule, MatProgressSpinnerModule],
+    imports: [CommonModule, RouterModule, MatMenuModule, MatButtonModule, MatIconModule, DndModule, MatProgressSpinnerModule, TranslocoModule],
     providers: [RxState],
     standalone: true
 })
-export class BreadcrumbsComponent extends RxState<State> implements OnDestroy {
+export class BreadcrumbsComponent extends RxState<State> {
     @ViewChild('activeMenu', { read: ElementRef }) activeMenuRef!: ElementRef;
     @ViewChild('currentMenuTrigger', { read: MatMenuTrigger }) contextMenuTrigger!: MatMenuTrigger;
     @ViewChild('backButton', { read: ElementRef }) backButton!: ElementRef;
@@ -46,7 +47,6 @@ export class BreadcrumbsComponent extends RxState<State> implements OnDestroy {
     private journalService = inject(JournalService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     get contextTemplate(): TemplateRef<HTMLElement> {
         return this.fileListState.get('contextItemsTemplate');
@@ -83,7 +83,7 @@ export class BreadcrumbsComponent extends RxState<State> implements OnDestroy {
                     )
                 ),
                 filter(([lastPath, currentPath]) => lastPath !== currentPath),
-                takeUntil(this.destroyed)
+                takeUntilDestroyed()
             )
             .subscribe(([path]) => {
                 this.router.navigate([this.getUrl(path ?? '')]);
@@ -154,11 +154,5 @@ export class BreadcrumbsComponent extends RxState<State> implements OnDestroy {
         if (this.get('dragEnterCount') === 0) {
             this.set({ entered: null });
         }
-    }
-
-    override ngOnDestroy(): void {
-        super.ngOnDestroy();
-        this.destroyed.next();
-        this.destroyed.complete();
     }
 }

@@ -5,3 +5,4 @@ export * from './add-svg-icons';
 export * from './enum';
 export * from './auth';
 export * from './identity';
+export * from './concat-string-stream';

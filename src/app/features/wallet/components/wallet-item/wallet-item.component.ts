@@ -6,7 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ICPToken, TokenAmount } from '@dfinity/nns';
 import { TranslocoModule } from '@ngneat/transloco';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 
 import { E8S_PER_TOKEN } from '@core/constants';
 import { addFASvgIcons } from '@core/utils';
@@ -14,7 +14,7 @@ import { addFASvgIcons } from '@core/utils';
 @Component({
     selector: 'app-wallet-item',
     standalone: true,
-    imports: [IfModule, MatTooltipModule, MatIconModule, MatButtonModule, TranslocoModule, MatProgressSpinnerModule],
+    imports: [RxIf, MatTooltipModule, MatIconModule, MatButtonModule, TranslocoModule, MatProgressSpinnerModule],
     templateUrl: './wallet-item.component.html',
     styleUrls: ['./wallet-item.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

@@ -7,6 +7,7 @@ import { defaults, entries, isEqual, isPlainObject, isUndefined, uniqBy, values 
 import { v4 as uuidv4 } from 'uuid';
 import { arrayBufferToUint8Array } from '@dfinity/utils';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
+import { showDirectoryPicker, showOpenFilePicker } from 'native-file-system-adapter';
 
 import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
 import { FILE_LIST_RX_STATE } from '@features/file-list';
@@ -295,11 +296,10 @@ export class UploadService extends RxState<State> {
         });
     }
 
-    async add(value: FileUpload | FileList) {
+    async add(files: FileSystemFileHandle[]) {
         const worker = this.get('worker');
-        const files = value as FileList;
         for (let i = 0; i < files.length; i++) {
-            const file = files.item(i) as File;
+            const file = await files[i].getFile()
             const buffer = await file.arrayBuffer();
             const item = {
                 id: uuidv4(),
@@ -392,5 +392,16 @@ export class UploadService extends RxState<State> {
 
     resetSummary() {
         this.set({ summary: this.summaryInitValue });
+    }
+
+    async showOpenFilePicker() {
+        const files = await showOpenFilePicker({
+            multiple: true
+        });
+        this.add(files);
+    }
+
+    showDirectoryPicker() {
+        console.log('browse directory');
     }
 }

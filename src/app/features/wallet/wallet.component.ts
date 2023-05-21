@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, ViewChild } from '@angular/core';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 import { lastValueFrom, Observable } from 'rxjs';
 import { toNullable } from '@dfinity/utils';
 import { AccountIdentifier, TokenAmount, ICPToken, Token } from '@dfinity/nns';
@@ -16,7 +16,7 @@ import { TRANSLOCO_SCOPE } from '@ngneat/transloco';
     templateUrl: './wallet.component.html',
     styleUrls: ['./wallet.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PushModule, SendComponent, AccountComponent],
+    imports: [PushPipe, SendComponent, AccountComponent],
     host: {
         '(click)': '$event.stopPropagation()'
     }

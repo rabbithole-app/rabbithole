@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, Input, HostBinding } from '@angular
 
 @Component({
     selector: 'app-avatar',
-    template: `<img [src]="url" />`,
+    template: `<img [src]="url" [alt]="name" />`,
     styleUrls: ['./avatar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true

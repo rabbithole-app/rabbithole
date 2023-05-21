@@ -6,7 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { map, Observable } from 'rxjs';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 import { selectSlice } from '@rx-angular/state/selections';
 
 import { InvitationsService } from './services/invitations.service';
@@ -19,7 +19,7 @@ import { prepareInvite } from './utils';
 @Component({
     selector: 'app-invitations',
     standalone: true,
-    imports: [NgIf, TranslocoModule, InvitesTableComponent, MatButtonModule, MatDialogModule, MatProgressSpinnerModule, MatIconModule, PushModule],
+    imports: [NgIf, TranslocoModule, InvitesTableComponent, MatButtonModule, MatDialogModule, MatProgressSpinnerModule, MatIconModule, PushPipe],
     templateUrl: './invitations.component.html',
     styleUrls: ['./invitations.component.scss']
 })

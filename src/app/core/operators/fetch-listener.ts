@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { FetchInterceptor } from '@mswjs/interceptors/lib/interceptors/fetch';
+import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 
 export const fetchListener = (eventName: 'request' | 'response') =>
     new Observable(subscriber => {

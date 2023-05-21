@@ -6,7 +6,6 @@ import {
     forwardRef,
     inject,
     Input,
-    OnDestroy,
     Output,
     QueryList,
     ViewChildren
@@ -19,7 +18,7 @@ import { MatInput, MatInputModule } from '@angular/material/input';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { createMask, InputMaskModule, InputmaskOptions } from '@ngneat/input-mask';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 import { convertStringToE8s, TokenAmount, Token } from '@dfinity/nns';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
@@ -46,6 +45,7 @@ import { AccountValidators, AmountAsyncValidator } from '@features/wallet/valida
 import { addFASvgIcons } from '@core/utils';
 import { Send } from '@features/wallet/models';
 import { E8S_PER_TOKEN } from '@core/constants';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface State {
     token: Token;
@@ -63,7 +63,7 @@ interface State {
 @Component({
     selector: 'app-send-form',
     standalone: true,
-    imports: [NgIf, ReactiveFormsModule, MatFormFieldModule, MatInputModule, InputMaskModule, MatIconModule, MatButtonModule, PushModule, TranslocoModule],
+    imports: [NgIf, ReactiveFormsModule, MatFormFieldModule, MatInputModule, InputMaskModule, MatIconModule, MatButtonModule, PushPipe, TranslocoModule],
     templateUrl: './send-form.component.html',
     styleUrls: ['./send-form.component.scss'],
     providers: [
@@ -75,7 +75,7 @@ interface State {
     ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SendFormComponent extends RxState<State> implements ControlValueAccessor, OnDestroy {
+export class SendFormComponent extends RxState<State> implements ControlValueAccessor {
     @Input() set token(value: Token) {
         this.set({ token: value });
     }
@@ -103,7 +103,6 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
     private domSanitizer = inject(DomSanitizer);
     private amountAsyncValidator = inject(AmountAsyncValidator);
     private formBuilder = inject(FormBuilder);
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     sendFormGroup = this.formBuilder.group({
         amount: new FormControl<string>('', {
             validators: [Validators.required],
@@ -193,7 +192,7 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
                     )
                 ),
                 distinctUntilChanged(isEqual),
-                takeUntil(this.destroyed)
+                takeUntilDestroyed()
             )
             .subscribe(value => {
                 this.onChanged(value);
@@ -208,7 +207,8 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
                         'blur'
                     )
                 ),
-                takeUntil(merge(touched$, this.destroyed))
+                takeUntil(touched$),
+                takeUntilDestroyed()
             )
             .subscribe(() => {
                 this.set({ touched: true });
@@ -247,12 +247,6 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
         event.preventDefault();
         const value = this.get('maxAmount');
         this.amountControl.setValue(value);
-    }
-
-    override ngOnDestroy(): void {
-        super.ngOnDestroy();
-        this.destroyed.next();
-        this.destroyed.complete();
     }
 
     private amountToString(value: bigint): string {

@@ -3,7 +3,7 @@ import { ResolveEnd, ResolveStart, Router, RouterModule, RouterOutlet } from '@a
 import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { filter, map, merge } from 'rxjs';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { has } from 'lodash';
 
 import { routeAnimations } from '@core/animations';
@@ -15,7 +15,7 @@ import { SidebarService } from './services/sidebar.service';
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [MatProgressBarModule, RouterModule, SidebarComponent, HeaderComponent, FooterComponent, MatSidenavModule, IfModule],
+    imports: [MatProgressBarModule, RouterModule, SidebarComponent, HeaderComponent, FooterComponent, MatSidenavModule, RxIf],
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,

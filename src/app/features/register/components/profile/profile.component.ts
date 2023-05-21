@@ -7,9 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { EMPTY, map, Observable, shareReplay, startWith } from 'rxjs';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 
 import { RegisterService, UserStatus } from '@features/register/services/register.service';
 import { addFASvgIcons } from '@core/utils';
@@ -24,8 +24,8 @@ import { UniqueUsernameValidator } from '@core/validators';
         TranslocoModule,
         ReactiveFormsModule,
         MatFormFieldModule,
-        IfModule,
-        PushModule,
+        RxIf,
+        PushPipe,
         MatIconModule,
         MatInputModule,
         MatButtonModule,

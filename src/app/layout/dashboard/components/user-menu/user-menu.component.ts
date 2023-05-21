@@ -1,12 +1,13 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ViewChild, ViewContainerRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, ViewContainerRef, inject } from '@angular/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLinkWithHref } from '@angular/router';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { AsyncSubject, filter, map, switchMap, takeUntil } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isUndefined } from 'lodash';
 
 import { AvatarComponent } from '../avatar/avatar.component';
@@ -19,6 +20,7 @@ import { SETTINGS_RX_STATE } from '@core/stores';
 
 interface State {
     openedMenu?: CustomOverlayRef;
+    trigger: MatMenuTrigger;
 }
 
 @Component({
@@ -33,23 +35,27 @@ interface State {
         TranslocoModule,
         WalletComponent,
         UploadTriggerComponent,
-        IfModule
+        RxIf
     ],
     providers: [RxState],
     templateUrl: './user-menu.component.html',
     styleUrls: ['./user-menu.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UserMenuComponent extends RxState<State> implements AfterViewInit {
+export class UserMenuComponent extends RxState<State> {
     @ViewChild('wallet', { read: ViewContainerRef }) walletContainer!: ViewContainerRef;
     @ViewChild('menu', { read: MatMenu }) menu!: MatMenu;
-    @ViewChild('trigger', { read: MatMenuTrigger }) trigger!: MatMenuTrigger;
+    @ViewChild('trigger', { read: MatMenuTrigger }) set trigger(value: MatMenuTrigger) {
+        this.set({ trigger: value });
+    }
+    get trigger(): MatMenuTrigger {
+        return this.get('trigger');
+    }
     authService = inject(AuthService);
     private settingsState = inject(SETTINGS_RX_STATE);
     expertMode$ = this.settingsState.select('expertMode');
     private profileService = inject(ProfileService);
     canInvite$ = this.profileService.select('canInvite');
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     constructor() {
         super();
@@ -63,21 +69,9 @@ export class UserMenuComponent extends RxState<State> implements AfterViewInit {
                 }))
             )
         );
-    }
-
-    ngAfterViewInit(): void {
-        this.trigger.menuOpened
-            .asObservable()
-            .pipe(takeUntil(this.destroyed))
-            .subscribe(() => {
-                this.walletContainer.clear();
-                this.walletContainer.createComponent(WalletComponent);
-            });
-    }
-
-    override ngOnDestroy(): void {
-        super.ngOnDestroy();
-        this.destroyed.next();
-        this.destroyed.complete();
+        this.select('trigger').pipe(switchMap(trigger => trigger.menuOpened.asObservable()), takeUntilDestroyed()).subscribe(() => {
+            this.walletContainer.clear();
+            this.walletContainer.createComponent(WalletComponent);
+        })
     }
 }

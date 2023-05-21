@@ -1,4 +1,5 @@
 {
+    "label": "Uploading",
     "tabs": {
         "uploading": "Uploading",
         "completed": "Completed{count, plural, =0 {} other { (#)}}"

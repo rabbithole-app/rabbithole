@@ -1,18 +1,18 @@
-import { CommonModule, JsonPipe, Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, OnDestroy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef } from '@angular/core';
+import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
+import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
-import { asapScheduler, AsyncSubject, filter, Observable, observeOn } from 'rxjs';
+import { asapScheduler, filter, Observable, observeOn } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
-import { PushModule } from '@rx-angular/template/push';
-import { IfModule } from '@rx-angular/template/if';
-import { LetModule } from '@rx-angular/template/let';
-import { ForModule } from '@rx-angular/template/for';
+import { PushPipe } from '@rx-angular/template/push';
+import { RxIf } from '@rx-angular/template/if';
+import { LetDirective } from '@rx-angular/template/let';
+import { RxFor } from '@rx-angular/template/for';
 import { v4 as uuidv4 } from 'uuid';
 
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
@@ -45,20 +45,20 @@ interface State {
         MatIconModule,
         MatDialogModule,
         TranslocoModule,
-        PushModule,
-        LetModule,
+        PushPipe,
+        LetDirective,
         NgSwitch,
         NgSwitchCase,
         NgSwitchDefault,
         NgTemplateOutlet,
-        ForModule,
+        RxFor,
         NgIf,
-        IfModule
+        RxIf
     ],
     providers: [RxState, SnackbarProgressService, DirectoryService, ContextMenuService, JournalService],
     standalone: true
 })
-export class FileListComponent implements OnInit, OnDestroy {
+export class FileListComponent implements OnInit {
     @ViewChild(EmptyComponent, { read: ElementRef }) set emptyRef(value: ElementRef) {
         this.state.set({ emptyRef: value });
     }
@@ -90,7 +90,6 @@ export class FileListComponent implements OnInit, OnDestroy {
     get itemsMenuTrigger(): MatMenuTrigger {
         return this.state.get('itemsMenuTrigger');
     }
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     readonly folderColors: string[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
     folderColor: string = 'blue';
     nextColor!: string;
@@ -105,11 +104,6 @@ export class FileListComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.fileListState.connect(this.route.data.pipe(map(({ fileList }) => fileList)));
-    }
-
-    ngOnDestroy(): void {
-        this.destroyed.next();
-        this.destroyed.complete();
     }
 
     async openCreateDirectoryDialog(event: MouseEvent) {
@@ -170,12 +164,6 @@ export class FileListComponent implements OnInit, OnDestroy {
             default:
                 break;
         }
-    }
-
-    handleFileSelected(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const files: FileList = input.files as FileList;
-        this.uploadService.add(files);
     }
 
     handleEmptyContextMenu(event: MouseEvent) {

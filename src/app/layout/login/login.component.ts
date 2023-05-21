@@ -12,12 +12,12 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { LogoComponent } from '../dashboard/components/logo/logo.component';
-import { PushModule } from '@rx-angular/template/push';
+import { PushPipe } from '@rx-angular/template/push';
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [NgSwitch, NgSwitchCase, PushModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule, LogoComponent],
+    imports: [NgSwitch, NgSwitchCase, PushPipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule, LogoComponent],
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

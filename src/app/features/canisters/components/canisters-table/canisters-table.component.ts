@@ -9,7 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
-import { ForModule } from '@rx-angular/template/for';
+import { RxFor } from '@rx-angular/template/for';
 
 import { CanisterDetails } from '@features/canisters/models';
 import { EmptyComponent } from '@core/components/empty/empty.component';
@@ -31,7 +31,7 @@ import { CopyIDComponent } from '@core/components/copy-id/copy-id.component';
         EmptyComponent,
         MatTooltipModule,
         MatProgressSpinnerModule,
-        ForModule,
+        RxFor,
         TranslocoModule,
         CopyIDComponent
     ],

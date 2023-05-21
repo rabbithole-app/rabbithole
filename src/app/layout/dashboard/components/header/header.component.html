@@ -1,5 +1,5 @@
 
-<button mat-icon-button class="sidebar-toggle" (click)="toggleSidebar()" [disabled]="isCompact$ | push">
+<button mat-icon-button class="sidebar-toggle" (click)="toggleSidebar()" [disabled]="isCompact$ | push" [attr.aria-label]="'application.toggle-sidebar' | transloco">
     <mat-icon svgIcon="far:bars"></mat-icon>
 </button>
 <div class="header-portal-outlet">

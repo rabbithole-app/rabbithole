@@ -4,7 +4,6 @@ import {
     Input,
     ElementRef,
     HostBinding,
-    OnDestroy,
     Inject,
     Output,
     EventEmitter,
@@ -19,7 +18,6 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RxState } from '@rx-angular/state';
-import { AsyncSubject } from 'rxjs';
 import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
 
 import { JournalItem } from '@features/file-list/models';
@@ -43,7 +41,7 @@ interface State {
     imports: [CommonModule, AnimatedFolderComponent, MatIconModule, MatProgressBarModule],
     standalone: true
 })
-export class GridListItemComponent implements OnDestroy, Highlightable {
+export class GridListItemComponent implements Highlightable {
     @Input()
     set data(data: JournalItem) {
         // console.log('set data', data)
@@ -57,12 +55,14 @@ export class GridListItemComponent implements OnDestroy, Highlightable {
     @Output() openContext: EventEmitter<{ trigger: MatMenuTrigger; position: Point }> = new EventEmitter<{ trigger: MatMenuTrigger; position: Point }>();
     folderColor: string = 'blue';
     @HostBinding('attr.tabindex') tabindex = '-1';
-    @HostBinding('attr.role') role = 'list-item';
+    @HostBinding('attr.role') role = 'listitem';
+    @HostBinding('attr.aria-label') get label() {
+        return this.data.name;
+    };
     @HostBinding('class.disabled') @Input() disabled: boolean = false;
     @HostBinding('class.loading') @Input() loading?: boolean = false;
     @HostBinding('class.selected') @Input() selected: boolean = false;
     directoryService = inject(DirectoryService);
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     private _isActive = false;
 
     /*
@@ -103,11 +103,6 @@ export class GridListItemComponent implements OnDestroy, Highlightable {
         private state: RxState<State>,
         @Inject(WINDOW) private window: Window
     ) {}
-
-    ngOnDestroy(): void {
-        this.destroyed.next();
-        this.destroyed.complete();
-    }
 
     getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);
 

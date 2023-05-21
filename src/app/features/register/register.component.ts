@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { formatNumber } from '@angular/common';
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -7,10 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { asyncScheduler, AsyncSubject, debounceTime, distinctUntilChanged, map, merge, Observable, observeOn, scan } from 'rxjs';
-import { PushModule } from '@rx-angular/template/push';
+import { asyncScheduler, debounceTime, distinctUntilChanged, map, merge, Observable, observeOn, scan } from 'rxjs';
+import { PushPipe } from '@rx-angular/template/push';
 import { RxState } from '@rx-angular/state';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { isUndefined, pickBy, size } from 'lodash';
 
 import { cyclesToICP } from '@features/wallet/utils';
@@ -43,12 +43,12 @@ interface State {
     imports: [
         TranslocoModule,
         MatStepperModule,
-        PushModule,
+        PushPipe,
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,
         InvoiceComponent,
-        IfModule,
+        RxIf,
         RedeemInviteDialogComponent,
         MatDialogModule
     ],
@@ -64,7 +64,7 @@ interface State {
         }
     ]
 })
-export class RegisterComponent extends RxState<State> implements OnDestroy {
+export class RegisterComponent extends RxState<State> {
     readonly invoiceStage = InvoiceStage;
     readonly xdr: number = cyclesToICP(JOURNAL_CYCLES_SHARE);
     readonly usd = formatNumber(this.xdr * 1.3, 'en-US', '0.0-1');
@@ -77,7 +77,6 @@ export class RegisterComponent extends RxState<State> implements OnDestroy {
     createInvoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_INVOICE] as keyof typeof Step);
     invoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.INVOICE] as keyof typeof Step);
     createJournalCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_JOURNAL] as keyof typeof Step);
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
     createInvoiceStateIcon$ = this.select('createInvoiceStateIcon');
     createJournalStateIcon$ = this.select('createJournalStateIcon');
     invite$: Observable<boolean> = this.select('invite');
@@ -112,12 +111,6 @@ export class RegisterComponent extends RxState<State> implements OnDestroy {
                 this.registerService.select('loadingCreateInvoice').pipe(map(loading => ({ createInvoiceStateIcon: loading ? 'spinner' : 'number' })))
             ).pipe(map(v => v as Partial<State>))
         );
-    }
-
-    override ngOnDestroy(): void {
-        super.ngOnDestroy();
-        this.destroyed.next();
-        this.destroyed.complete();
     }
 
     handleCreateInvoice(event: MouseEvent): void {

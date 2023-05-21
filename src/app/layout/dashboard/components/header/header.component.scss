@@ -17,6 +17,7 @@
     $size: 20px;
     --mdc-icon-button-state-layer-size: 40px;
     --mdc-icon-button-icon-size: #{$size};
+    padding: 10px;
     .mat-icon {
         width: $size;
         height: $size;

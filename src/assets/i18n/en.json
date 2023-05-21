@@ -7,7 +7,12 @@
         "initializing": "Initializing...",
         "synchronizing": "Synchronizing...",
         "synchronizing.description": "Please keep the app open on a device that's already added.",
-        "signed-out": "You have been logged out because your session has expired."
+        "signed-out": "You have been logged out because your session has expired.",
+        "toggle-sidebar": "Toggle sidebar"
+    },
+    "breadcrumbs": {
+        "back": "Back",
+        "menu": "Actions menu"
     },
     "sidebar": {
         "upload": "Upload",
@@ -104,7 +109,7 @@
         },
         "directory": {
             "get": {
-                "answers": {
+                "errors": {
                     "notFound": "Directory not found"
                 }
             },

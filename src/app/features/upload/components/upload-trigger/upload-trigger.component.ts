@@ -7,7 +7,7 @@ import { filter, switchMap, map } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
-import { IfModule } from '@rx-angular/template/if';
+import { RxIf } from '@rx-angular/template/if';
 import { MatButtonModule } from '@angular/material/button';
 import { isUndefined } from 'lodash';
 
@@ -26,7 +26,7 @@ interface State {
 @Component({
     selector: 'app-upload-trigger',
     standalone: true,
-    imports: [IfModule, NgSwitch, NgSwitchDefault, NgSwitchCase, MatIconModule, MatProgressSpinnerModule, TranslocoModule, UploadComponent, MatButtonModule],
+    imports: [RxIf, NgSwitch, NgSwitchDefault, NgSwitchCase, MatIconModule, MatProgressSpinnerModule, TranslocoModule, UploadComponent, MatButtonModule],
     templateUrl: './upload-trigger.component.html',
     styleUrls: ['./upload-trigger.component.scss'],
     providers: [RxState, OverlayService, { provide: TRANSLOCO_SCOPE, useValue: 'upload' }],

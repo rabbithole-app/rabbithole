@@ -5,19 +5,19 @@
         <ng-container #wallet></ng-container>
         <!-- <app-account (click)="$event.stopPropagation()"></app-account> -->
         <mat-divider></mat-divider>
-        <button mat-menu-item routerLink="profile" disabled>
+        <!-- <button mat-menu-item routerLink="/profile" disabled>
             <mat-icon svgIcon="far:user"></mat-icon>
             <span>{{ t('navigation.profile') }}</span>
-        </button>
+        </button> -->
         <button *rxIf="canInvite$" mat-menu-item routerLink="invitations">
             <mat-icon svgIcon="far:envelope"></mat-icon>
             <span>{{ t('navigation.invitations') }}</span>
         </button>
-        <button mat-menu-item routerLink="settings">
+        <button mat-menu-item routerLink="/settings">
             <mat-icon svgIcon="far:gear"></mat-icon>
             <span>{{ t('navigation.settings') }}</span>
         </button>
-        <button mat-menu-item routerLink="canisters" *rxIf="expertMode$">
+        <button mat-menu-item routerLink="/canisters" *rxIf="expertMode$">
             <mat-icon svgIcon="far:database"></mat-icon>
             <span>{{ t('navigation.canisters') }}</span>
         </button>
