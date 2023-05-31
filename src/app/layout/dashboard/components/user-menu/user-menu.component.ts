@@ -69,9 +69,14 @@ export class UserMenuComponent extends RxState<State> {
                 }))
             )
         );
-        this.select('trigger').pipe(switchMap(trigger => trigger.menuOpened.asObservable()), takeUntilDestroyed()).subscribe(() => {
-            this.walletContainer.clear();
-            this.walletContainer.createComponent(WalletComponent);
-        })
+        this.select('trigger')
+            .pipe(
+                switchMap(trigger => trigger.menuOpened.asObservable()),
+                takeUntilDestroyed()
+            )
+            .subscribe(() => {
+                this.walletContainer.clear();
+                this.walletContainer.createComponent(WalletComponent);
+            });
     }
 }

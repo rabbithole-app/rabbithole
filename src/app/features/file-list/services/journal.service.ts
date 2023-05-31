@@ -1,56 +1,79 @@
 import { inject, Injectable } from '@angular/core';
-import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { defer, EMPTY, iif, Observable, of, throwError } from 'rxjs';
-import { first, catchError, switchMap, tap } from 'rxjs/operators';
-import { get, has, isNil, orderBy } from 'lodash';
+import { first, catchError, switchMap, tap, map, finalize } from 'rxjs/operators';
+import { get, has, head, isEqual, isNil } from 'lodash';
 import { saveAs } from 'file-saver';
+import { nanoid } from 'nanoid';
 
 import { BucketsService, NotificationService } from '@core/services';
-import { Directory, DirectoryMoveError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
-import { DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { CreatePath, Directory, DirectoryCreateError, DirectoryMoveError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
+import { DirectoryCreate, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
-import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
-import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
-
-export interface BucketActor<T> {
-    bucketId: Principal;
-    actor: T;
-    balance: bigint;
-}
+import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
+import { FileListService } from './file-list.service';
 
 @Injectable()
 export class JournalService {
     private bucketsService = inject(BucketsService);
     private notificationService = inject(NotificationService);
     private snackbarProgressService = inject(SnackbarProgressService);
-    private fileListState = inject(FILE_LIST_RX_STATE);
+    readonly #fileListService = inject(FileListService);
     private translocoService = inject(TranslocoService);
 
-    async createDirectory({ id, name, parentId }: { id: string; name: string; parentId?: string }) {
-        const tempDirectory: DirectoryExtended = { id, name, parentId, type: 'folder', color: 'blue', children: undefined, loading: true, disabled: true };
-        this.fileListState.set('items', state => orderBy([...state.items, tempDirectory], [{ type: 'folder' }, 'name'], ['desc', 'asc']));
-        this.wrapActionHandler(actor => actor.createDirectory({ id, name, parentId: toNullable(parentId) }))
+    createDirectory({ name, parent }: DirectoryCreate) {
+        const id = `temp_${nanoid(4)}`;
+        this.#fileListService.addTemponaryDir({ id, name, parent });
+        this.wrapActionHandler(actor => actor.createDirectory({ name, parentId: toNullable(parent?.id) }))
             .pipe(
-                switchMap(result => {
+                map(result => {
                     if (has(result, 'err')) {
-                        // TODO: перевод ошибок
-                        return throwError(() => new Error(Object.keys(get(result, 'err') as unknown as Record<string, void>)[0]));
+                        const [key, value] = Object.entries(get(result, 'err') as unknown as DirectoryCreateError)[0];
+                        throw Error(this.translocoService.translate(`fileList.directory.create.messages.err.${key}`, { value }));
                     }
-                    const directory = toDirectoryExtended(get(result, 'ok') as unknown as Directory);
-                    return of(directory);
-                })
+                    const directory = { ...toDirectoryExtended(get(result, 'ok') as unknown as Directory), path: parent?.path };
+                    return directory;
+                }),
+                finalize(() => this.#fileListService.removeItem(id))
             )
             .subscribe({
-                error: () => this.fileListState.set('items', state => state.items.filter(item => item.id !== id)),
-                next: directory =>
-                    this.fileListState.set('items', state =>
-                        orderBy([...state.items.filter(item => item.id !== id), directory], [{ type: 'folder' }, 'name'], ['desc', 'asc'])
-                    ),
-                complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.answers.ok'))
+                error: err => this.notificationService.error(err.message),
+                next: directory => this.#fileListService.add(directory),
+                complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.messages.ok'))
             });
+    }
+
+    createPaths(args: { paths: string[]; parent?: { path: string; id: string } }): Observable<{ path: string; id: string }[]> {
+        return new Observable(subscriber => {
+            const handler: (item: Task) => Observable<unknown> = item => {
+                const items = this.#fileListService.items();
+                const parent = this.#fileListService.parent();
+                const name = head(item.name.split('/')) as string;
+                if (!items.some(v => v.name === name) && isEqual(args.parent, parent)) {
+                    this.#fileListService.addTemponaryDir({ id: item.id, name, parent: args.parent });
+                }
+
+                return this.wrapActionHandler(actor => actor.createPathsV2([item.name], toNullable(args.parent?.id))).pipe(
+                    tap({
+                        next: value => subscriber.next(value.map(([path, id]) => ({ path, id }))),
+                        finalize: () => this.#fileListService.removeItem(item.id),
+                        complete: () => this.#fileListService.update()
+                    })
+                );
+            }
+
+            this.snackbarProgressService.add('createPath', args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' })), handler);
+            const subscription = this.snackbarProgressService.snackBarRef
+                ?.afterDismissed()
+                .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
+                .subscribe({
+                    error: (err) => subscriber.error(err),
+                    complete: () => subscriber.complete()
+                });
+            return () => subscription?.unsubscribe();
+        });
     }
 
     private wrapActionHandler<T>(callback: (actor: ActorSubclass<JournalBucketActor>) => Promise<T>) {
@@ -60,7 +83,7 @@ export class JournalService {
                 iif(
                     () => isNil(actor),
                     throwError(() => new Error("User isn't authorized")),
-                    defer(() => callback(actor as unknown as ActorSubclass<JournalBucketActor>))
+                    defer(() => callback(actor as NonNullable<typeof actor>))
                 )
             ),
             catchError(err => {
@@ -72,71 +95,72 @@ export class JournalService {
 
     move(selected: JournalItem[], targetPath: string | null) {
         const selectedIds = selected.map(({ id }) => id);
-        this.updateItems(id => selectedIds.includes(id), { disabled: true });
+        this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
         const handler: (item: JournalItem) => Observable<unknown> = item =>
             this.wrapActionHandler(actor => {
                 const sourcePath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
                 const preparedTargetPath = toNullable(targetPath ?? undefined);
                 return item.type === 'folder' ? actor.moveDirectory(sourcePath, preparedTargetPath) : actor.moveFile(sourcePath, preparedTargetPath);
             }).pipe(
-                switchMap(result => {
+                map(result => {
                     if (has(result, 'err')) {
                         // TODO: перевод ошибок
-                        return throwError(() => new Error(Object.keys(get(result, 'err') as unknown as DirectoryMoveError)[0]));
+                        throw new Error(Object.keys(get(result, 'err') as unknown as DirectoryMoveError)[0]);
                     }
 
-                    return of(true);
+                    return true;
                 }),
                 tap({
                     error: err => console.error(err),
-                    finalize: () => this.updateItems(id => id === item.id, { disabled: false }),
-                    complete: () => this.fileListState.set('items', state => state.items.filter(({ id }) => item.id !== id))
+                    finalize: () => this.#fileListService.updateItems(id => id === item.id, { disabled: false }),
+                    complete: () => this.#fileListService.removeItem(item.id)
                 })
             );
         this.snackbarProgressService.add<JournalItem>('move', selected, handler);
         this.snackbarProgressService.snackBarRef
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
-            .subscribe(() => this.updateItems(id => selectedIds.includes(id), { disabled: false }));
+            .subscribe(() => this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: false }));
     }
 
-    async download(selected: JournalItem[]) {
+    download(selected: JournalItem[]) {
         selected
             .filter(({ type }) => type === 'file')
             .map(v => v as FileInfoExtended)
-            .forEach(async ({ downloadUrl, name }) => {
+            .forEach(({ downloadUrl, name }) => {
                 saveAs(downloadUrl, name);
             });
     }
 
     remove(selected: JournalItem[]) {
         const selectedIds = selected.map(({ id }) => id);
-        this.updateItems(id => selectedIds.includes(id), { disabled: true });
-        this.updateBreadcrumbs(id => selectedIds.includes(id), { loading: true });
+        this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
+        this.#fileListService.updateBreadcrumbs(id => selectedIds.includes(id), { loading: true });
         const handler: (item: JournalItem) => Observable<unknown> = item =>
             this.wrapActionHandler(actor => {
                 const path = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
                 return item.type === 'folder' ? actor.deleteDirectory(path) : actor.deleteFile(path);
             }).pipe(
-                switchMap(result => {
+                map(result => {
                     if (has(result, 'err')) {
                         // TODO: перевод ошибок
-                        return throwError(() => new Error(Object.keys(get(result, 'err') as unknown as Record<string, any>)[0]));
+                        throw Error(Object.keys(get(result, 'err') as unknown as Record<string, any>)[0]);
                     }
 
-                    return of(true);
+                    return true;
                 }),
                 tap({
                     error: err => console.error(err),
                     finalize: () => {
-                        this.updateItems(id => id === item.id, { disabled: false });
-                        this.updateBreadcrumbs(id => id === item.id, { loading: false });
+                        this.#fileListService.updateItems(id => id === item.id, { disabled: false });
+                        this.#fileListService.updateBreadcrumbs(id => id === item.id, { loading: false });
                     },
                     complete: () => {
-                        this.fileListState.set(state => ({
-                            items: state.items.filter(({ id }) => item.id !== id),
-                            breadcrumbs: state.breadcrumbs.filter(({ id }) => item.id !== id)
-                        }));
+                        this.#fileListService.removeItem(item.id);
+                        // this.fileListState.set(state => ({
+                        //     items: state.items.filter(({ id }) => item.id !== id),
+                        //     breadcrumbs: state.breadcrumbs.filter(({ id }) => item.id !== id)
+                        // }));
                     }
                 })
             );
@@ -144,15 +168,7 @@ export class JournalService {
         this.snackbarProgressService.snackBarRef
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
-            .subscribe(() => this.updateItems(id => selectedIds.includes(id), { disabled: false }));
-    }
-
-    private updateItems(iteratee: (id: string) => boolean, value: Partial<JournalItem>) {
-        this.fileListState.set('items', state => state.items.map<JournalItem>(item => (iteratee(item.id) ? ({ ...item, ...value } as JournalItem) : item)));
-    }
-
-    private updateBreadcrumbs(iteratee: (id: string) => boolean, value: Partial<DirectoryExtended>) {
-        this.fileListState.set('breadcrumbs', state => state.breadcrumbs.map(item => (iteratee(item.id) ? { ...item, ...value } : item)));
+            .subscribe(() => this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: false }));
     }
 
     /*

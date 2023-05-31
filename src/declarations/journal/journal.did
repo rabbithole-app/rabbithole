@@ -34,10 +34,15 @@ type TransferError =
 type Tokens__1 = record {e8s: nat64;};
 type Tokens = record {e8s: nat64;};
 type Time = int;
-type Result_7 = 
+type Result_8 = 
  variant {
    err: FileCreateError;
    ok: File__1;
+ };
+type Result_7 = 
+ variant {
+   err: DirectoryCreateError;
+   ok;
  };
 type Result_6 = 
  variant {
@@ -108,20 +113,25 @@ type JournalEntry =
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
-   addFile: (FileCreate) -> (Result_7);
+   addFile: (FileCreate) -> (Result_8);
    canisterStatus: (principal) ->
     (record {
        freezingThresholdInCycles: nat;
        id: principal;
        status: canister_status_response;
      });
-   createDirectory: (record {
-                       id: ID__1;
-                       name: text;
-                       parentId: opt ID__1;
-                     }) -> (Result_6);
+   checkDirectoryName: (DirectoryCreate) -> (Result_7) query;
+   createDirectory: (DirectoryCreate) -> (Result_6);
    createInvite: (Time) -> (Result_5);
-   createPath: (text) -> ();
+   createPath: (text, opt ID__1) -> ();
+   createPaths: (vec CreatePath) -> (vec record {
+                                           text;
+                                           ID__1;
+                                         });
+   createPathsV2: (vec text, opt ID__1) -> (vec record {
+                                                  text;
+                                                  ID__1;
+                                                });
    deleteDirectory: (text) -> (Result_4);
    deleteFile: (text) -> (Result_4);
    deleteStorage: (BucketId) -> ();
@@ -225,6 +235,11 @@ type DirectoryCreateError =
    alreadyExists: Directory__1;
    illegalCharacters;
  };
+type DirectoryCreate = 
+ record {
+   name: text;
+   parentId: opt ID;
+ };
 type DirectoryColor = 
  variant {
    blue;
@@ -250,6 +265,12 @@ type Directory =
    parentId: opt ID;
    path: opt text;
    updatedAt: Time;
+ };
+type CreatePath = 
+ record {
+   base: opt text;
+   parentId: opt ID;
+   path: text;
  };
 type Canister = 
  record {

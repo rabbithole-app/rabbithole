@@ -115,8 +115,10 @@
             },
             "create": {
                 "title": "Create directory",
-                "cancel": "Cancel",
-                "create": "Create",
+                "actions": {
+                    "cancel": "Cancel",
+                    "create": "Create"
+                },
                 "name": {
                     "label": "Directory name",
                     "errors": {
@@ -125,9 +127,11 @@
                         "illegalCharacters": "Directory name contains illegal characters"
                     }
                 },
-                "answers": {
-                    "notAuthorized": "Not authorized user",
-                    "alreadyExists": "Directory already exists",
+                "messages": {
+                    "err": {
+                        "notAuthorized": "Not authorized user",
+                        "alreadyExists": "Directory already exists"
+                    },
                     "ok": "Directory was successfully created"
                 }
             }
@@ -138,26 +142,34 @@
                 "cancel": "Cancel"
             },
             "common": {
-                "prepare": "Processing {total, plural, =1 { {filename} } other {# files}}",
-                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
-                "warning": "An error occurred while processing {count, plural, =0 {} =1 {# file} other {# files}}",
-                "success": "Processed {count} files",
-                "failed": "An error occurred while processing {count, plural, =0 {} =1 {# file} other {# files}}"
+                "prepare": "Preparing to process {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Processed{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while processing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0{File} other{Directory}} {name} processed} other {Processed # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while processing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
+            },
+            "createPath": {
+                "prepare": "Creating {total, plural, =1 {path: {name}} other {# paths}}",
+                "message": "Created{total, plural, =0 {} =1 { {name}} other { {current} of # paths}}",
+                "warning": "An error occurred while creating {count, plural, =0 {} =1 {# path} other {# paths}}",
+                "success": "{count, plural, =0 {} =1 {The path has} other {All paths have}} been successfully created.",
+                "failed": "An error occurred while creating {count, plural, =0 {} =1 {# path} other {# paths}}"
             },
             "move": {
-                "prepare": "Preparing to move {total, plural, =1 { {filename} } other {# files}}",
-                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
-                "warning": "An error occurred while moving {count, plural, =0 {} =1 {# file} other {# files}}",
-                "success": "{count, plural, =0 {} =1 {File {filename} moved} other {Moved # files}}",
-                "failed": "An error occurred while moving {count, plural, =0 {} =1 {# file} other {# files}}"
+                "prepare": "Preparing to move {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Processed{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while moving {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} moved} other {Moved # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while moving {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
             },
             "remove": {
-                "prepare": "Preparing to remove {total, plural, =1 { {filename} } other {# files}}",
-                "message": "Processed {total, plural, =0 {} =1 { {filename} } other { {current} of # files}}",
-                "warning": "An error occurred while deleting {count, plural, =0 {} =1 {# file} other {# files}}",
-                "success": "{count, plural, =0 {} =1 {File {filename} removed} other {Removed # files}}",
-                "failed": "An error occurred while deleting {count, plural, =0 {} =1 {# file} other {# files}}"
+                "prepare": "Preparing to remove {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Processed{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while removing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} removed} other {Removed # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while removing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
             }
+            
         },
         "dialog": {
             "show-errors": {

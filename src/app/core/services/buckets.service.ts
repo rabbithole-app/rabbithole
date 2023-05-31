@@ -131,7 +131,7 @@ export class BucketsService extends RxState<State> {
                 } else {
                     return createActor<StorageActor>({ canisterId, idlFactory: storageIdlFactory, identity }).pipe(
                         map(actor => ({ actor, canisterId })),
-                        tap(storage => this.set('storages', state => ([...state.storages, storage])))
+                        tap(storage => this.set('storages', state => [...state.storages, storage]))
                     );
                 }
             })

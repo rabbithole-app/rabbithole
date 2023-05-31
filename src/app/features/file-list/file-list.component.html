@@ -1,12 +1,12 @@
 <ng-container *transloco="let t; read: 'fileList'">
-    <app-page-header [class.dragging]="dragging$ | push">My Drive</app-page-header>
-    <ng-container *ngIf="hasItems$ | push; else empty">
-        <app-grid-list [items]="items$ | push" (openContext)="handleContextMenu($event)"></app-grid-list>
+    <app-page-header [class.dragging]="fileListService.dragging()">My Drive</app-page-header>
+    <ng-container *ngIf="hasItems(); else empty">
+        <app-grid-list [items]="fileListService.items()" (openContext)="handleContextMenu($event)"></app-grid-list>
     </ng-container>
     <ng-template #empty>
         <app-empty (contextmenu)="handleEmptyContextMenu($event)"></app-empty>
     </ng-template>
-    <ng-container *rxLet="contextMenuData$; let data">
+    <ng-container *rxLet="contextMenuData(); let data">
         <button #itemsTrigger [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false" aria-hidden="true"></button>
     </ng-container>
     <mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">

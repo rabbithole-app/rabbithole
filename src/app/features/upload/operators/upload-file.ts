@@ -1,6 +1,5 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
 import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, tap, throwError } from 'rxjs';
-import { translate } from '@ngneat/transloco';
 import { addSeconds, differenceInSeconds } from 'date-fns';
 import { defaults, get, has, includes, isNull, pick } from 'lodash';
 
@@ -85,7 +84,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
 
                                                     return {
                                                         ...acc,
-                                                        // in order to always have the correct progress when racing chunks, 
+                                                        // in order to always have the correct progress when racing chunks,
                                                         // we form it outside of this function
                                                         loaded: chunk.byteLength,
                                                         batch: {
@@ -124,7 +123,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                         map(response => {
                             if (has(response, 'err')) {
                                 let key = Object.keys(get(response, 'err') as unknown as CommitUploadError)[0];
-                                throw Error(translate(`upload.commit.errors.${key}`));
+                                throw new Error(`upload.commit.errors.${key}`);
                             }
 
                             return get(response, 'ok');

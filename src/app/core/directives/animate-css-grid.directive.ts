@@ -14,14 +14,14 @@ export interface WrapGridConfig {
 })
 export class AnimateCssGridDirective implements OnDestroy {
     readonly #elementRef = inject(ElementRef);
-    #animationEnabled : WritableSignal<boolean> = signal(true);
+    #animationEnabled: WritableSignal<boolean> = signal(true);
     #config: WritableSignal<WrapGridArguments> = signal({
         onStart: animatedChildren => this.animationStart.emit(animatedChildren),
         onEnd: animatedChildren => this.animationEnd.emit(animatedChildren)
     });
     @Input() set appAnimateCssGrid(value: WrapGridConfig) {
         this.#config.update(config => ({ ...config, ...value }));
-    };
+    }
     @Input() set appAnimateCssGridDisabled(value: boolean) {
         this.#animationEnabled.set(!value);
     }

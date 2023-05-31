@@ -1,56 +1,52 @@
-import { Component, OnInit, ChangeDetectionStrategy, Inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, Signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { FormControl, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { filter, Observable, of, shareReplay } from 'rxjs';
-import { map, startWith, switchMap, take } from 'rxjs/operators';
-import { isNull } from 'lodash';
-
-import { DirectoryService } from '@features/file-list/services/directory.service';
-import { DirectoryCreate } from '@features/file-list/models';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { CommonModule } from '@angular/common';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import { RxIf } from '@rx-angular/template/if';
+import { RxFor } from '@rx-angular/template/for';
+import { EMPTY, Observable, filter } from 'rxjs';
+import { delayWhen, map } from 'rxjs/operators';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
+import { DirectoryNameValidator } from '@features/file-list/validators';
 
 @Component({
     selector: 'app-create-directory-dialog-dialog',
     templateUrl: './create-directory-dialog.component.html',
     styleUrls: ['./create-directory-dialog.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, MatDialogModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatButtonModule],
-    providers: [DirectoryService],
+    imports: [RxIf, RxFor, MatDialogModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatButtonModule, TranslocoModule],
+    providers: [DirectoryNameValidator],
     standalone: true
 })
-export class CreateDirectoryDialogComponent implements OnInit {
-    name: FormControl = new FormControl('', [Validators.required]);
-    errorMessages$!: Observable<string[]>;
+export class CreateDirectoryDialogComponent {
+    readonly #directoryNameValidator = inject(DirectoryNameValidator);
+    readonly #translocoService = inject(TranslocoService);
+    readonly #fb = inject(FormBuilder);
+    readonly data = inject<{ parent?: { id: string; path: string } }>(MAT_DIALOG_DATA);
+    readonly #dialogRef = inject<MatDialogRef<CreateDirectoryDialogComponent>>(MatDialogRef);
+    form = this.#fb.group({
+        name: new FormControl('', [Validators.required], [this.#directoryNameValidator.validate.bind(this.#directoryNameValidator)]),
+        parentId: new FormControl(this.data.parent?.id)
+    });
+    #errorMessage$: Observable<string | undefined> =
+        this.name?.valueChanges.pipe(
+            delayWhen(() => this.name?.statusChanges.pipe(filter(status => status !== 'PENDING')) ?? EMPTY),
+            map(() => {
+                if (this.name?.errors) {
+                    const key = Object.keys(this.name.errors)[0];
+                    return this.#translocoService.translate(`fileList.directory.create.name.errors.${key}`);
+                }
 
-    constructor(
-        public dialogRef: MatDialogRef<CreateDirectoryDialogComponent>,
-        private directoryService: DirectoryService,
-        @Inject(MAT_DIALOG_DATA) public data: Omit<DirectoryCreate, 'name'>
-    ) {
-        this.name.addAsyncValidators(this.directoryService.checkDirectoryValidator(data));
-    }
+                return;
+            })
+        ) ?? EMPTY;
+    errorMessage: Signal<string | undefined> = toSignal(this.#errorMessage$);
 
-    ngOnInit(): void {
-        this.errorMessages$ = this.name.valueChanges.pipe(
-            // ждем выполнения асинхронных валидаторов
-            switchMap(() =>
-                this.name.statusChanges.pipe(
-                    startWith(this.name.status),
-                    filter(status => status !== 'PENDING'),
-                    take(1)
-                )
-            ),
-            switchMap(errors =>
-                of(this.name.errors as ValidationErrors).pipe(
-                    filter(errors => !isNull(errors)),
-                    // TODO: языковые файлы
-                    map(errors => Object.entries(errors).map(([key, value]) => `file-list.directory.create.name.errors.${key}`))
-                )
-            ),
-            shareReplay(1)
-        );
+    get name() {
+        return this.form.get('name');
     }
 }

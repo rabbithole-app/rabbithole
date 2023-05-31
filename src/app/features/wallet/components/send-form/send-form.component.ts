@@ -1,15 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    ElementRef,
-    EventEmitter,
-    forwardRef,
-    inject,
-    Input,
-    Output,
-    QueryList,
-    ViewChildren
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { ControlValueAccessor, FormBuilder, FormControl, FormControlStatus, NG_VALUE_ACCESSOR, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';

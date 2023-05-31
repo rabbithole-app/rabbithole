@@ -4,11 +4,12 @@ import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
 import { EMPTY, catchError, filter, from, iif, map, switchMap, throwError } from 'rxjs';
-import { get, has, isNull, orderBy } from 'lodash';
+import { get, has, isNull } from 'lodash';
 
 import { BucketsService, NotificationService } from '@core/services';
 import { Directory, File, Journal, JournalError } from '@declarations/journal/journal.did';
 import { toDirectoryExtended, toFileExtended } from '../utils';
+import { JournalItem } from '../models';
 
 export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
     const router = inject(Router);
@@ -43,13 +44,12 @@ export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterSta
                             path
                         }));
                         const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
+                        const parentId = fromNullable<string>(journal.id);
 
                         return {
-                            items: orderBy([...dirs, ...files], [{ type: 'folder' }, 'name'], ['desc', 'asc']),
+                            items: [...dirs, ...files] as JournalItem[],
                             breadcrumbs,
-                            parentId: fromNullable<string>(journal.id) ?? null,
-                            lastPath: path,
-                            selected: []
+                            parent: parentId && path ? { id: parentId, path } : null
                         };
                     }),
                     catchError(err => {

@@ -3,7 +3,6 @@ import { importProvidersFrom } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 
 import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard, dashboardGuard, invitationsGuard } from '@core/guards';
-import { fileListStateFactory, FILE_LIST_RX_STATE } from '@features/file-list';
 import { InvitationsService } from '@features/invitations/services/invitations.service';
 import { RegisterService } from '@features/register/services/register.service';
 import { CanistersService } from '@features/canisters/services';
@@ -15,6 +14,7 @@ import { JournalService, SnackbarProgressService } from '@features/file-list/ser
 import { UploadService } from '@features/upload/services';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
+import { FileListService } from '@features/file-list/services/file-list.service';
 
 export const appRoutes: Route[] = [
     {
@@ -72,7 +72,7 @@ export const appRoutes: Route[] = [
         ],
         providers: [
             BucketsService,
-            { provide: FILE_LIST_RX_STATE, useFactory: fileListStateFactory, deps: [BucketsService] },
+            FileListService,
             SidebarService,
             WalletService,
             UploadService,

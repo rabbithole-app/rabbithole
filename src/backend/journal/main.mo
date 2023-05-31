@@ -52,6 +52,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type Directory = JournalTypes.Directory;
     type DirectoryError = JournalTypes.DirectoryError;
     type DirectoryMoveError = JournalTypes.DirectoryMoveError;
+    type DirectoryCreate = JournalTypes.DirectoryCreate;
     type DirectoryCreateError = JournalTypes.DirectoryCreateError;
     type DirectoryAction = JournalTypes.DirectoryAction;
     type DirectoryUpdatableFields = JournalTypes.DirectoryUpdatableFields;
@@ -66,6 +67,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type JournalError = JournalTypes.JournalError;
     type Tokens = LedgerTypes.Tokens;
     type InviteCreate = Types.InviteCreate;
+    type CreatePath = JournalTypes.CreatePath;
 
     let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
     let CYCLE_SHARE = 500_000_000_000;
@@ -93,16 +95,16 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         Text.equal
     );
 
-    public shared ({ caller }) func createDirectory(directory : { id : ID; name : Text; parentId : ?ID }) : async Result.Result<Directory, DirectoryCreateError> {
+    public shared ({ caller }) func createDirectory(directory : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
         assert validateCaller(caller);
         await createDirectory_(caller, directory);
     };
 
     // поиск папки по id
-    func getDirectoryByID(id : ?ID) : ?Directory {
+    func getDirectoryByID(id : ID) : ?Directory {
         var found : ?Directory = null;
         label dirloop for (dir in directories.keys()) {
-            if (?dir.id == id) {
+            if (Text.equal(dir.id, id)) {
                 found := ?dir;
                 break dirloop;
             };
@@ -111,7 +113,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // возвращает пару (l, r) по id директории
-    func getPairByID(id : ?ID) : ?(Directory, Text) {
+    func getPairByID(id : ID) : ?(Directory, Text) {
         switch (getDirectoryByID(id)) {
             case null null;
             case (?l) {
@@ -145,7 +147,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     buffer.add(dir);
                 };
             };
-            Buffer.toArray(buffer);
+            let result = Buffer.toArray(buffer);
+            buffer.clear();
+            result;
         };
         let files_ : [File] = do {
             let buffer : Buffer.Buffer<File> = Buffer.Buffer<File>(0);
@@ -154,22 +158,29 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     buffer.add(file);
                 };
             };
-            Buffer.toArray(buffer);
+            let result = Buffer.toArray(buffer);
+            buffer.clear();
+            result;
         };
         (dirs, files_);
     };
 
-    func createDirectory_(caller : Principal, directory_ : { id : ID; name : Text; parentId : ?ID }) : async Result.Result<Directory, DirectoryCreateError> {
-        if (not validateName(directory_.name)) {
+    func createDirectory_(caller : Principal, { name; parentId } : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
+        if (not validateName(name)) {
             return #err(#illegalCharacters);
         };
-        let pair : ?(Directory, Text) = getPairByID(directory_.parentId);
+
+        let pair : ?(Directory, Text) = switch (parentId) {
+            case null null;
+            case (?v) getPairByID(v);
+        };
         let path = switch (pair) {
-            case null directory_.name;
-            case (?(l, r)) r # "/" # directory_.name;
+            case null name;
+            case (?(l, r)) r # "/" # name;
         };
         let now = Time.now();
-        let directory : Directory = { directory_ and { createdAt = now; updatedAt = now; color = ?#blue; children = null; path = null } };
+        let id = await Utils.generateId();
+        let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ?#blue; children = null; path = null };
         switch (directories.insert(directory, path)) {
             case (#err((l, r))) {
                 let found : Directory = Option.get(directories.getByRight(r), l);
@@ -179,12 +190,31 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
+    public query ({ caller }) func checkDirectoryName({ name; parentId } : DirectoryCreate): async Result.Result<(), DirectoryCreateError> {
+        assert validateCaller(caller);
+        if (not validateName(name)) {
+            return #err(#illegalCharacters);
+        };
+        let pair : ?(Directory, Text) = switch (parentId) {
+            case null null;
+            case (?v) getPairByID(v);
+        };
+        let path = switch (pair) {
+            case null name;
+            case (?(l, r)) r # "/" # name;
+        };
+        switch (directories.getByRight(path)) {
+            case (?v) #err(#alreadyExists(v));
+            case null #ok();
+        };
+    };
+
     public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, { #notFound; #alreadyExists }> {
         assert validateCaller(caller);
 
         switch (action) {
             case (#rename id) {
-                switch (getPairByID(?id)) {
+                switch (getPairByID(id)) {
                     case null #err(#notFound);
                     case (?(l, r)) {
                         let newName : Text = Option.get(fields.name, l.name);
@@ -207,7 +237,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 };
             };
             case (#changeColor id) {
-                switch (getPairByID(?id)) {
+                switch (getPairByID(id)) {
                     case null #err(#notFound);
                     case (?(l, r)) {
                         let color : ?DirectoryColor = ?Option.get(fields.color, Option.get(l.color, #blue));
@@ -385,17 +415,16 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Создание дерева директорий
-    public shared ({ caller }) func createPath(path : Text) : async () {
+    public shared ({ caller }) func createPath(path : Text, _parentId : ?ID) : async () {
         assert validateCaller(caller);
 
-        var parentId : ?ID = null;
+        var parentId : ?ID = _parentId;
         let preparedPath : Text = Text.trim(path, #text "/");
         let dirnames : Iter.Iter<Text> = Text.split(preparedPath, #text "/");
         for (dirname in dirnames) {
             let name = Text.trim(dirname, #text " ");
             if (Text.notEqual(name, "")) {
-                let id = await Utils.generateId();
-                let directory = { id; name; parentId };
+                let directory = { name; parentId };
 
                 switch (await createDirectory_(caller, directory)) {
                     case (#ok(res)) parentId := ?res.id;
@@ -405,6 +434,100 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 };
             };
         };
+    };
+    
+    public shared ({ caller }) func createPaths(paths : [CreatePath]) : async [(Text, ID)] {
+        assert validateCaller(caller);
+        await createPaths_(caller, paths);
+    };
+
+    func createPaths_(caller : Principal, paths : [CreatePath]) : async [(Text, ID)] {
+        let buffer = Buffer.Buffer<(Text, ID)>(0);
+        for ({ path; parentId = pid; base } in Iter.fromArray(paths)) {
+            var parentId : ?ID = pid;
+            var parentPath : Text = Option.get(base, "");
+            let preparedPath : Text = Text.trim(path, #text "/");
+            let dirnames : Iter.Iter<Text> = Text.split(preparedPath, #text "/");
+            for (dirname in dirnames) {
+                let name = Text.trim(dirname, #text " ");
+                if (Text.notEqual(name, "")) {
+                    let directory = { name; parentId };
+                    parentPath := if (Text.equal(parentPath, "")) dirname else parentPath # "/" # dirname;
+                    switch (await createDirectory_(caller, directory)) {
+                        case (#ok(res)) {
+                            parentId := ?res.id;
+                            buffer.add((parentPath, res.id));
+                        };
+                        case (#err(#alreadyExists v)) {
+                            parentId := ?v.id;
+                            buffer.add((parentPath, v.id));
+                        };
+                        case (#err(#illegalCharacters)) throw Error.reject("Illegal characters: " # dirname);
+                    };
+                };
+            };
+        };
+        let result = Buffer.toArray(buffer);
+        buffer.clear();
+        result;
+    };
+
+    func joinPath(dir1 : Text, dir2 : Text) : Text = if (Text.equal(dir1, "")) dir2 else dir1 # "/" # dir2;
+
+    public shared ({ caller }) func createPathsV2(paths : [Text],  _parentId : ?ID) : async [(Text, ID)] {
+        assert validateCaller(caller);
+        let buffer = Buffer.Buffer<(Text, ID)>(0);
+        let createBuffer : Buffer.Buffer<CreatePath> = Buffer.Buffer(0);
+        let pair : ?(Directory, Text) = switch (_parentId) {
+            case null null;
+            case (?v) getPairByID(v);
+        };
+        let parent : (Text, ?ID) = switch(pair) {
+            case null ("", null);
+            case (?(dir, path)) (path, ?dir.id);
+        };
+        for (p in Iter.fromArray(paths)) {
+            let path = Text.trim(p, #char '/');
+            var parentPath : Text = parent.0;
+            var parentId : ?ID = parent.1;
+            var currentPath : Text = "";
+            var fullPath : Text = joinPath(parentPath, path);
+            let dirnames : Iter.Iter<Text> = Text.split(path, #char '/');
+            label dirsLoop for (dirname in dirnames) {
+                let name = Text.trim(dirname, #char ' ');
+                if (Text.notEqual(name, "")) {
+                    currentPath := joinPath(currentPath, dirname);
+                    let absPath = joinPath(parent.0, currentPath);
+                    switch (directories.getByRight(absPath)) {
+                        case null {
+                            switch (Text.stripStart(fullPath, #text parentPath)) {
+                                case null {};
+                                case (?v) {
+                                    let path = Text.trim(v, #char '/');
+                                    let base = Text.stripStart(parentPath, #text(parent.0 # "/"));
+                                    createBuffer.add({ path; parentId; base });
+                                };
+                            };
+                            break dirsLoop;
+                        };
+                        case (?v) {
+                            parentId := ?v.id;
+                            buffer.add((currentPath, v.id));
+                        };
+                    };
+                    parentPath := absPath;
+                }
+            };
+        };
+        let arg = Buffer.toArray(createBuffer);
+        createBuffer.clear();
+        let createPathsResult = await createPaths_(caller, arg);
+        let createPathsResultBuffer : Buffer.Buffer<(Text, ID)> = Buffer.fromArray(createPathsResult);
+        buffer.append(createPathsResultBuffer);
+        createPathsResultBuffer.clear();
+        let result = Buffer.toArray(buffer);
+        buffer.clear();
+        result;
     };
 
     public query ({ caller }) func getJournal(path : ?Text) : async Result.Result<Journal, JournalError> {
@@ -516,7 +639,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         let root = switch (id) {
             case null ".";
             case (?v) {
-                switch (getDirectoryByID(?v)) {
+                switch (getDirectoryByID(v)) {
                     case null ".";
                     case (?{ id; name }) name # " [" # id # "]";
                 };
@@ -533,7 +656,10 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         if (not validateName(file_.name)) {
             return #err(#illegalCharacters);
         };
-        let pair : ?(Directory, Text) = getPairByID(file_.parentId);
+        let pair : ?(Directory, Text) = switch (file_.parentId) {
+            case null null;
+            case (?v) getPairByID(v);
+        };
         let path = switch (pair) {
             case null file_.name;
             case (?(l, r)) r # "/" # file_.name;

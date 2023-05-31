@@ -1,19 +1,22 @@
 import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { RxState } from '@rx-angular/state';
 import { from, mergeMap, Observable, of, onErrorResumeNext, Subject, merge, timer, forkJoin } from 'rxjs';
-import { filter, first, concatWith, connect, debounceTime, distinctUntilChanged, switchMap, exhaustMap, map, shareReplay, skip, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
-import { defaults, entries, isEqual, isPlainObject, isUndefined, uniqBy, values } from 'lodash';
+import { filter, first, concatWith, connect, debounceTime, distinctUntilChanged, switchMap, exhaustMap, map, shareReplay, skip, takeUntil, tap, withLatestFrom, mergeAll } from 'rxjs/operators';
+import { defaults, entries, isEqual, isPlainObject, isUndefined, orderBy, uniqBy, values, remove } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { arrayBufferToUint8Array } from '@dfinity/utils';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
 import { showDirectoryPicker, showOpenFilePicker } from 'native-file-system-adapter';
+import { type FileSystemDirectoryHandle } from 'native-file-system-adapter/types/src/FileSystemDirectoryHandle';
+import { type FileSystemFileHandle } from 'native-file-system-adapter/types/src/FileSystemFileHandle';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
-import { FILE_LIST_RX_STATE } from '@features/file-list';
 import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
 import { uploadFile } from '../operators';
 import { BucketsService } from '@core/services';
+import { FileListService } from '@features/file-list/services/file-list.service';
+import { JournalService } from '@features/file-list/services';
 
 interface State {
     items: FileUpload[];
@@ -24,9 +27,9 @@ interface State {
 
 @Injectable()
 export class UploadService extends RxState<State> {
-    private fileListState = inject(FILE_LIST_RX_STATE);
+    #fileListService = inject(FileListService);
+    #journalService = inject(JournalService);
     #bucketService = inject(BucketsService);
-    private router = inject(Router);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
 
@@ -45,6 +48,7 @@ export class UploadService extends RxState<State> {
         progress: 0,
         status: UPLOAD_STATUS.Queue
     };
+    readonly #ignoreFileList = ['.DS_Store', 'Thumbs.db'];
 
     progress$: Observable<FileUploadState[]> = this.select('progress').pipe(
         map(value => values(value)),
@@ -62,11 +66,11 @@ export class UploadService extends RxState<State> {
         super();
         this.completed$
             .pipe(
-                withLatestFrom(this.fileListState.select('parentId').pipe(map(v => v ?? undefined))),
-                switchMap(([items, parentId]) => from(items.filter(item => item.parentId === parentId))),
+                withLatestFrom(toObservable(this.#fileListService.parent)),
+                switchMap(([items, parent]) => from(items.filter(item => item.parentId === parent?.id)).pipe(map(() => parent?.path))),
                 debounceTime(1000)
             )
-            .subscribe(() => this.reloadComponent(true));
+            .subscribe(path => this.#fileListService.getJournal(path));
         this.set({
             items: [],
             summary: this.summaryInitValue
@@ -172,14 +176,14 @@ export class UploadService extends RxState<State> {
                     return onErrorResumeNext(
                         this.select('progress', item.id).pipe(
                             first(),
-                            switchMap(state => 
+                            switchMap(state =>
                                 of({ status: UPLOAD_STATUS.Request, errorMessage: null }).pipe(
                                     concatWith(
                                         forkJoin([
                                             from(crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data))).pipe(map(arrayBufferToUint8Array)),
                                             this.#bucketService.getStorageBySize(BigInt(item.fileSize))
                                         ]).pipe(
-                                            switchMap(([sha256, storage]) => 
+                                            switchMap(([sha256, storage]) =>
                                                 uploadFile({
                                                     storage,
                                                     item: { ...item, sha256 },
@@ -198,7 +202,7 @@ export class UploadService extends RxState<State> {
                                                             progress = Math.ceil((loaded / item.fileSize) * 100);
                                                             return { ...value, loaded, progress };
                                                         }
-                        
+
                                                         return value;
                                                     })
                                                 )
@@ -275,12 +279,12 @@ export class UploadService extends RxState<State> {
         );
     }
 
-    async reloadComponent(self: boolean, urlToNavigateTo?: string) {
-        const url = self ? this.router.url : urlToNavigateTo;
-        // если запрошено обновление корня, то переадресация на / не дает эффекта, поэтому открываем любой путь без журнала
-        await this.router.navigateByUrl('/settings', { skipLocationChange: true });
-        await this.router.navigate([url]);
-    }
+    // async reloadComponent(self: boolean, urlToNavigateTo?: string) {
+    //     const url = self ? this.router.url : urlToNavigateTo;
+    //     // если запрошено обновление корня, то переадресация на / не дает эффекта, поэтому открываем любой путь без журнала
+    //     await this.router.navigateByUrl('/settings', { skipLocationChange: true });
+    //     await this.router.navigate([url]);
+    // }
 
     terminate() {
         const worker = this.get('worker');
@@ -299,14 +303,15 @@ export class UploadService extends RxState<State> {
     async add(files: FileSystemFileHandle[]) {
         const worker = this.get('worker');
         for (let i = 0; i < files.length; i++) {
-            const file = await files[i].getFile()
+            const file = await files[i].getFile();
             const buffer = await file.arrayBuffer();
+            const parent = this.#fileListService.parent();
             const item = {
                 id: uuidv4(),
                 name: file.name,
                 fileSize: file.size,
                 contentType: file.type,
-                parentId: this.fileListState.get('parentId') ?? undefined,
+                parentId: parent?.id,
                 data: buffer
             };
             this.files.next(item);
@@ -401,7 +406,59 @@ export class UploadService extends RxState<State> {
         this.add(files);
     }
 
-    showDirectoryPicker() {
-        console.log('browse directory');
+    async #listFilesAndDirsRecursively(dirHandle: FileSystemDirectoryHandle, cwd?: string): Promise<[{ file: File, path: string }[], string[]]> {
+        let path = cwd ? `${cwd}/${dirHandle.name}` : dirHandle.name;
+        const files: Array<{ file: File, path: string }> = [];
+        const directories: string[] = [path];
+        for await (const [name, handle] of dirHandle.entries()) {
+            if (this.#ignoreFileList.includes(name)) continue;
+            if (handle.kind === 'directory') {
+                const [f, d] = await this.#listFilesAndDirsRecursively(handle as FileSystemDirectoryHandle, path);
+                files.push(...f);
+                directories.push(...d);
+            } else {
+                files.push({ file: await (handle as FileSystemFileHandle).getFile(), path });
+            }
+        }
+        return [files, directories];
+    }
+
+    async showDirectoryPicker() {
+        const dirHandle = await showDirectoryPicker();
+        const parent = this.#fileListService.parent();
+        const [files, directories] = await this.#listFilesAndDirsRecursively(dirHandle);
+
+        const worker = this.get('worker');
+        this.#journalService.createPaths({ paths: this.#getUniquePaths(directories), parent }).pipe(
+            mergeAll(),
+            mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
+            mergeMap(({ file, parentId }) => from(file.arrayBuffer()).pipe(
+                map(buffer => ({
+                    id: uuidv4(),
+                    name: file.name,
+                    fileSize: file.size,
+                    contentType: file.type,
+                    parentId,
+                    data: buffer
+                }))
+            ))
+        ).subscribe(item => {
+            this.files.next(item);
+            if (worker) {
+                const uploadState = this.get('progress', item.id);
+                worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
+            }
+        });
+    }
+
+    #getUniquePaths(dirs: string[]): string[] {
+        const result: string[] = [];
+        const sortedDirs = orderBy(dirs, v => v.split('/').length, 'desc');
+        for (let dir of sortedDirs) {
+            if (!result.some(v => v.startsWith(dir + '/'))) {
+                result.push(dir);
+            }
+        }
+        return result;
     }
 }

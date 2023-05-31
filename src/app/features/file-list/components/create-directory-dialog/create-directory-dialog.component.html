@@ -1,18 +1,19 @@
-<h1 mat-dialog-title>Create directory</h1>
-<mat-dialog-content class="mat-typography">
-    <mat-form-field>
-        <mat-label>Directory name</mat-label>
-        <input [formControl]="name" matInput />
-        <mat-error *ngIf="errorMessages$ | async as errorMessages">
-            <ng-container *ngIf="errorMessages.length && (name.touched || name.dirty)">
-                <ng-container *ngFor="let message of errorMessages">{{ message }}<br /></ng-container>
-            </ng-container>
-        </mat-error>
-    </mat-form-field>
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-    <button mat-button mat-dialog-close>Cancel</button>
-    <button mat-raised-button color="primary" [mat-dialog-close]="{ id: data.id, name: name.value, parentId: data.parentId }" [disabled]="name.invalid">
-        Create
-    </button>
-</mat-dialog-actions>
+<ng-container *transloco="let t; read 'fileList.directory.create'">
+    <h1 mat-dialog-title>{{ t('title') }}</h1>
+    <form [formGroup]="form">
+        <mat-dialog-content class="mat-typography">
+            <mat-form-field>
+                <mat-label>{{ t('name.label') }}</mat-label>
+                <input formControlName="name" matInput />
+                <mat-error *rxIf="errorMessage()?.length && (name?.touched || name?.dirty)">{{ errorMessage() }}</mat-error>
+            </mat-form-field>
+        </mat-dialog-content>
+        <mat-dialog-actions align="end">
+            <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
+            <button mat-raised-button color="primary" [mat-dialog-close]="{ name: name?.value, parent: data.parent }"
+                [disabled]="form.invalid">
+                {{ t('actions.create') }}
+            </button>
+        </mat-dialog-actions>
+    </form>
+</ng-container>

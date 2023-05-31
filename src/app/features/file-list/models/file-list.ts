@@ -1,4 +1,4 @@
-type JournalItemType = 'file' | 'folder';
+export type JournalItemType = 'file' | 'folder';
 export type DirectoryColor = 'blue' | 'gray' | 'orange' | 'pink' | 'purple' | 'green' | 'yellow';
 
 type ItemsCommonAttrs = {
@@ -31,7 +31,7 @@ export type FileInfo = {
 
 export type DirectoryExtended = Directory &
     ItemsCommonAttrs & {
-        children: JournalItem[] | undefined;
+        children?: JournalItem[];
     };
 
 export type FileInfoExtended = FileInfo & ItemsCommonAttrs;
@@ -39,9 +39,8 @@ export type FileInfoExtended = FileInfo & ItemsCommonAttrs;
 export type JournalItem = DirectoryExtended | FileInfoExtended;
 
 export type DirectoryCreate = {
-    id: string;
     name: string;
-    parentId?: string;
+    parent?: { id: string; path: string };
 };
 
 export type MenuItemAction = 'open' | 'remove' | 'download';

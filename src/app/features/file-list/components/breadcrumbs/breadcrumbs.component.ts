@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -7,24 +7,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DndModule } from 'ngx-drag-drop';
 import { RxState } from '@rx-angular/state';
-import { Observable, switchMap, windowToggle } from 'rxjs';
+import { switchMap, windowToggle } from 'rxjs';
 import { filter, map, withLatestFrom } from 'rxjs/operators';
 import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { TranslocoModule } from '@ngneat/transloco';
 
 import { addFASvgIcons } from '@core/utils';
 import { DirectoryExtended } from '@features/file-list/models';
 import { ContextMenuService, JournalService } from '@features/file-list/services';
-import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
-
-interface State {
-    items: DirectoryExtended[];
-    last: DirectoryExtended | null;
-    dragEnterCount: number;
-    entered: string | null;
-    parentPath: string | null;
-}
+import { FileListService } from '@features/file-list/services/file-list.service';
 
 @Component({
     selector: 'app-breadcrumbs',
@@ -36,38 +28,43 @@ interface State {
     providers: [RxState],
     standalone: true
 })
-export class BreadcrumbsComponent extends RxState<State> {
+export class BreadcrumbsComponent {
     @ViewChild('activeMenu', { read: ElementRef }) activeMenuRef!: ElementRef;
     @ViewChild('currentMenuTrigger', { read: MatMenuTrigger }) contextMenuTrigger!: MatMenuTrigger;
     @ViewChild('backButton', { read: ElementRef }) backButton!: ElementRef;
-    items$: Observable<DirectoryExtended[]> = this.select('items');
-    last$: Observable<DirectoryExtended | null> = this.select('last');
+
+    items: Signal<DirectoryExtended[]> = computed(() => dropRight(this.fileListService.breadcrumbs()));
+    last: Signal<DirectoryExtended | null> = computed(() => {
+        const breadcrumbs = this.fileListService.breadcrumbs();
+        return breadcrumbs.length ? (last(breadcrumbs) as DirectoryExtended) : null;
+    });
+    dragEnterCount: WritableSignal<number> = signal(0);
+    entered: WritableSignal<string | null> = signal(null);
+    backReceiving: Signal<boolean> = computed(() => {
+        const entered = this.entered();
+        const last = this.last();
+        return entered === last?.parentId || (isUndefined(last?.parentId) && entered === 'root');
+    });
+    backlink: Signal<string> = computed(() => this.getUrl(this.last()?.path ?? ''));
     contextMenuService = inject(ContextMenuService);
-    private fileListState = inject(FILE_LIST_RX_STATE);
+    readonly fileListService = inject(FileListService);
     private journalService = inject(JournalService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    get contextTemplate(): TemplateRef<HTMLElement> {
-        return this.fileListState.get('contextItemsTemplate');
-    }
-
     constructor() {
-        super();
-        addFASvgIcons(['angle-left', 'angle-right', 'arrow-left', 'arrow-right', 'ellipsis-vertical'], 'far');
-        this.set({ entered: null });
-        this.connect(
-            this.fileListState.select('breadcrumbs').pipe(
-                map(value => {
-                    const lastItem = value.length ? (last(value) as DirectoryExtended) : null;
-                    return { last: lastItem, items: dropRight(value), dragEnterCount: 0, parentPath: lastItem?.path ?? null };
-                })
-            )
+        effect(
+            () => {
+                this.fileListService.breadcrumbs();
+                this.dragEnterCount.set(0);
+            },
+            { allowSignalWrites: true }
         );
+        addFASvgIcons(['angle-left', 'angle-right', 'arrow-left', 'arrow-right', 'ellipsis-vertical'], 'far');
 
         // когда происходит изменение хлебных крошек (удалили родительскую директорию через контекстное меню),
         // сравниваем текущий путь и путь последней крошки, если не совпадает, то перенаправляем до последней крошки
-        this.select('last')
+        toObservable(this.last)
             .pipe(
                 windowToggle(this.router.events.pipe(map(event => event instanceof NavigationStart)), () =>
                     this.router.events.pipe(map(event => event instanceof NavigationEnd))
@@ -90,12 +87,6 @@ export class BreadcrumbsComponent extends RxState<State> {
             });
     }
 
-    get backReceiving(): boolean {
-        const { entered, last } = this.get();
-
-        return entered === last?.parentId || (isUndefined(last?.parentId) && entered === 'root');
-    }
-
     getUrl(path: string): string {
         return compact(['/drive'].concat(path.split('/'))).join('/');
     }
@@ -112,7 +103,7 @@ export class BreadcrumbsComponent extends RxState<State> {
             return;
         }
 
-        const activeDirectory = this.get('last');
+        const activeDirectory = this.last();
         if (!isNull(activeDirectory)) {
             this.contextMenuService.open({
                 origin: this.activeMenuRef,
@@ -130,29 +121,30 @@ export class BreadcrumbsComponent extends RxState<State> {
 
     handleDrop(event: DragEvent) {
         const selectedIds = JSON.parse(event.dataTransfer?.getData('text/plain') || '[]');
-        const { items, entered } = this.get();
-        let parentPath = null;
+        const entered = this.entered();
+        let parentPath: string | null = null;
         if (entered !== 'root' && isString(entered)) {
-            let item = items.find(({ id }) => id === entered);
+            let item = this.items().find(({ id }) => id === entered);
             if (item) {
                 parentPath = isUndefined(item.path) ? item.name : `${item.path}/${item.name}`;
             }
         }
 
-        const selected = this.fileListState.get('selected').filter(({ id }) => selectedIds.includes(id));
+        const selected = this.fileListService.selected().filter(({ id }) => selectedIds.includes(id));
         this.journalService.move(selected, parentPath);
-        this.set({ entered: null });
+        this.entered.set(null);
     }
 
     handleDragenter(event: DragEvent, id: string) {
         event.preventDefault();
-        this.set(state => ({ dragEnterCount: state.dragEnterCount + 1, entered: id }));
+        this.entered.set(id);
+        this.dragEnterCount.update(count => count + 1);
     }
 
     handleDragleave(event: DragEvent) {
-        this.set('dragEnterCount', state => state.dragEnterCount - 1);
-        if (this.get('dragEnterCount') === 0) {
-            this.set({ entered: null });
+        this.dragEnterCount.update(count => count - 1);
+        if (this.dragEnterCount() === 0) {
+            this.entered.set(null);
         }
     }
 }

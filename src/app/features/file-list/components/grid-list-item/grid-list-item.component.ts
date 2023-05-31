@@ -23,7 +23,7 @@ import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnim
 import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { ContextMenuService, DirectoryService } from '@features/file-list/services';
+import { ContextMenuService } from '@features/file-list/services';
 import { OverlayService, WINDOW } from '@core/services';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 
@@ -44,7 +44,6 @@ interface State {
 export class GridListItemComponent implements Highlightable {
     @Input()
     set data(data: JournalItem) {
-        // console.log('set data', data)
         this.state.set({ data });
     }
     get data(): JournalItem {
@@ -58,11 +57,10 @@ export class GridListItemComponent implements Highlightable {
     @HostBinding('attr.role') role = 'listitem';
     @HostBinding('attr.aria-label') get label() {
         return this.data.name;
-    };
+    }
     @HostBinding('class.disabled') @Input() disabled: boolean = false;
     @HostBinding('class.loading') @Input() loading?: boolean = false;
     @HostBinding('class.selected') @Input() selected: boolean = false;
-    directoryService = inject(DirectoryService);
     private _isActive = false;
 
     /*
@@ -112,10 +110,5 @@ export class GridListItemComponent implements Highlightable {
 
     setInactiveStyles(): void {
         this._isActive = false;
-    }
-
-    // TODO: вынести действия вверх с помощью EventEmitter
-    handleDeleteDirectory(event: MouseEvent, id: string) {
-        this.directoryService.delete(id);
     }
 }

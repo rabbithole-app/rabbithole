@@ -1,30 +1,30 @@
 import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef, Signal, computed } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
-import { asapScheduler, filter, Observable, observeOn } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
 import { PushPipe } from '@rx-angular/template/push';
 import { RxIf } from '@rx-angular/template/if';
 import { LetDirective } from '@rx-angular/template/let';
 import { RxFor } from '@rx-angular/template/for';
-import { v4 as uuidv4 } from 'uuid';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
 import { JournalItem, MenuItemAction } from '@features/file-list/models';
-import { ContextMenuService, DirectoryService, JournalService } from '@features/file-list/services';
+import { ContextMenuService, JournalService } from '@features/file-list/services';
 import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
 import { addFASvgIcons } from '@core/utils';
-import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
 import { PageHeaderComponent } from '@features/file-list/components/page-header/page-header.component';
 import { EmptyComponent } from '@core/components/empty/empty.component';
 import { UploadService } from '@features/upload/services';
+import { FileListService } from './services/file-list.service';
 
 interface State {
     emptyRef: ElementRef;
@@ -55,7 +55,7 @@ interface State {
         NgIf,
         RxIf
     ],
-    providers: [RxState, SnackbarProgressService, DirectoryService, ContextMenuService, JournalService],
+    providers: [RxState, SnackbarProgressService, ContextMenuService, JournalService],
     standalone: true
 })
 export class FileListComponent implements OnInit {
@@ -67,23 +67,19 @@ export class FileListComponent implements OnInit {
     }
 
     journalService = inject(JournalService);
-    fileListState = inject(FILE_LIST_RX_STATE);
-    directoryService = inject(DirectoryService);
+    readonly fileListService = inject(FileListService);
     uploadService = inject(UploadService);
-
-    items$: Observable<JournalItem[]> = this.fileListState.select('items').pipe(observeOn(asapScheduler));
-    selected$: Observable<JournalItem[]> = this.fileListState.select('selected');
-    contextMenuData$ = this.selected$.pipe(
-        map(items => ({
+    contextMenuData = computed(() => {
+        const items = this.fileListService.selected();
+        return {
             items,
             someFile: items.some(({ type }) => type === 'file'),
             someFolder: items.some(({ type }) => type === 'folder'),
             everyFile: items.every(({ type }) => type === 'file'),
             everyFolder: items.every(({ type }) => type === 'folder')
-        }))
-    );
-    hasItems$: Observable<boolean> = this.fileListState.select('items').pipe(map(items => items.length > 0));
-    dragging$: Observable<boolean> = this.fileListState.select('dragging');
+        };
+    });
+    hasItems: Signal<boolean> = computed(() => this.fileListService.items().length > 0);
     @ViewChild('itemsTrigger', { read: MatMenuTrigger }) set itemsMenuTrigger(value: MatMenuTrigger) {
         this.state.set({ itemsMenuTrigger: value });
     }
@@ -95,54 +91,50 @@ export class FileListComponent implements OnInit {
     nextColor!: string;
     route = inject(ActivatedRoute);
     @ViewChild('contextItemsTemplate', { read: TemplateRef }) set contextItemsTemplate(value: TemplateRef<HTMLElement>) {
-        this.fileListState.set({ contextItemsTemplate: value });
+        this.fileListService.contextMenuTemplate.set(value);
     }
 
     constructor(private dialog: MatDialog, private location: Location, private contextMenuService: ContextMenuService, private state: RxState<State>) {
         addFASvgIcons(['plus', 'trash-can', 'download'], 'far');
+        this.route.data
+            .pipe(
+                map(({ fileList }) => fileList),
+                takeUntilDestroyed()
+            )
+            .subscribe(data => this.fileListService.setData(data));
     }
 
-    ngOnInit() {
-        this.fileListState.connect(this.route.data.pipe(map(({ fileList }) => fileList)));
+    async ngOnInit() {
+        // const path: string = await firstValueFrom(this.route.url.pipe(map(segments => segments.map(({ path }) => path).join('/'))));
+        // this.fileListService.getJournal(path);
     }
 
     async openCreateDirectoryDialog(event: MouseEvent) {
-        const { parentId } = this.fileListState.get();
+        const parent = this.fileListService.parent();
 
         const dialogRef = this.dialog.open(CreateDirectoryDialogComponent, {
-            width: '400px',
-            data: { id: uuidv4(), parentId }
+            width: '450px',
+            data: { parent }
         });
 
-        dialogRef
-            .afterClosed()
-            .pipe(
-                take(1),
-                filter(v => v)
-            )
-            .subscribe(directory => {
-                this.journalService.createDirectory(directory);
-            });
+        const directory: { name: string; parent: typeof parent } = await firstValueFrom(dialogRef.afterClosed());
+        if (directory) {
+            this.journalService.createDirectory(directory);
+        }
     }
 
     // @HostListener('contextmenu', ['$event'])
     handleContextMenu({ event, origin }: { event: MouseEvent; origin?: ElementRef }) {
-        this.contextMenuData$
-            .pipe(
-                map(menuData => ({
-                    menuData,
-                    trigger: this.itemsMenuTrigger,
-                    origin,
-                    point: {
-                        x: event.clientX,
-                        y: event.clientY
-                    }
-                })),
-                take(1)
-            )
-            .subscribe(state => {
-                this.contextMenuService.open(state);
-            });
+        const menuData = this.contextMenuData();
+        this.contextMenuService.open({
+            menuData,
+            trigger: this.itemsMenuTrigger,
+            origin,
+            point: {
+                x: event.clientX,
+                y: event.clientY
+            }
+        });
     }
 
     @HostListener('document:click')

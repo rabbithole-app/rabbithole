@@ -15,6 +15,11 @@ export interface Canister {
     timerId: [] | [bigint];
     canisterId: BucketId__1;
 }
+export interface CreatePath {
+    base: [] | [string];
+    path: string;
+    parentId: [] | [ID];
+}
 export interface Directory {
     id: ID;
     name: string;
@@ -27,6 +32,10 @@ export interface Directory {
 }
 export type DirectoryAction = { rename: ID } | { changeColor: ID };
 export type DirectoryColor = { blue: null } | { gray: null } | { orange: null } | { pink: null } | { purple: null } | { green: null } | { yellow: null };
+export interface DirectoryCreate {
+    name: string;
+    parentId: [] | [ID];
+}
 export type DirectoryCreateError = { illegalCharacters: null } | { alreadyExists: Directory__1 };
 export type DirectoryMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
 export interface DirectoryUpdatableFields {
@@ -81,7 +90,7 @@ export interface Journal {
 }
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
-    addFile: ActorMethod<[FileCreate], Result_7>;
+    addFile: ActorMethod<[FileCreate], Result_8>;
     canisterStatus: ActorMethod<
         [Principal],
         {
@@ -90,9 +99,12 @@ export interface JournalBucket {
             freezingThresholdInCycles: bigint;
         }
     >;
-    createDirectory: ActorMethod<[{ id: ID__1; name: string; parentId: [] | [ID__1] }], Result_6>;
+    checkDirectoryName: ActorMethod<[DirectoryCreate], Result_7>;
+    createDirectory: ActorMethod<[DirectoryCreate], Result_6>;
     createInvite: ActorMethod<[Time], Result_5>;
-    createPath: ActorMethod<[string], undefined>;
+    createPath: ActorMethod<[string, [] | [ID__1]], undefined>;
+    createPaths: ActorMethod<[Array<CreatePath>], Array<[string, ID__1]>>;
+    createPathsV2: ActorMethod<[Array<string>, [] | [ID__1]], Array<[string, ID__1]>>;
     deleteDirectory: ActorMethod<[string], Result_4>;
     deleteFile: ActorMethod<[string], Result_4>;
     deleteStorage: ActorMethod<[BucketId], undefined>;
@@ -139,7 +151,8 @@ export type Result_5 =
           err: { notify: NotifyError } | { insufficientFunds: { balance: Tokens__1 } } | { transfer: TransferError };
       };
 export type Result_6 = { ok: Directory } | { err: DirectoryCreateError };
-export type Result_7 = { ok: File__1 } | { err: FileCreateError };
+export type Result_7 = { ok: null } | { err: DirectoryCreateError };
+export type Result_8 = { ok: File__1 } | { err: FileCreateError };
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;

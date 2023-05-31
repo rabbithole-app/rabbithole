@@ -45,7 +45,7 @@ import {
     switchMap,
     timer
 } from 'rxjs';
-import { filter, map, pluck,takeUntil, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, pluck, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -57,8 +57,8 @@ import { AnimateCssGridDirective } from '@core/directives';
 import { addSvgIcons } from '@features/file-list/utils';
 import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
 import { OverlayService } from '@core/services';
-import { FILE_LIST_RX_STATE } from '@features/file-list/file-list.store';
 import { JournalService } from '@features/file-list/services';
+import { FileListService } from '@features/file-list/services/file-list.service';
 
 const GRID_CELL_WIDTH = 102;
 const GRID_CELL_COLUMN_GAP = 16;
@@ -104,9 +104,9 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     @ViewChild(AnimateCssGridDirective) animatedGrid!: AnimateCssGridDirective;
     @ViewChild('dragPreview', { read: DragPreviewComponent }) dragPreview!: DragPreviewComponent;
     @ViewChild('dragPreviewGhost', { read: ElementRef, static: true }) private dragPreviewGhost!: ElementRef;
-    @ViewChildren(GridListItemComponent) private set gridListItems (value: QueryList<GridListItemComponent>) {
+    @ViewChildren(GridListItemComponent) private set gridListItems(value: QueryList<GridListItemComponent>) {
         this.#gridListItems.set(value);
-    };
+    }
     #gridListItems: WritableSignal<QueryList<GridListItemComponent>> = signal(new QueryList());
     @HostBinding('attr.role') role = 'list';
 
@@ -118,7 +118,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     );
     private dropEntered: Subject<JournalItem['id']> = new Subject<JournalItem['id']>();
     private dropExited: Subject<void> = new Subject<void>();
-    private fileListState = inject(FILE_LIST_RX_STATE);
+    #fileListService = inject(FileListService);
     private route = inject(ActivatedRoute);
     private journalService = inject(JournalService);
 
@@ -313,7 +313,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         this.dragSelected$ = selected$.pipe(map(items => items.map(item => pick(item, ['id', 'type', 'extension']))));
 
         selected$.pipe(takeUntilDestroyed()).subscribe(selected => {
-            this.fileListState.set({ selected });
+            this.#fileListService.selected.set(selected);
         });
 
         const dragMove$: Observable<Point> = this.state
@@ -473,7 +473,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         this.dropExited.next();
         let parentPath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
         // JSON.parse(event.event.dataTransfer?.getData('text/plain') ?? '[]');
-        const selected = this.fileListState.get('selected');
+        const selected = this.#fileListService.selected();
         this.journalService.move(selected, parentPath);
     }
 
@@ -486,13 +486,13 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         event.dataTransfer?.setData('text/plain', JSON.stringify(this.selected.selected));
         this.state.set('drag', state => ({ ...state.drag, dragging: true, startPosition: { x: event.clientX, y: event.clientY } }));
         event.dataTransfer?.setDragImage(this.dragPreviewGhost.nativeElement, 60, 60);
-        this.fileListState.set({ dragging: true });
+        this.#fileListService.dragging.set(true);
     }
 
     handleEnd(event: DragEvent) {
         event.preventDefault();
         this.state.set('drag', state => ({ ...state.drag, dragging: false }));
-        this.fileListState.set({ dragging: false });
+        this.#fileListService.dragging.set(false);
     }
 
     handleDrag(event: DragEvent) {

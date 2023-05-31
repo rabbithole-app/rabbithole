@@ -42,7 +42,7 @@ module {
     // public type DirectoryAction = { #rename : ID; /*#create;  #delete; #move;*/ #changeColor : ID; };
 
     public type DirectoryCreate = {
-        id : ID;
+        // id : ID;
         name : Text;
         parentId : ?ID;
     };
@@ -115,4 +115,10 @@ module {
         breadcrumbs : [Directory]
     };
     public type JournalError = { #notFound };
+
+    public type CreatePath = {
+        path : Text;
+        parentId : ?ID;
+        base : ?Text;
+    };
 };

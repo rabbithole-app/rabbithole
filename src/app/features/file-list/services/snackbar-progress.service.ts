@@ -10,7 +10,12 @@ import { TranslocoService } from '@ngneat/transloco';
 import { ProgressMessageSnackbarComponent } from '@features/file-list/components/progress-message-snackbar/progress-message-snackbar.component';
 import { ShowErrorsDialogComponent } from '@features/file-list/components/show-errors-dialog/show-errors-dialog.component';
 
-type Action = 'move' | 'remove';
+type Action = 'createPath' | 'move' | 'remove';
+enum ItemType {
+    File,
+    Folder,
+    Both
+}
 
 interface State {
     queue: string[];
@@ -20,13 +25,15 @@ interface State {
     errors?: Record<string, string>;
     snackBarRef?: MatSnackBarRef<ProgressMessageSnackbarComponent>;
     progressMessage?: string;
-    filename?: string;
+    name?: string;
     actions: Action[];
+    type: ItemType;
 }
 
-type Task = {
+export type Task = {
     id: string;
     name: string;
+    type: 'file' | 'folder';
 };
 
 @Injectable()
@@ -38,10 +45,10 @@ export class SnackbarProgressService extends RxState<State> {
         value: any;
         handler: (item: any) => Observable<unknown>;
     }>();
-    readonly concurrentTasksCount = 1;
+    readonly concurrentTasksCount = 5;
 
     get snackBarRef(): MatSnackBarRef<ProgressMessageSnackbarComponent> | undefined {
-        return this.get().snackBarRef;
+        return this.get('snackBarRef');
     }
 
     constructor() {
@@ -66,18 +73,19 @@ export class SnackbarProgressService extends RxState<State> {
         this.connect(
             'progressMessage',
             this.$.pipe(
-                map(({ filename, done, failed, total, actions }) => ({ filename, done, failed, total, actions })),
+                map(({ name, done, failed, total, actions }) => ({ name, done, failed, total, actions })),
                 filter(({ actions, done, failed, total }) => actions.length > 0 && total > 0),
                 distinctUntilChanged(isEqual),
-                map(({ filename, done, failed, total, actions }) => {
+                map(({ name, done, failed, total, actions }) => {
                     const isPreparing = done === 0 && failed === 0;
                     const actionKey = actions.length === 1 ? actions[0] : 'common';
                     const key = `fileList.notification.${actionKey}.${isPreparing ? 'prepare' : 'message'}`;
-                    return this.translocoService.translate(key, {
-                        total,
-                        current: done + failed,
-                        filename
-                    });
+                    return this.translocoService
+                        .translate(key, {
+                            total,
+                            current: done + failed,
+                            name
+                        });
                 })
             )
         );
@@ -122,12 +130,12 @@ export class SnackbarProgressService extends RxState<State> {
     }
 
     private resetProgress() {
-        this.set({ snackBarRef: undefined, queue: [], done: 0, failed: 0, total: 0, errors: {}, actions: [] });
+        this.set({ snackBarRef: undefined, queue: [], done: 0, failed: 0, total: 0, errors: {}, actions: [], type: undefined });
     }
 
     private finalNotify() {
         let snackBarRef!: MatSnackBarRef<TextOnlySnackBar>;
-        const { done, failed, filename, total, errors, actions } = this.get();
+        const { done, failed, name, total, errors, actions, type } = this.get();
         const isSingle = total === 1;
         const isSuccess = done > 0 && done === total;
         const isFailed = failed > 0 && failed === total;
@@ -137,24 +145,26 @@ export class SnackbarProgressService extends RxState<State> {
 
         if (isSuccess) {
             this.snackBar.open(
-                this.translocoService.translate(`fileList.notification.${actionKey}.success`, {
-                    count: done,
-                    filename
-                }),
+                this.translocoService
+                    .translate(`fileList.notification.${actionKey}.success`, {
+                        count: done,
+                        name,
+                        type
+                    }),
                 undefined,
                 { duration: 2000 }
             );
         } else if (isSingle && isFailed) {
-            this.snackBar.open((errors || {})[filename as string], undefined, { duration: 3000 });
+            this.snackBar.open((errors || {})[name as string], undefined, { duration: 3000 });
         } else if (hasSuccess && hasFailed) {
             snackBarRef = this.snackBar.open(
-                this.translocoService.translate(`fileList.notification.${actionKey}.warning`, { count: failed }),
+                this.translocoService.translate(`fileList.notification.${actionKey}.warning`, { count: failed, type }),
                 this.translocoService.translate('fileList.notification.actions.details'),
                 { duration: 2500 }
             );
         } else if (isFailed) {
             snackBarRef = this.snackBar.open(
-                this.translocoService.translate(`fileList.notification.${actionKey}.failed`, { count: failed }),
+                this.translocoService.translate(`fileList.notification.${actionKey}.failed`, { count: failed, type }),
                 this.translocoService.translate('fileList.notification.actions.details'),
                 { duration: 2500 }
             );
@@ -183,12 +193,16 @@ export class SnackbarProgressService extends RxState<State> {
             });
         }
 
+        const everyFile = items.every(({ type }) => type === 'file');
+        const everyFolder = items.every(({ type }) => type === 'folder');
+
         this.set(state => ({
             snackBarRef,
             queue: state.queue.concat(items.map(({ id }) => id)),
             total: state.total + items.length,
-            filename: !state.total && items.length === 1 ? items[0].name : undefined,
-            actions: uniq(state.actions.concat([action]))
+            name: !state.total && items.length === 1 ? items[0].name : undefined,
+            actions: uniq(state.actions.concat([action])),
+            type: everyFile ? ItemType.File : everyFolder ? ItemType.Folder : ItemType.Both
         }));
         items.forEach(value => this.tasks.next({ value, handler }));
     }

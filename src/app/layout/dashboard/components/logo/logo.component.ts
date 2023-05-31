@@ -37,7 +37,7 @@ export class LogoComponent implements OnChanges {
     }
 
     private async animateLetters(direction: DirectionOptions): Promise<void> {
-        const promises = [];
+        const promises: Promise<void>[] = [];
         const letters = {
             'letter-r': 'R-path',
             'letter-a': 'A-path',

@@ -28,7 +28,7 @@ import { createAgent } from '@dfinity/utils';
 import { formatICP } from '../utils/icp';
 import { BucketsService, NotificationService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
-import { AccountIdentifier as AccountIdentifierRaw, Tokens, TransferError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
+import { AccountIdentifier as AccountIdentifierRaw, Tokens, TransferError } from '@declarations/journal/journal.did';
 import { LEDGER_CANISTER_ID } from '@core/constants';
 import { environment } from 'environments/environment';
 
@@ -60,7 +60,7 @@ export class WalletService extends RxState<State> {
         });
         const journalActor$ = this.bucketsService.select('journal').pipe(
             filter(actor => !isNull(actor)),
-            map(actor => actor as ActorSubclass<JournalBucketActor>),
+            map(actor => actor as NonNullable<typeof actor>),
             shareReplay(1)
         );
         const accountIdentifier$ = journalActor$.pipe(
@@ -109,7 +109,7 @@ export class WalletService extends RxState<State> {
                 iif(
                     () => isNull(actor),
                     throwError(() => new Error('JournalActor is null')),
-                    defer(() => (actor as ActorSubclass<JournalBucketActor>).withdraw(params)).pipe(
+                    defer(() => (actor as NonNullable<typeof actor>).withdraw(params)).pipe(
                         map(result => {
                             if (has(result, 'err')) {
                                 let [key, value] = Object.entries(get(result, 'err') as unknown as TransferError)[0];

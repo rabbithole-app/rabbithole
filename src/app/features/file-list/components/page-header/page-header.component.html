@@ -1,4 +1,4 @@
-<ng-container [ngSwitch]="select('hasBreadcrumbs') | async">
+<ng-container [ngSwitch]="hasBreadcrumbs()">
     <app-breadcrumbs *ngSwitchCase="true"></app-breadcrumbs>
     <div *ngSwitchDefault class="mat-typography">
         <h1><ng-content></ng-content></h1>
