@@ -5,14 +5,14 @@ import { ActorSubclass, Identity } from '@dfinity/agent';
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { Principal } from '@dfinity/principal';
 import { EMPTY, Observable, Subject, from, merge } from 'rxjs';
-import { catchError, connect, filter, first, map, switchMap, withLatestFrom } from 'rxjs/operators';
+import { catchError, connect, filter, first, map, switchMap, withLatestFrom, tap } from 'rxjs/operators';
 import { get, has, isUndefined } from 'lodash';
 
 import { createActor, loadIdentity } from '@core/utils';
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
-import { Directory, File, Journal, _SERVICE as JournalActor, JournalError } from 'declarations/journal/journal.did';
+import { Directory, File, DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { toDirectoryExtended, toFileExtended } from '../utils';
 import { JournalItem } from '../models';
 
@@ -98,40 +98,45 @@ state.connect(
     )
 );
 
-updateJournal.asObservable().pipe(
-    withLatestFrom(state.select('journal')),
-    switchMap(([path, actor]) => from(actor.getJournal(toNullable(path || undefined))).pipe(
-        map(response => {
-            if (has(response, 'err')) {
-                const err = Object.keys(get(response, 'err') as unknown as JournalError)[0];
-                const message = `fileList.directory.get.errors.${err}`;
-                throw new Error(message);
-            }
-    
-            const journal = get(response, 'ok') as unknown as Journal;
-            const dirs = journal.dirs.map((dir: Directory) => ({
-                ...toDirectoryExtended(dir),
-                path
-            }));
-            const files = journal.files.map((file: File) => ({
-                ...toFileExtended(file),
-                path
-            }));
-            const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
-            const parentId = fromNullable<string>(journal.id);
-    
-            return {
-                items: [...dirs, ...files] as JournalItem[],
-                breadcrumbs,
-                parent: parentId && path ? { id: parentId, path } : undefined
-            };
+updateJournal
+    .asObservable()
+    .pipe(
+        withLatestFrom(state.select('journal')),
+        switchMap(([path, actor]) =>
+            from(actor.getJournal(toNullable(path || undefined))).pipe(
+                tap(console.log),
+                map(response => {
+                    if (has(response, 'err')) {
+                        const err = Object.keys(get(response, 'err') as unknown as DirectoryStateError)[0];
+                        const message = `fileList.directory.get.errors.${err}`;
+                        throw new Error(message);
+                    }
+
+                    const journal = get(response, 'ok') as unknown as DirectoryState;
+                    const dirs = journal.dirs.map((dir: Directory) => ({
+                        ...toDirectoryExtended(dir),
+                        path
+                    }));
+                    const files = journal.files.map((file: File) => ({
+                        ...toFileExtended(file),
+                        path
+                    }));
+                    const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
+                    const parentId = fromNullable<string>(journal.id);
+
+                    return {
+                        items: [...dirs, ...files] as JournalItem[],
+                        breadcrumbs,
+                        parent: parentId && path ? { id: parentId, path } : undefined
+                    };
+                })
+            )
+        ),
+        catchError(err => {
+            postMessage({ action: 'getJournalFailed', errorCode: err.message });
+            return EMPTY;
         })
-    )),
-    catchError(err => {
-        postMessage({ action: 'getJournalFailed', errorCode: err.message });
-        return EMPTY;
-    })
-)
-.subscribe(data => {
-    postMessage({ action: 'getJournalSuccess', payload: data });
-});
+    )
+    .subscribe(data => {
+        postMessage({ action: 'getJournalSuccess', payload: data });
+    });

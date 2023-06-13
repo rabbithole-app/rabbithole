@@ -1,11 +1,12 @@
 export const idlFactory = ({ IDL }) => {
+    const Directory__1 = IDL.Rec();
     const AccountIdentifier = IDL.Vec(IDL.Nat8);
     const ID = IDL.Text;
-    const BucketId__1 = IDL.Principal;
+    const BucketId = IDL.Principal;
     const FileCreate = IDL.Record({
         id: ID,
         name: IDL.Text,
-        bucketId: BucketId__1,
+        bucketId: BucketId,
         fileSize: IDL.Nat,
         parentId: IDL.Opt(ID)
     });
@@ -14,7 +15,7 @@ export const idlFactory = ({ IDL }) => {
         id: ID,
         name: IDL.Text,
         createdAt: Time,
-        bucketId: BucketId__1,
+        bucketId: BucketId,
         fileSize: IDL.Nat,
         updatedAt: Time,
         parentId: IDL.Opt(ID)
@@ -23,14 +24,15 @@ export const idlFactory = ({ IDL }) => {
         id: ID,
         name: IDL.Text,
         createdAt: Time,
-        bucketId: BucketId__1,
+        bucketId: BucketId,
         fileSize: IDL.Nat,
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
     const FileCreateError = IDL.Variant({
         illegalCharacters: IDL.Null,
-        alreadyExists: File
+        alreadyExists: File,
+        parentNotFound: IDL.Null
     });
     const Result_8 = IDL.Variant({ ok: File__1, err: FileCreateError });
     const definite_canister_settings = IDL.Record({
@@ -64,26 +66,22 @@ export const idlFactory = ({ IDL }) => {
         green: IDL.Null,
         yellow: IDL.Null
     });
-    const JournalEntry = IDL.Record({
-        id: ID,
-        name: IDL.Text,
-        createdAt: Time,
-        updatedAt: Time,
-        parentId: IDL.Opt(ID)
-    });
-    const Directory__1 = IDL.Record({
-        id: ID,
-        name: IDL.Text,
-        createdAt: Time,
-        path: IDL.Opt(IDL.Text),
-        color: IDL.Opt(DirectoryColor),
-        children: IDL.Opt(IDL.Vec(JournalEntry)),
-        updatedAt: Time,
-        parentId: IDL.Opt(ID)
-    });
+    Directory__1.fill(
+        IDL.Record({
+            id: ID,
+            name: IDL.Text,
+            createdAt: Time,
+            path: IDL.Opt(IDL.Text),
+            color: IDL.Opt(DirectoryColor),
+            children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
+            updatedAt: Time,
+            parentId: IDL.Opt(ID)
+        })
+    );
     const DirectoryCreateError = IDL.Variant({
         illegalCharacters: IDL.Null,
-        alreadyExists: Directory__1
+        alreadyExists: Directory__1,
+        parentNotFound: IDL.Null
     });
     const Result_7 = IDL.Variant({
         ok: IDL.Null,
@@ -95,7 +93,7 @@ export const idlFactory = ({ IDL }) => {
         createdAt: Time,
         path: IDL.Opt(IDL.Text),
         color: IDL.Opt(DirectoryColor),
-        children: IDL.Opt(IDL.Vec(JournalEntry)),
+        children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
@@ -136,16 +134,11 @@ export const idlFactory = ({ IDL }) => {
         })
     });
     const ID__1 = IDL.Text;
-    const CreatePath = IDL.Record({
-        base: IDL.Opt(IDL.Text),
-        path: IDL.Text,
-        parentId: IDL.Opt(ID)
-    });
     const Result_4 = IDL.Variant({
         ok: IDL.Null,
         err: IDL.Variant({ notFound: IDL.Null })
     });
-    const BucketId = IDL.Principal;
+    const BucketId__1 = IDL.Principal;
     const Canister = IDL.Record({
         status: IDL.Opt(canister_status_response),
         owner: IDL.Principal,
@@ -153,16 +146,19 @@ export const idlFactory = ({ IDL }) => {
         monitoring: IDL.Variant({ stopped: IDL.Null, running: IDL.Null }),
         lastChecked: Time,
         timerId: IDL.Opt(IDL.Nat),
-        canisterId: BucketId__1
+        canisterId: BucketId
     });
-    const Journal = IDL.Record({
+    const DirectoryState = IDL.Record({
         id: IDL.Opt(ID),
         files: IDL.Vec(File),
         dirs: IDL.Vec(Directory__1),
         breadcrumbs: IDL.Vec(Directory__1)
     });
-    const JournalError = IDL.Variant({ notFound: IDL.Null });
-    const Result_3 = IDL.Variant({ ok: Journal, err: JournalError });
+    const DirectoryStateError = IDL.Variant({ notFound: IDL.Null });
+    const Result_3 = IDL.Variant({
+        ok: DirectoryState,
+        err: DirectoryStateError
+    });
     const DirectoryMoveError = IDL.Variant({
         sourceNotFound: IDL.Null,
         notFound: IDL.Null,
@@ -205,25 +201,23 @@ export const idlFactory = ({ IDL }) => {
             ],
             []
         ),
-        checkDirectoryName: IDL.Func([DirectoryCreate], [Result_7], ['query']),
+        checkDirname: IDL.Func([DirectoryCreate], [Result_7], ['query']),
         createDirectory: IDL.Func([DirectoryCreate], [Result_6], []),
         createInvite: IDL.Func([Time], [Result_5], []),
-        createPath: IDL.Func([IDL.Text, IDL.Opt(ID__1)], [], []),
-        createPaths: IDL.Func([IDL.Vec(CreatePath)], [IDL.Vec(IDL.Tuple(IDL.Text, ID__1))], []),
-        createPathsV2: IDL.Func([IDL.Vec(IDL.Text), IDL.Opt(ID__1)], [IDL.Vec(IDL.Tuple(IDL.Text, ID__1))], []),
+        createPaths: IDL.Func([IDL.Vec(IDL.Text), IDL.Vec(ID__1), IDL.Opt(ID__1)], [IDL.Vec(IDL.Tuple(IDL.Text, ID__1))], []),
         deleteDirectory: IDL.Func([IDL.Text], [Result_4], []),
         deleteFile: IDL.Func([IDL.Text], [Result_4], []),
-        deleteStorage: IDL.Func([BucketId], [], []),
+        deleteStorage: IDL.Func([BucketId__1], [], []),
         getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
+        getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_3], ['query']),
-        getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId)], []),
-        isDirnameValid: IDL.Func([IDL.Text], [IDL.Bool], ['query']),
-        listStorages: IDL.Func([], [IDL.Vec(BucketId)], ['query']),
+        getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId__1)], []),
+        listStorages: IDL.Func([], [IDL.Vec(BucketId__1)], ['query']),
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_2], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_1], []),
         showDirectoriesTree: IDL.Func([IDL.Opt(ID__1)], [IDL.Text], ['query']),
-        startBucketMonitor: IDL.Func([BucketId], [], []),
-        stopBucketMonitor: IDL.Func([BucketId], [], []),
+        startBucketMonitor: IDL.Func([BucketId__1], [], []),
+        stopBucketMonitor: IDL.Func([BucketId__1], [], []),
         storageLoadWasm: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Record({ total: IDL.Nat, chunks: IDL.Nat })], []),
         storageResetWasm: IDL.Func([], [], []),
         updateDirectory: IDL.Func([DirectoryAction, DirectoryUpdatableFields], [Result], []),

@@ -31,10 +31,10 @@
             <mat-icon svgIcon="far:files"></mat-icon>
             <span>{{ t('context.uploadFiles') }}</span>
         </button>
-        <!--<button mat-menu-item>
+        <button mat-menu-item (click)="uploadService.showDirectoryPicker()">
             <mat-icon svgIcon="far:folder-plus"></mat-icon>
-            <span>{{ 'sidebar.upload-folder' | translate }}</span>
-        </button>-->
+            <span>{{ t('context.uploadFolder') }}</span>
+        </button>
     </ng-template>
     <ng-template #contextItemsTemplate let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
         <!--<h3 *ngFor="let item of items" class="mat-typography">{{ item.name }} [{{ item.id }}]</h3>-->
@@ -54,7 +54,10 @@
             </div>
             <mat-divider></mat-divider>
         </ng-container>
-        
+        <!-- <button mat-menu-item (click)="handleItemsAction('share', items)">
+            <mat-icon svgIcon="far:share"></mat-icon>
+            <span>Share</span>
+        </button> -->
         <!--<button mat-menu-item (click)="handleItemsAction('open')">
             <mat-icon svgIcon="far:trash-can"></mat-icon>
             &lt;!&ndash;<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>&ndash;&gt;

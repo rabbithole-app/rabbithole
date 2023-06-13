@@ -1,0 +1,50 @@
+<mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackById">
+    <!-- This is the tree node template for leaf nodes -->
+    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="26"
+        [class.selected]="selected.isSelected(node.directory.id)" [class.disabled]="node.disabled"
+        [disabled]="node.disabled" [matRippleDisabled]="node.disabled" #treeNode="matRipple" matRipple
+        [matRippleTrigger]="nodeTrigger" (click)="handleSelect($event, node, treeNode)">
+        <!-- use a disabled button to provide padding for tree leaf -->
+        <button mat-icon-button class="arrow-icon" disabled></button>
+        <ng-container [ngSwitch]="selected.isSelected(node.directory.id)" #nodeTrigger>
+            <ng-container *ngSwitchCase="true">
+                <ng-container *ngTemplateOutlet="selectedNode; context: { $implicit: node }"></ng-container>
+            </ng-container>
+            <div class="node" *ngSwitchCase="false">
+                <mat-icon svgIcon="far:folder-closed"></mat-icon>
+                {{ node.directory.name }}
+            </div>
+        </ng-container>
+    </mat-tree-node>
+    <!-- This is the tree node template for expandable nodes -->
+    <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding [matTreeNodePaddingIndent]="26"
+        [class.selected]="selected.isSelected(node.directory.id)" [class.disabled]="node.disabled" #treeNode="matRipple"
+        matRipple [matRippleTrigger]="nodeTrigger" (click)="handleSelect($event, node, treeNode)"
+        [disabled]="node.disabled" [matRippleDisabled]="node.disabled">
+        <mat-spinner diameter="20" *rxIf="node.loading; else arrowTemplate"></mat-spinner>
+        <ng-template #arrowTemplate>
+            <button mat-icon-button class="arrow-icon" matTreeNodeToggle
+                [attr.aria-label]="'Toggle ' + node.directory.name">
+                <mat-icon class="mat-icon-rtl-mirror"
+                    [svgIcon]="'far:' + (treeControl.isExpanded(node) ? 'angle-down' : 'angle-right')"></mat-icon>
+            </button>
+        </ng-template>
+        <ng-container [ngSwitch]="selected.isSelected(node.directory.id)" #nodeTrigger>
+            <ng-container *ngSwitchCase="true">
+                <ng-container *ngTemplateOutlet="selectedNode; context: { $implicit: node }"></ng-container>
+            </ng-container>
+            <div class="node" *ngSwitchCase="false">
+                <mat-icon
+                    [svgIcon]="'far:' + (treeControl.isExpanded(node) ? 'folder-open' : 'folder-closed')"></mat-icon>
+                {{ node.directory.name }}
+            </div>
+        </ng-container>
+    </mat-tree-node>
+    <ng-template #selectedNode let-node>
+        <div class="node">
+            <mat-icon class="folder-icon"
+                [svgIcon]="'far:' + (node.expandable && treeControl.isExpanded(node) ? 'folder-open' : 'folder-closed')"></mat-icon>
+            {{ node.directory.name }}
+        </div>
+    </ng-template>
+</mat-tree>

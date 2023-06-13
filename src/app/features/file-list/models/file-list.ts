@@ -31,7 +31,7 @@ export type FileInfo = {
 
 export type DirectoryExtended = Directory &
     ItemsCommonAttrs & {
-        children?: JournalItem[];
+        children?: [DirectoryExtended[], FileInfoExtended[]];
     };
 
 export type FileInfoExtended = FileInfo & ItemsCommonAttrs;
@@ -43,7 +43,7 @@ export type DirectoryCreate = {
     parent?: { id: string; path: string };
 };
 
-export type MenuItemAction = 'open' | 'remove' | 'download';
+export type MenuItemAction = 'open' | 'remove' | 'download' | 'share';
 
 export interface FileListIconsConfig {
     namespace: string;

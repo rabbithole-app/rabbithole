@@ -3,11 +3,11 @@ import { Router, RouterStateSnapshot, ActivatedRouteSnapshot } from '@angular/ro
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
-import { EMPTY, catchError, filter, from, iif, map, switchMap, throwError } from 'rxjs';
+import { EMPTY, catchError, filter, from, iif, map, switchMap, tap, throwError } from 'rxjs';
 import { get, has, isNull } from 'lodash';
 
 import { BucketsService, NotificationService } from '@core/services';
-import { Directory, File, Journal, JournalError } from '@declarations/journal/journal.did';
+import { Directory, File, DirectoryState, DirectoryStateError } from '@declarations/journal/journal.did';
 import { toDirectoryExtended, toFileExtended } from '../utils';
 import { JournalItem } from '../models';
 
@@ -28,12 +28,12 @@ export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterSta
                 ).pipe(
                     map(response => {
                         if (has(response, 'err')) {
-                            const err = Object.keys(get(response, 'err') as unknown as JournalError)[0];
+                            const err = Object.keys(get(response, 'err') as unknown as DirectoryStateError)[0];
                             const message = translocoService.translate(`fileList.directory.get.errors.${err}`);
                             throw new Error(message);
                         }
 
-                        const journal = get(response, 'ok') as unknown as Journal;
+                        const journal = get(response, 'ok') as unknown as DirectoryState;
 
                         const dirs = journal.dirs.map((dir: Directory) => ({
                             ...toDirectoryExtended(dir),

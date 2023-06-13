@@ -44,10 +44,11 @@ import Utils "../utils/utils";
 import { LEDGER_CANISTER_ID; CYCLE_MINTING_CANISTER_ID } = "../env";
 import Wallet "../utils/wallet";
 import TrieMap "mo:base/TrieMap";
+import Journal "journal";
 
 shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = this {
     type ID = Types.ID;
-    type JournalEntry = JournalTypes.JournalEntry;
+    type JournalEntry = JournalTypes.Entry;
     type File = JournalTypes.File;
     type Directory = JournalTypes.Directory;
     type DirectoryError = JournalTypes.DirectoryError;
@@ -63,8 +64,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type FileMoveError = JournalTypes.FileMoveError;
     type Canister = JournalTypes.Canister;
     type Topup = JournalTypes.Topup;
-    type Journal = JournalTypes.Journal;
-    type JournalError = JournalTypes.JournalError;
+    type DirectoryState = JournalTypes.DirectoryState;
+    type DirectoryStateError = JournalTypes.DirectoryStateError;
     type Tokens = LedgerTypes.Tokens;
     type InviteCreate = Types.InviteCreate;
     type CreatePath = JournalTypes.CreatePath;
@@ -94,681 +95,113 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
         Text.equal
     );
+    var journal = Journal.New();
 
     public shared ({ caller }) func createDirectory(directory : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
         assert validateCaller(caller);
-        await createDirectory_(caller, directory);
+        await journal.createDir(directory);
     };
 
-    // поиск папки по id
-    func getDirectoryByID(id : ID) : ?Directory {
-        var found : ?Directory = null;
-        label dirloop for (dir in directories.keys()) {
-            if (Text.equal(dir.id, id)) {
-                found := ?dir;
-                break dirloop;
-            };
-        };
-        found;
-    };
-
-    // возвращает пару (l, r) по id директории
-    func getPairByID(id : ID) : ?(Directory, Text) {
-        switch (getDirectoryByID(id)) {
-            case null null;
-            case (?l) {
-                switch (directories.getByLeft(l)) {
-                    case null null;
-                    case (?r) ?(l, r);
-                };
-            };
-        };
-    };
-
-    // // возвращает пару (l, r) по id файла
-    // func getPairByFileID (id : ?ID) : ?(File, Text) {
-    //     switch (getDirectoryByID(id)) {
-    //         case null null;
-    //         case (?l) {
-    //             switch (directories.getByLeft(l)) {
-    //                 case null null;
-    //                 case (?r) ?(l, r);
-    //             };
-    //         };
-    //     };
-    // };
-
-    // список директорий и файлов по id родителя
-    func getChildrenByID(id : ?ID) : ([Directory], [File]) {
-        let dirs : [Directory] = do {
-            let buffer : Buffer.Buffer<Directory> = Buffer.Buffer<Directory>(0);
-            for (dir in directories.keys()) {
-                if (dir.parentId == id) {
-                    buffer.add(dir);
-                };
-            };
-            let result = Buffer.toArray(buffer);
-            buffer.clear();
-            result;
-        };
-        let files_ : [File] = do {
-            let buffer : Buffer.Buffer<File> = Buffer.Buffer<File>(0);
-            for (file in files.keys()) {
-                if (file.parentId == id) {
-                    buffer.add(file);
-                };
-            };
-            let result = Buffer.toArray(buffer);
-            buffer.clear();
-            result;
-        };
-        (dirs, files_);
-    };
-
-    func createDirectory_(caller : Principal, { name; parentId } : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
-        if (not validateName(name)) {
-            return #err(#illegalCharacters);
-        };
-
-        let pair : ?(Directory, Text) = switch (parentId) {
-            case null null;
-            case (?v) getPairByID(v);
-        };
-        let path = switch (pair) {
-            case null name;
-            case (?(l, r)) r # "/" # name;
-        };
-        let now = Time.now();
-        let id = await Utils.generateId();
-        let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ?#blue; children = null; path = null };
-        switch (directories.insert(directory, path)) {
-            case (#err((l, r))) {
-                let found : Directory = Option.get(directories.getByRight(r), l);
-                #err(#alreadyExists(found));
-            };
-            case (#ok) #ok(directory);
-        };
-    };
-
-    public query ({ caller }) func checkDirectoryName({ name; parentId } : DirectoryCreate): async Result.Result<(), DirectoryCreateError> {
+    public query ({ caller }) func checkDirname(dir : DirectoryCreate): async Result.Result<(), DirectoryCreateError> {
         assert validateCaller(caller);
-        if (not validateName(name)) {
-            return #err(#illegalCharacters);
-        };
-        let pair : ?(Directory, Text) = switch (parentId) {
-            case null null;
-            case (?v) getPairByID(v);
-        };
-        let path = switch (pair) {
-            case null name;
-            case (?(l, r)) r # "/" # name;
-        };
-        switch (directories.getByRight(path)) {
-            case (?v) #err(#alreadyExists(v));
-            case null #ok();
-        };
+        journal.checkDirname(dir);
     };
 
     public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, { #notFound; #alreadyExists }> {
         assert validateCaller(caller);
-
-        switch (action) {
-            case (#rename id) {
-                switch (getPairByID(id)) {
-                    case null #err(#notFound);
-                    case (?(l, r)) {
-                        let newName : Text = Option.get(fields.name, l.name);
-                        let (siblingDirs : [Directory], _) = getChildrenByID(l.parentId);
-                        let found : ?Directory = Array.find<Directory>(
-                            siblingDirs,
-                            func(dir : Directory) : Bool {
-                                Text.equal(dir.name, newName) and Text.notEqual(dir.id, l.id);
-                            }
-                        );
-                        switch (found) {
-                            case null {
-                                let directory : Directory = { l with updatedAt = Time.now(); name = newName };
-                                ignore directories.replace(directory, r);
-                                #ok(directory);
-                            };
-                            case (?v) #err(#alreadyExists);
-                        };
-                    };
-                };
-            };
-            case (#changeColor id) {
-                switch (getPairByID(id)) {
-                    case null #err(#notFound);
-                    case (?(l, r)) {
-                        let color : ?DirectoryColor = ?Option.get(fields.color, Option.get(l.color, #blue));
-                        let directory : Directory = { l with updatedAt = Time.now(); color };
-                        ignore directories.replace(directory, r);
-                        #ok(directory);
-                    };
-                };
-            };
-            // case _ throw Error.reject("Wrong action");
-        };
+        journal.updateDir(action, fields);
     };
 
     public shared ({ caller }) func moveDirectory(sourcePath : Text, targetPath : ?Text) : async Result.Result<(), DirectoryMoveError> {
         assert validateCaller(caller);
-        let preparedSourcePath : Text = Text.trim(sourcePath, #text "/");
-        let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func(text : Text) { Text.trim(text, #text "/") });
-        // Text.trim(targetPath_, #text "/");
-        await* moveDirectory_(preparedSourcePath, preparedTargetPath);
-    };
-
-    // Перемещение директории из одной в другу
-    //-------------------------------------
-    // crypto/             crypto/
-    // ├─ layer1/          ├─ layer1/
-    // │  ├─ ethereum      │  ├─ ethereum
-    // layer1/             │  ├─ ic
-    // ├─ ic               layer1
-    //-------------------------------------
-    // sourcePath = "layer1/ic"
-    // targetPath = "crypto/layer1"
-    func moveDirectory_(sourcePath : Text, targetPath : ?Text) : async* Result.Result<(), DirectoryMoveError> {
-        switch (directories.getByRight(sourcePath)) {
-            case null return #err(#sourceNotFound);
-            case (?sourceDir) {
-                let targetDir : ?Directory = switch (targetPath) {
-                    case null null;
-                    case (?v) directories.getByRight(v);
-                };
-
-                switch (targetPath, targetDir) {
-                    case (?v, null) return #err(#targetNotFound);
-                    case (?v, _) {
-                        if (isTargetParentOfSource(sourcePath, v)) {
-                            return #err(#invalidParams);
-                        };
-                    };
-                    case (null, _) {};
-                };
-
-                // список директорий в папке-получателе
-                let id : ?ID = switch (targetDir) {
-                    case null null;
-                    case (?v) ?v.id;
-                };
-                let targetDirs : [Directory] = getChildrenByID(id).0;
-                switch (Array.find<Directory>(targetDirs, func({ name } : Directory) : Bool { Text.equal(name, sourceDir.name) })) {
-                    case null {
-                        let directory : Directory = { sourceDir with updatedAt = Time.now(); parentId = id };
-                        let path : Text = Option.getMapped<Text, Text>(targetPath, func(v : Text) : Text { v # "/" # directory.name }, directory.name);
-                        ignore directories.replace(directory, path);
-                        let (sourceDirs : [Directory], sourceFiles : [File]) = getChildrenByID(?sourceDir.id);
-                        await* updateSubdirPaths(directory.id, path);
-
-                        for (file in Iter.fromArray<File>(sourceFiles)) {
-                            ignore await moveFile_(sourcePath # "/" # file.name, Option.make(path));
-                        };
-
-                        #ok();
-                    };
-                    case (?found) {
-                        let path : Text = Option.getMapped<Text, Text>(targetPath, func(v : Text) : Text { v # "/" # found.name }, found.name);
-                        await* mergeDirectory_(sourcePath, path);
-                    };
-                };
-            };
-        };
-    };
-
-    func updateSubdirPaths(id : Text, path : Text) : async* () {
-        let (dirs : [Directory], files_ : [File]) = getChildrenByID(?id);
-                        
-        for (dir in Iter.fromArray<Directory>(dirs)) {
-            let newPath : Text = path # "/" # dir.name;
-            ignore directories.replace(dir, newPath);
-            await* updateSubdirPaths(dir.id, newPath);
-        };
-    };
-
-    func isTargetParentOfSource(sourcePath : Text, targetPath : Text) : Bool {
-        switch (directories.getByRight(sourcePath)) {
-            case null false;
-            case (?v) {
-                let parents : [Directory] = getBreadcrumbs(targetPath);
-                for ({ id } in Iter.fromArray<Directory>(parents)) {
-                    if (Text.equal(v.id, id)) {
-                        return true;
-                    };
-                };
-                false;
-            };
-        };
-        // let ?sourceDir : ?Directory = directories.getByRight(sourcePath) else { return false };
-    };
-
-    // Слияние двух директорий
-    //-------------------------------------
-    // crypto/             crypto/
-    // ├─ layer1/          ├─ layer1/
-    // │  ├─ ethereum      │  ├─ ethereum
-    // layer1/             │  ├─ ic
-    // ├─ ic
-    //-------------------------------------
-    // sourcePath = "layer1"
-    // targetPath = "crypto/layer1"
-    func mergeDirectory_(sourcePath : Text, targetPath : Text) : async* Result.Result<(), DirectoryMoveError> {
-        if (Text.equal(sourcePath, targetPath)) {
-            return #err(#invalidParams);
-        };
-
-        switch (directories.getByRight(sourcePath), directories.getByRight(targetPath)) {
-            case (null, null) return #err(#notFound);
-            case (null, _) return #err(#sourceNotFound);
-            case (_, null) return #err(#targetNotFound);
-            case (?sourceDir, ?targetDir) {
-                // список директорий в папке-источнике
-                let (sourceDirs : [Directory], _) = getChildrenByID(?sourceDir.id);
-                // список директорий в папке-получателе
-                let (targetDirs : [Directory], _) = getChildrenByID(?targetDir.id);
-
-                let directory : Directory = { targetDir with updatedAt = Time.now() };
-                ignore directories.replace(directory, targetPath);
-                ignore directories.removeByLeft(sourceDir);
-
-                for (sourceChildDir in sourceDirs.vals()) {
-                    // если существует директория с таким же именем в папке-получателе, рекурсивно вызываем mergeDirectory
-                    let found = Array.find(targetDirs, func(dir : Directory) : Bool { Text.equal(dir.name, sourceChildDir.name) });
-                    switch (found) {
-                        case (?v) { ignore await* mergeDirectory_(sourcePath # "/" # v.name, targetPath # "/" # v.name) };
-                        case null { ignore await* moveDirectory_(sourcePath # "/" # sourceChildDir.name, ?targetPath) };
-                    };
-                };
-
-                #ok();
-            };
-        };
+        let preparedSourcePath : Text = Text.trim(sourcePath, #char '/');
+        let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func t = Text.trim(t, #char '/'));
+        await* journal.moveDir(preparedSourcePath, preparedTargetPath);
     };
 
     // Удаление директории со всеми дочерними поддиректориями и файлами
     public shared ({ caller }) func deleteDirectory(sourcePath : Text) : async Result.Result<(), { #notFound }> {
         assert validateCaller(caller);
-        let preparedPath : Text = Text.trim(sourcePath, #text "/");
-        await deleteDirectory_(preparedPath);
-    };
-
-    func deleteDirectory_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
-        let found : ?Directory = directories.getByRight(sourcePath);
-        switch found {
-            case null #err(#notFound);
-            case (?v) {
-                let (dirs : [Directory], files : [File]) = getChildrenByID(?v.id);
-
-                for ({ name } in Iter.fromArray<Directory>(dirs)) {
-                    ignore await deleteDirectory_(sourcePath # "/" # name);
-                };
-
-                for ({ name } in Iter.fromArray<File>(files)) {
-                    ignore await deleteFile_(sourcePath # "/" # name);
-                };
-
-                ignore directories.removeByRight(sourcePath);
-                #ok();
-            };
-        };
+        let preparedPath : Text = Text.trim(sourcePath, #char '/');
+        await journal.deleteDir(preparedPath);
     };
 
     // Создание дерева директорий
-    public shared ({ caller }) func createPath(path : Text, _parentId : ?ID) : async () {
-        assert validateCaller(caller);
-
-        var parentId : ?ID = _parentId;
-        let preparedPath : Text = Text.trim(path, #text "/");
-        let dirnames : Iter.Iter<Text> = Text.split(preparedPath, #text "/");
-        for (dirname in dirnames) {
-            let name = Text.trim(dirname, #text " ");
-            if (Text.notEqual(name, "")) {
-                let directory = { name; parentId };
-
-                switch (await createDirectory_(caller, directory)) {
-                    case (#ok(res)) parentId := ?res.id;
-                    case (#err(#alreadyExists v)) parentId := ?v.id;
-                    case (#err(#illegalCharacters)) throw Error.reject("Illegal characters: " # dirname);
-                    // case (#err msg) throw Error.reject(msg);
-                };
-            };
-        };
-    };
     
-    public shared ({ caller }) func createPaths(paths : [CreatePath]) : async [(Text, ID)] {
+    // public shared ({ caller }) func createPaths(paths : [CreatePath]) : async [(Text, ID)] {
+    //     assert validateCaller(caller);
+    //     await journal.createPaths(caller, paths);
+    // };
+
+    public shared ({ caller }) func createPaths(paths : [Text], ids : [ID], parentId : ?ID) : async [(Text, ID)] {
         assert validateCaller(caller);
-        await createPaths_(caller, paths);
+        await journal.createPaths(paths, ids, parentId);
     };
 
-    func createPaths_(caller : Principal, paths : [CreatePath]) : async [(Text, ID)] {
-        let buffer = Buffer.Buffer<(Text, ID)>(0);
-        for ({ path; parentId = pid; base } in Iter.fromArray(paths)) {
-            var parentId : ?ID = pid;
-            var parentPath : Text = Option.get(base, "");
-            let preparedPath : Text = Text.trim(path, #text "/");
-            let dirnames : Iter.Iter<Text> = Text.split(preparedPath, #text "/");
-            for (dirname in dirnames) {
-                let name = Text.trim(dirname, #text " ");
-                if (Text.notEqual(name, "")) {
-                    let directory = { name; parentId };
-                    parentPath := if (Text.equal(parentPath, "")) dirname else parentPath # "/" # dirname;
-                    switch (await createDirectory_(caller, directory)) {
-                        case (#ok(res)) {
-                            parentId := ?res.id;
-                            buffer.add((parentPath, res.id));
-                        };
-                        case (#err(#alreadyExists v)) {
-                            parentId := ?v.id;
-                            buffer.add((parentPath, v.id));
-                        };
-                        case (#err(#illegalCharacters)) throw Error.reject("Illegal characters: " # dirname);
-                    };
-                };
-            };
-        };
-        let result = Buffer.toArray(buffer);
-        buffer.clear();
-        result;
-    };
-
-    func joinPath(dir1 : Text, dir2 : Text) : Text = if (Text.equal(dir1, "")) dir2 else dir1 # "/" # dir2;
-
-    public shared ({ caller }) func createPathsV2(paths : [Text],  _parentId : ?ID) : async [(Text, ID)] {
+    public query ({ caller }) func getJournal(path : ?Text) : async Result.Result<DirectoryState, DirectoryStateError> {
         assert validateCaller(caller);
-        let buffer = Buffer.Buffer<(Text, ID)>(0);
-        let createBuffer : Buffer.Buffer<CreatePath> = Buffer.Buffer(0);
-        let pair : ?(Directory, Text) = switch (_parentId) {
-            case null null;
-            case (?v) getPairByID(v);
-        };
-        let parent : (Text, ?ID) = switch(pair) {
-            case null ("", null);
-            case (?(dir, path)) (path, ?dir.id);
-        };
-        for (p in Iter.fromArray(paths)) {
-            let path = Text.trim(p, #char '/');
-            var parentPath : Text = parent.0;
-            var parentId : ?ID = parent.1;
-            var currentPath : Text = "";
-            var fullPath : Text = joinPath(parentPath, path);
-            let dirnames : Iter.Iter<Text> = Text.split(path, #char '/');
-            label dirsLoop for (dirname in dirnames) {
-                let name = Text.trim(dirname, #char ' ');
-                if (Text.notEqual(name, "")) {
-                    currentPath := joinPath(currentPath, dirname);
-                    let absPath = joinPath(parent.0, currentPath);
-                    switch (directories.getByRight(absPath)) {
-                        case null {
-                            switch (Text.stripStart(fullPath, #text parentPath)) {
-                                case null {};
-                                case (?v) {
-                                    let path = Text.trim(v, #char '/');
-                                    let base = Text.stripStart(parentPath, #text(parent.0 # "/"));
-                                    createBuffer.add({ path; parentId; base });
-                                };
-                            };
-                            break dirsLoop;
-                        };
-                        case (?v) {
-                            parentId := ?v.id;
-                            buffer.add((currentPath, v.id));
-                        };
-                    };
-                    parentPath := absPath;
-                }
-            };
-        };
-        let arg = Buffer.toArray(createBuffer);
-        createBuffer.clear();
-        let createPathsResult = await createPaths_(caller, arg);
-        let createPathsResultBuffer : Buffer.Buffer<(Text, ID)> = Buffer.fromArray(createPathsResult);
-        buffer.append(createPathsResultBuffer);
-        createPathsResultBuffer.clear();
-        let result = Buffer.toArray(buffer);
-        buffer.clear();
-        result;
+        journal.getJournal(path);
     };
 
-    public query ({ caller }) func getJournal(path : ?Text) : async Result.Result<Journal, JournalError> {
-        assert validateCaller(caller);
-
-        let preparedPath : Text = switch (path) {
-            case null "";
-            case (?v) Text.trim(v, #text "/");
-        };
-        let id : ?ID = switch (directories.getByRight(preparedPath)) {
-            case null null;
-            case (?v) ?v.id;
-        };
-
-        if (Option.isSome(path) and Option.isNull(id)) {
-            return #err(#notFound);
-        };
-
-        let (dirs : [Directory], files : [File]) = getChildrenByID(id);
-        let breadcrumbs : [Directory] = getBreadcrumbs(preparedPath);
-        #ok({ id; dirs; files; breadcrumbs });
-    };
-
-    func getBreadcrumbs(path : Text) : [Directory] {
-        let dirnames : Iter.Iter<Text> = Text.split(path, #text "/");
-        let buffer : Buffer.Buffer<Directory> = Buffer.Buffer<Directory>(0);
-        var parentPath : ?Text = null;
-        var separator = "";
-        for (dirname in dirnames) {
-            if (Text.notEqual(dirname, "")) {
-                // Option.get(pa)
-                // let currentPath : ?Text = Option.map<Text, Text>(parentPath, func (v : Text) {
-                //     v # separator # dirname;
-                // });
-                let currentPath : Text = Option.get(parentPath, "") # separator # dirname;
-                separator := "/";
-                switch (directories.getByRight(currentPath)) {
-                    case null {};
-                    case (?v) buffer.add({ v with path = parentPath });
-                };
-                parentPath := ?currentPath;
-            };
-        };
-        Buffer.toArray(buffer);
-    };
-
-    // Проверка имени директории на недопустимы символы
-    public query func isDirnameValid(name : Text) : async Bool {
-        validateName(name);
-    };
-
-    func validateName(name : Text) : Bool {
-        for (c : Char in name.chars()) {
-            let isNonPrintableChar : Bool = Char.fromNat32(0x00) <= c and c <= Char.fromNat32(0x1f);
-            if (isNonPrintableChar or Text.contains("<>:/|\\?*\"", #char c)) {
-                return false;
-            };
-        };
-        true;
-    };
-
-    func repeatText(text : Text, n : Int) : Text {
-        var output : Text = "";
-        for (i in Iter.range(1, n)) {
-            output #= text;
-        };
-        output;
-    };
-
-    func showSubdirsTree(id : ?ID, depth : Nat, prefix_ : ?Text, isParentLast_ : ?Bool) : Text {
-        var output : Text = "";
-        var i : Nat = 0;
-        var isParentLast = Option.get(isParentLast_, true);
-        var prefix : Text = Option.get(prefix_, "");
-        if (depth > 0) { prefix #= if isParentLast "░░" else "│░" };
-        let (dirs : [Directory], files : [File]) = getChildrenByID(id);
-        let items : Buffer.Buffer<JournalEntry> = do {
-            let buffer : Buffer.Buffer<JournalEntry> = Buffer.fromArray<JournalEntry>(dirs);
-            let fBuffer : Buffer.Buffer<JournalEntry> = Buffer.fromArray<JournalEntry>(files);
-            buffer.append(fBuffer);
-            buffer;
-        };
-        let count = items.size();
-        let prefixLength = prefix.size();
-
-        for ({ id; name } in items.vals()) {
-            let isLast : Bool = Nat.equal(i, count - 1);
-            let node = if isLast "└─" else "├─";
-            output #= "\n" # prefix # repeatText("░", depth * 2 - prefixLength) # node # name # " [" # id # "]";
-            output #= showSubdirsTree(?id, depth + 1, ?prefix, ?isLast);
-            i += 1;
-        };
-        output;
-    };
-
-    // Визуализация дерева каталогов в консоли
-    /* например,
-    .
-    ├─crypto [uuid]
-    │ └─nfts
-    │   └─punks
-    └─images
-      └─icons
-    */
     public query ({ caller }) func showDirectoriesTree(id : ?ID) : async Text {
         assert validateCaller(caller);
-
-        let result : Text = showSubdirsTree(id, 0, null, null);
-        let root = switch (id) {
-            case null ".";
-            case (?v) {
-                switch (getDirectoryByID(v)) {
-                    case null ".";
-                    case (?{ id; name }) name # " [" # id # "]";
-                };
-            };
-        };
-        "\n" # root # result # "\n";
+        journal.showDirectoriesTree(id);
     };
 
-    public shared ({ caller }) func addFile(file_ : FileCreate) : async Result.Result<File, FileCreateError> {
+    public shared ({ caller }) func addFile(file : FileCreate) : async Result.Result<File, FileCreateError> {
         assert not Principal.isAnonymous(caller);
         // assert Principal.equal(caller, owner);
         assert isStorage(caller);
-
-        if (not validateName(file_.name)) {
-            return #err(#illegalCharacters);
-        };
-        let pair : ?(Directory, Text) = switch (file_.parentId) {
-            case null null;
-            case (?v) getPairByID(v);
-        };
-        let path = switch (pair) {
-            case null file_.name;
-            case (?(l, r)) r # "/" # file_.name;
-        };
-        let now = Time.now();
-        let file : File = { file_ and { createdAt = now; updatedAt = now } };
-        // TODO: замена и удаление файлов из хранилища
-        ignore files.replace(file, path);
-        #ok(file);
-        // switch (files.insert(file, path)) {
-        //     case (#err((l, r))) {
-        //         let found : File = Option.get(files.getByRight(r), l);
-        //         #err(#alreadyExists(found));
-        //     };
-        //     case (#ok) #ok(file);
-        // };
+        await journal.putFile(file);
     };
 
     public shared ({ caller }) func deleteFile(sourcePath : Text) : async Result.Result<(), { #notFound }> {
         assert validateCaller(caller);
         let preparedPath : Text = Text.trimStart(sourcePath, #text "/");
-        await deleteFile_(preparedPath);
-    };
-
-    func deleteFile_(sourcePath : Text) : async Result.Result<(), { #notFound }> {
-        switch (files.removeByRight(sourcePath)) {
-            case null #err(#notFound);
-            case (?(file, _)) {
-                let storageBucket : actor { delete : shared (id : ID) -> async () } = actor (Principal.toText(file.bucketId));
-                ignore storageBucket.delete(file.id);
-                #ok();
-            };
-        };
+        await journal.deleteFile(preparedPath);
     };
 
     public shared ({ caller }) func moveFile(sourceFullPath : Text, targetPath : ?Text) : async Result.Result<(), FileMoveError> {
         assert validateCaller(caller);
         let preparedSourceFullPath : Text = Text.trimStart(sourceFullPath, #text "/");
         let preparedTargetPath : ?Text = Option.map<Text, Text>(targetPath, func(text : Text) { Text.trim(text, #text "/") });
-        await moveFile_(preparedSourceFullPath, preparedTargetPath);
+        await journal.moveFile(preparedSourceFullPath, preparedTargetPath);
     };
 
-    func moveFile_(sourceFullPath : Text, targetPath : ?Text) : async Result.Result<(), FileMoveError> {
-        switch (files.getByRight(sourceFullPath)) {
-            case null return #err(#sourceNotFound);
-            case (?sourceFile) {
-                let targetDir : ?Directory = switch (targetPath) {
-                    case null null;
-                    case (?v) directories.getByRight(v);
-                };
-
-                if (Option.isSome(targetPath) and Option.isNull(targetDir)) {
-                    return #err(#targetNotFound);
-                };
-
-                // список файлов в папке-получателе
-                let id : ?ID = switch (targetDir) {
-                    case null null;
-                    case (?v) ?v.id;
-                };
-                let targetFiles : [File] = getChildrenByID(id).1;
-                let found : ?File = Array.find<File>(targetFiles, func({ name } : File) : Bool { Text.equal(name, sourceFile.name) });
-                let file : File = { sourceFile with updatedAt = Time.now(); parentId = id };
-                let path : Text = Option.getMapped<Text, Text>(targetPath, func(v : Text) : Text { v # "/" # file.name }, file.name);
-
-                if (Option.isSome(found)) {
-                    ignore await deleteFile_(path);
-                };
-
-                ignore files.replace(file, path);
-                #ok();
-            };
-        };
-
-        // if (Text.equal(sourceFullPath, targetPath)) {
-        //     return #err(#invalidParams);
-        // };
-
-        // switch (files.getByRight(sourceFullPath), directories.getByRight(targetPath)) {
-        //     case (null, null) return #err(#notFound);
-        //     case (null, _) return #err(#sourceNotFound);
-        //     case (_, null) return #err(#targetNotFound);
-        //     case (?sourceFile, ?targetDir) {
-        //         let (_, targetFiles : [File]) = getChildrenByID(?targetDir.id);
-        //         let found : ?File = Array.find<File>(targetFiles, func({ name } : File) : Bool { Text.equal(name, sourceFile.name) });
-        //         let file : File = { sourceFile with updatedAt = Time.now(); parentId = ?targetDir.id };
-        //         let path : Text = targetPath # "/" # file.name;
-
-        //         if (Option.isSome(found)) {
-        //             ignore await deleteFile_(path);
-        //         };
-
-        //         ignore files.replace(file, path);
-        //         #ok();
-        //     };
-        // };
+    public query ({ caller }) func getChildrenDirs(id : ?ID) : async [Directory] {
+        assert validateCaller(caller);
+        journal.listDirsExtend(id);
     };
 
     stable var stableDirectories : [(Directory, Text)] = [];
     stable var stableFiles : [(File, Text)] = [];
+    stable var stableJournal : ([(Text, Directory)], [(Text, File)]) = ([], []);
     // stable var stableCanisters : [Canister] = [];
 
     system func preupgrade() {
         stableDirectories := Iter.toArray(directories.entries());
         stableFiles := Iter.toArray(files.entries());
+        stableJournal := journal.preupgrade();
         // stableCanisters := Iter.toArray(topup.preupgrade());
     };
 
     system func postupgrade() {
+        // Debug.print(debug_show("postupgrade", { directories = stableDirectories.size(); files = stableFiles.size() }));
+        let dirsBuffer : Buffer.Buffer<(Text, Directory)> = Buffer.Buffer(stableDirectories.size());
+        for ((dir, path) in stableDirectories.vals()) dirsBuffer.add((path, dir));
+        let dirsIter = dirsBuffer.vals();
+        // Debug.print(debug_show("postupgrade", { directories = dirsBuffer.size() }));
+        // // dirsBuffer.clear();
+        let filesBuffer : Buffer.Buffer<(Text, File)> = Buffer.Buffer(stableFiles.size());
+        for ((file, path) in stableFiles.vals()) filesBuffer.add((path, file));
+        let filesIter = filesBuffer.vals();
+        // Debug.print(debug_show("postupgrade", { files = filesBuffer.size() }));
+        // filesBuffer.clear();
+
+        // let dirsIter = stableJournal.0.vals();
+        // let filesIter = stableJournal.1.vals();
+        journal := Journal.fromIter(dirsIter, filesIter);
+
         directories := BiMap.fromIter<Directory, Text>(
             stableDirectories.vals(),
             BiHashMap.empty<Directory, Text>(0, equal, hash),

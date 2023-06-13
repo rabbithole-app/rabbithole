@@ -26,6 +26,7 @@ import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { ContextMenuService } from '@features/file-list/services';
 import { OverlayService, WINDOW } from '@core/services';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
+import { addFASvgIcons } from '@core/utils';
 
 interface State {
     data: JournalItem;
@@ -100,7 +101,9 @@ export class GridListItemComponent implements Highlightable {
         private cdr: ChangeDetectorRef,
         private state: RxState<State>,
         @Inject(WINDOW) private window: Window
-    ) {}
+    ) {
+        addFASvgIcons(['users'], 'far');
+    }
 
     getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);
 

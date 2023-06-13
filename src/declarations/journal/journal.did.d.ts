@@ -13,12 +13,7 @@ export interface Canister {
     monitoring: { stopped: null } | { running: null };
     lastChecked: Time;
     timerId: [] | [bigint];
-    canisterId: BucketId__1;
-}
-export interface CreatePath {
-    base: [] | [string];
-    path: string;
-    parentId: [] | [ID];
+    canisterId: BucketId;
 }
 export interface Directory {
     id: ID;
@@ -26,7 +21,7 @@ export interface Directory {
     createdAt: Time;
     path: [] | [string];
     color: [] | [DirectoryColor];
-    children: [] | [Array<JournalEntry>];
+    children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
 }
@@ -36,8 +31,15 @@ export interface DirectoryCreate {
     name: string;
     parentId: [] | [ID];
 }
-export type DirectoryCreateError = { illegalCharacters: null } | { alreadyExists: Directory__1 };
+export type DirectoryCreateError = { illegalCharacters: null } | { alreadyExists: Directory__1 } | { parentNotFound: null };
 export type DirectoryMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
+export interface DirectoryState {
+    id: [] | [ID];
+    files: Array<File>;
+    dirs: Array<Directory__1>;
+    breadcrumbs: Array<Directory__1>;
+}
+export type DirectoryStateError = { notFound: null };
 export interface DirectoryUpdatableFields {
     name: [] | [string];
     color: [] | [DirectoryColor];
@@ -49,7 +51,7 @@ export interface Directory__1 {
     createdAt: Time;
     path: [] | [string];
     color: [] | [DirectoryColor];
-    children: [] | [Array<JournalEntry>];
+    children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
 }
@@ -57,7 +59,7 @@ export interface File {
     id: ID;
     name: string;
     createdAt: Time;
-    bucketId: BucketId__1;
+    bucketId: BucketId;
     fileSize: bigint;
     updatedAt: Time;
     parentId: [] | [ID];
@@ -65,29 +67,23 @@ export interface File {
 export interface FileCreate {
     id: ID;
     name: string;
-    bucketId: BucketId__1;
+    bucketId: BucketId;
     fileSize: bigint;
     parentId: [] | [ID];
 }
-export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File };
+export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
 export type FileMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
 export interface File__1 {
     id: ID;
     name: string;
     createdAt: Time;
-    bucketId: BucketId__1;
+    bucketId: BucketId;
     fileSize: bigint;
     updatedAt: Time;
     parentId: [] | [ID];
 }
 export type ID = string;
 export type ID__1 = string;
-export interface Journal {
-    id: [] | [ID];
-    files: Array<File>;
-    dirs: Array<Directory__1>;
-    breadcrumbs: Array<Directory__1>;
-}
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
     addFile: ActorMethod<[FileCreate], Result_8>;
@@ -99,39 +95,29 @@ export interface JournalBucket {
             freezingThresholdInCycles: bigint;
         }
     >;
-    checkDirectoryName: ActorMethod<[DirectoryCreate], Result_7>;
+    checkDirname: ActorMethod<[DirectoryCreate], Result_7>;
     createDirectory: ActorMethod<[DirectoryCreate], Result_6>;
     createInvite: ActorMethod<[Time], Result_5>;
-    createPath: ActorMethod<[string, [] | [ID__1]], undefined>;
-    createPaths: ActorMethod<[Array<CreatePath>], Array<[string, ID__1]>>;
-    createPathsV2: ActorMethod<[Array<string>, [] | [ID__1]], Array<[string, ID__1]>>;
+    createPaths: ActorMethod<[Array<string>, Array<ID__1>, [] | [ID__1]], Array<[string, ID__1]>>;
     deleteDirectory: ActorMethod<[string], Result_4>;
     deleteFile: ActorMethod<[string], Result_4>;
-    deleteStorage: ActorMethod<[BucketId], undefined>;
+    deleteStorage: ActorMethod<[BucketId__1], undefined>;
     getCanisters: ActorMethod<[], Array<Canister>>;
+    getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getJournal: ActorMethod<[[] | [string]], Result_3>;
-    getStorage: ActorMethod<[bigint], [] | [BucketId]>;
-    isDirnameValid: ActorMethod<[string], boolean>;
-    listStorages: ActorMethod<[], Array<BucketId>>;
+    getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
+    listStorages: ActorMethod<[], Array<BucketId__1>>;
     moveDirectory: ActorMethod<[string, [] | [string]], Result_2>;
     moveFile: ActorMethod<[string, [] | [string]], Result_1>;
     showDirectoriesTree: ActorMethod<[[] | [ID__1]], string>;
-    startBucketMonitor: ActorMethod<[BucketId], undefined>;
-    stopBucketMonitor: ActorMethod<[BucketId], undefined>;
+    startBucketMonitor: ActorMethod<[BucketId__1], undefined>;
+    stopBucketMonitor: ActorMethod<[BucketId__1], undefined>;
     storageLoadWasm: ActorMethod<[Uint8Array | number[]], { total: bigint; chunks: bigint }>;
     storageResetWasm: ActorMethod<[], undefined>;
     updateDirectory: ActorMethod<[DirectoryAction, DirectoryUpdatableFields], Result>;
     upgradeStorages: ActorMethod<[], undefined>;
     withdraw: ActorMethod<[{ to: [] | [AccountIdentifier]; amount: Tokens }], TransferResult>;
 }
-export interface JournalEntry {
-    id: ID;
-    name: string;
-    createdAt: Time;
-    updatedAt: Time;
-    parentId: [] | [ID];
-}
-export type JournalError = { notFound: null };
 export type NotifyError =
     | {
           Refunded: { block_index: [] | [BlockIndex__1]; reason: string };
@@ -143,7 +129,7 @@ export type NotifyError =
 export type Result = { ok: Directory } | { err: { alreadyExists: null } | { notFound: null } };
 export type Result_1 = { ok: null } | { err: FileMoveError };
 export type Result_2 = { ok: null } | { err: DirectoryMoveError };
-export type Result_3 = { ok: Journal } | { err: JournalError };
+export type Result_3 = { ok: DirectoryState } | { err: DirectoryStateError };
 export type Result_4 = { ok: null } | { err: { notFound: null } };
 export type Result_5 =
     | { ok: null }

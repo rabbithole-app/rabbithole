@@ -5,10 +5,12 @@
                 <!--<mat-icon svgIcon="filetype:folder" [class]="'folder folder&#45;&#45;' + (loading || disabled ? 'gray' : folderColor)">
                     &lt;!&ndash;<ng-container [ngTemplateOutlet]="progressTemplate"></ng-container>&ndash;&gt;
                 </mat-icon>-->
-                <app-animated-folder [color]="loading || disabled ? 'gray' : folderColor" [active]="active ?? false"></app-animated-folder>
+                <app-animated-folder [color]="loading || disabled ? 'gray' : folderColor" [active]="active ?? false">
+                    <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:users"></mat-icon> -->
+                </app-animated-folder>
             </ng-container>
             <ng-container *ngSwitchDefault>
-                <mat-icon [svgIcon]="getIconByExt(data.name)"></mat-icon>
+                <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
             </ng-container>
         </ng-container>
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;loading" *ngIf="loading" @zoomOutOnLeave>

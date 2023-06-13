@@ -101,7 +101,8 @@
         "context": {
             "color": "Color: <strong>{{ color }}</strong>",
             "createFolder": "Create folder",
-            "uploadFiles": "Upload files"
+            "uploadFiles": "Upload files",
+            "uploadFolder": "Upload folder"
         },
         "actions": {
             "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",

@@ -2,18 +2,21 @@ import { inject, Injectable } from '@angular/core';
 import { ActorSubclass } from '@dfinity/agent';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
-import { defer, EMPTY, iif, Observable, of, throwError } from 'rxjs';
-import { first, catchError, switchMap, tap, map, finalize } from 'rxjs/operators';
-import { get, has, head, isEqual, isNil } from 'lodash';
+import { defer, EMPTY, from, iif, Observable, of, throwError } from 'rxjs';
+import { first, catchError, switchMap, tap, map, finalize, filter } from 'rxjs/operators';
+import { get, has, head, isEqual, isNil, isNull, pick } from 'lodash';
 import { saveAs } from 'file-saver';
 import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
+import { selectSlice } from '@rx-angular/state/selections';
 
 import { BucketsService, NotificationService } from '@core/services';
-import { CreatePath, Directory, DirectoryCreateError, DirectoryMoveError, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
-import { DirectoryCreate, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { Directory, DirectoryCreateError, DirectoryMoveError, DirectoryState, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
+import { DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
 import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
 import { FileListService } from './file-list.service';
+import { DirectoryFlatNode } from '../components/tree/tree.models';
 
 @Injectable()
 export class JournalService {
@@ -55,21 +58,33 @@ export class JournalService {
                     this.#fileListService.addTemponaryDir({ id: item.id, name, parent: args.parent });
                 }
 
-                return this.wrapActionHandler(actor => actor.createPathsV2([item.name], toNullable(args.parent?.id))).pipe(
+                return this.wrapActionHandler(actor =>
+                    actor.createPaths(
+                        [item.name],
+                        Array.from({ length: item.name.split('/').length }).map(_ => uuidv4()),
+                        toNullable(args.parent?.id)
+                    )
+                ).pipe(
                     tap({
                         next: value => subscriber.next(value.map(([path, id]) => ({ path, id }))),
-                        finalize: () => this.#fileListService.removeItem(item.id),
-                        complete: () => this.#fileListService.update()
+                        finalize: () => {
+                            this.#fileListService.removeItem(item.id);
+                            this.#fileListService.update();
+                        }
                     })
                 );
-            }
+            };
 
-            this.snackbarProgressService.add('createPath', args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' })), handler);
+            this.snackbarProgressService.add(
+                'createPath',
+                args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' })),
+                handler
+            );
             const subscription = this.snackbarProgressService.snackBarRef
                 ?.afterDismissed()
                 .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
                 .subscribe({
-                    error: (err) => subscriber.error(err),
+                    error: err => subscriber.error(err),
                     complete: () => subscriber.complete()
                 });
             return () => subscription?.unsubscribe();
@@ -169,6 +184,47 @@ export class JournalService {
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
             .subscribe(() => this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: false }));
+    }
+
+    get(id?: string): Observable<Partial<DirectoryFlatNode>[]> {
+        return this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(
+            filter(({ loaded }) => loaded),
+            first(),
+            switchMap(({ journal }) => {
+                if (isNull(journal)) return of([]);
+
+                return from(journal.getChildrenDirs(toNullable(id))).pipe(
+                    map(dirs =>
+                        dirs.map(toDirectoryExtended).map(dir => ({
+                            expandable: dir.children && dir.children[0].length > 0,
+                            directory: pick(dir, ['id', 'name', 'parentId', 'path'])
+                        }))
+                    ),
+                    catchError(err => of([]))
+                );
+            })
+        );
+    }
+
+    getBreadcrumbs(path?: string): Observable<DirectoryExtended[]> {
+        return this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(
+            filter(({ loaded }) => loaded),
+            first(),
+            switchMap(({ journal }) => {
+                if (isNull(journal)) return of([]);
+                return from(journal.getJournal(toNullable(path))).pipe(
+                    map(response => {
+                        if (has(response, 'err')) {
+                            return [];
+                        }
+
+                        const journal = get(response, 'ok') as unknown as DirectoryState;
+                        return journal.breadcrumbs.map(toDirectoryExtended);
+                    }),
+                    catchError(err => of([]))
+                );
+            })
+        );
     }
 
     /*

@@ -66,8 +66,8 @@ type Result_4 =
  };
 type Result_3 = 
  variant {
-   err: JournalError;
-   ok: Journal;
+   err: DirectoryStateError;
+   ok: DirectoryState;
  };
 type Result_2 = 
  variant {
@@ -101,15 +101,6 @@ type NotifyError =
              };
    TransactionTooOld: BlockIndex__1;
  };
-type JournalError = variant {notFound;};
-type JournalEntry = 
- record {
-   createdAt: Time;
-   id: ID;
-   name: text;
-   parentId: opt ID;
-   updatedAt: Time;
- };
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
@@ -120,31 +111,27 @@ type JournalBucket =
        id: principal;
        status: canister_status_response;
      });
-   checkDirectoryName: (DirectoryCreate) -> (Result_7) query;
+   checkDirname: (DirectoryCreate) -> (Result_7) query;
    createDirectory: (DirectoryCreate) -> (Result_6);
    createInvite: (Time) -> (Result_5);
-   createPath: (text, opt ID__1) -> ();
-   createPaths: (vec CreatePath) -> (vec record {
-                                           text;
-                                           ID__1;
-                                         });
-   createPathsV2: (vec text, opt ID__1) -> (vec record {
-                                                  text;
-                                                  ID__1;
-                                                });
+   createPaths: (vec text, vec ID__1, opt ID__1) ->
+    (vec record {
+           text;
+           ID__1;
+         });
    deleteDirectory: (text) -> (Result_4);
    deleteFile: (text) -> (Result_4);
-   deleteStorage: (BucketId) -> ();
+   deleteStorage: (BucketId__1) -> ();
    getCanisters: () -> (vec Canister) query;
+   getChildrenDirs: (opt ID__1) -> (vec Directory) query;
    getJournal: (opt text) -> (Result_3) query;
-   getStorage: (nat) -> (opt BucketId);
-   isDirnameValid: (text) -> (bool) query;
-   listStorages: () -> (vec BucketId) query;
+   getStorage: (nat) -> (opt BucketId__1);
+   listStorages: () -> (vec BucketId__1) query;
    moveDirectory: (text, opt text) -> (Result_2);
    moveFile: (text, opt text) -> (Result_1);
    showDirectoriesTree: (opt ID__1) -> (text) query;
-   startBucketMonitor: (BucketId) -> ();
-   stopBucketMonitor: (BucketId) -> ();
+   startBucketMonitor: (BucketId__1) -> ();
+   stopBucketMonitor: (BucketId__1) -> ();
    storageLoadWasm: (vec nat8) -> (record {
                                      chunks: nat;
                                      total: nat;
@@ -157,18 +144,11 @@ type JournalBucket =
                 to: opt AccountIdentifier;
               }) -> (TransferResult);
  };
-type Journal = 
- record {
-   breadcrumbs: vec Directory__1;
-   dirs: vec Directory__1;
-   files: vec File;
-   id: opt ID;
- };
 type ID__1 = text;
 type ID = text;
 type File__1 = 
  record {
-   bucketId: BucketId__1;
+   bucketId: BucketId;
    createdAt: Time;
    fileSize: nat;
    id: ID;
@@ -187,10 +167,11 @@ type FileCreateError =
  variant {
    alreadyExists: File;
    illegalCharacters;
+   parentNotFound;
  };
 type FileCreate = 
  record {
-   bucketId: BucketId__1;
+   bucketId: BucketId;
    fileSize: nat;
    id: ID;
    name: text;
@@ -198,7 +179,7 @@ type FileCreate =
  };
 type File = 
  record {
-   bucketId: BucketId__1;
+   bucketId: BucketId;
    createdAt: Time;
    fileSize: nat;
    id: ID;
@@ -208,7 +189,10 @@ type File =
  };
 type Directory__1 = 
  record {
-   children: opt vec JournalEntry;
+   children: opt record {
+                   vec Directory__1;
+                   vec File;
+                 };
    color: opt DirectoryColor;
    createdAt: Time;
    id: ID;
@@ -223,6 +207,14 @@ type DirectoryUpdatableFields =
    name: opt text;
    parentId: opt ID;
  };
+type DirectoryStateError = variant {notFound;};
+type DirectoryState = 
+ record {
+   breadcrumbs: vec Directory__1;
+   dirs: vec Directory__1;
+   files: vec File;
+   id: opt ID;
+ };
 type DirectoryMoveError = 
  variant {
    invalidParams;
@@ -234,6 +226,7 @@ type DirectoryCreateError =
  variant {
    alreadyExists: Directory__1;
    illegalCharacters;
+   parentNotFound;
  };
 type DirectoryCreate = 
  record {
@@ -257,7 +250,10 @@ type DirectoryAction =
  };
 type Directory = 
  record {
-   children: opt vec JournalEntry;
+   children: opt record {
+                   vec Directory__1;
+                   vec File;
+                 };
    color: opt DirectoryColor;
    createdAt: Time;
    id: ID;
@@ -266,15 +262,9 @@ type Directory =
    path: opt text;
    updatedAt: Time;
  };
-type CreatePath = 
- record {
-   base: opt text;
-   parentId: opt ID;
-   path: text;
- };
 type Canister = 
  record {
-   canisterId: BucketId__1;
+   canisterId: BucketId;
    error: opt text;
    lastChecked: Time;
    monitoring: variant {

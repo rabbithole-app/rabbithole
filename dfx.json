@@ -18,7 +18,8 @@
     },
     "journal": {
       "main": "src/backend/journal/main.mo",
-      "type": "motoko"
+      "type": "motoko",
+      "args": "--incremental-gc"
     },
     "storage": {
       "main": "src/backend/storage/main.mo",

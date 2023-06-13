@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { APP_INITIALIZER, enableProdMode, importProvidersFrom } from '@angular/core';
-import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
+import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -31,7 +31,7 @@ function preloadLanguage(settingsState: RxState<SettingsState>, transloco: Trans
 bootstrapApplication(AppComponent, {
     providers: [
         importProvidersFrom(BrowserAnimationsModule, MatSnackBarModule, TranslocoRootModule),
-        provideRouter(appRoutes, withPreloading(PreloadAllModules)),
+        provideRouter(appRoutes, withPreloading(PreloadAllModules), withComponentInputBinding()),
         provideHttpClient(/*withInterceptors([])*/),
         { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } },
         ProfileService,

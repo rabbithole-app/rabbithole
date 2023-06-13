@@ -7,8 +7,11 @@
     </div>
     <div class="folder-paper"></div>
     <div class="folder-img folder-img--cover">
-        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="65" viewBox="0 0 80 65">
-            <rect width="80" height="55" y="10" fill="fillColor" rx="5" />
-        </svg>
+        <div class="cover">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="65" viewBox="0 0 80 65">
+                <rect width="80" height="55" y="10" fill="fillColor" rx="5" />
+            </svg>
+            <ng-content select="[icon]"></ng-content>
+        </div>
     </div>
 </div>

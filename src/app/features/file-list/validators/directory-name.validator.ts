@@ -16,7 +16,7 @@ export class DirectoryNameValidator implements AsyncValidator {
             first(),
             filter(actor => !isNil(actor)),
             map(actor => actor as NonNullable<typeof actor>),
-            switchMap(actor => actor.checkDirectoryName({ name: control.value, parentId: toNullable(control.parent?.value.parentId) })),
+            switchMap(actor => actor.checkDirname({ name: control.value, parentId: toNullable(control.parent?.value.parentId) })),
             map(response => {
                 if (has(response, 'err')) {
                     const key = Object.keys(get(response, 'err') as unknown as DirectoryCreateError)[0];

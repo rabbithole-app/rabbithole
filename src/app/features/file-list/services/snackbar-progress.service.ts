@@ -80,12 +80,11 @@ export class SnackbarProgressService extends RxState<State> {
                     const isPreparing = done === 0 && failed === 0;
                     const actionKey = actions.length === 1 ? actions[0] : 'common';
                     const key = `fileList.notification.${actionKey}.${isPreparing ? 'prepare' : 'message'}`;
-                    return this.translocoService
-                        .translate(key, {
-                            total,
-                            current: done + failed,
-                            name
-                        });
+                    return this.translocoService.translate(key, {
+                        total,
+                        current: done + failed,
+                        name
+                    });
                 })
             )
         );
@@ -145,12 +144,11 @@ export class SnackbarProgressService extends RxState<State> {
 
         if (isSuccess) {
             this.snackBar.open(
-                this.translocoService
-                    .translate(`fileList.notification.${actionKey}.success`, {
-                        count: done,
-                        name,
-                        type
-                    }),
+                this.translocoService.translate(`fileList.notification.${actionKey}.success`, {
+                    count: done,
+                    name,
+                    type
+                }),
                 undefined,
                 { duration: 2000 }
             );

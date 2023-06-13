@@ -1,0 +1,38 @@
+@use 'mixins';
+
+.mat-tree-node {
+    column-gap: .5rem;
+    min-height: auto;
+    &.selected:not(.disabled) {
+        background-color: var(--sidebar-bg-color);
+        .node {
+            color: var(--primary-color);
+        }
+    }
+    &.disabled .node {
+        opacity: .5;
+    }
+}
+
+.arrow-icon {
+    @include mixins.custom-icon-button();
+}
+
+mat-spinner {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.node {
+    display: flex;
+    column-gap: .5rem;
+    align-items: center;
+    min-height: 32px;
+    flex-grow: 1;
+
+    .mat-icon {
+        font-size: 1.125rem;
+        height: 1.125rem;
+        width: 1.125rem;
+    }
+}

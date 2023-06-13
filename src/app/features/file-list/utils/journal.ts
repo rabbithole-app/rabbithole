@@ -11,12 +11,21 @@ export const fromNullableOption = <T extends {}, K>(value: [] | [T], defaultValu
 };
 
 export function toDirectoryExtended(directory: Directory): DirectoryExtended {
+    const children = fromNullable(directory.children);
+    let dirs: DirectoryExtended[] = [];
+    let files: FileInfoExtended[] = [];
+
+    if (children) {
+        dirs = children[0].map(toDirectoryExtended);
+        files = children[1].map(toFileExtended);
+    }
+
     return {
         ...directory,
         type: 'folder',
         parentId: fromNullable(directory.parentId),
         color: fromNullableOption<JournalDirectoryColor, DirectoryColor>(directory.color, 'blue'),
-        children: fromNullable(directory.children),
+        children: children ? [dirs, files] : undefined,
         path: fromNullable(directory.path)
     } as DirectoryExtended;
 }

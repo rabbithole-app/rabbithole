@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Renderer2, Input, HostBinding, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Renderer2, Input, HostBinding, OnChanges, SimpleChanges, inject } from '@angular/core';
 
 @Component({
     selector: 'app-animated-folder',
@@ -10,16 +10,16 @@ import { Component, ChangeDetectionStrategy, ElementRef, Renderer2, Input, HostB
 export class AnimatedFolderComponent implements OnChanges {
     @Input() color: string = 'blue';
     @HostBinding('class.active') @Input() active: boolean = false;
-
-    constructor(private element: ElementRef, private renderer: Renderer2) {}
+    #renderer = inject(Renderer2);
+    #element = inject(ElementRef);
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['color']) {
             if (!changes['color'].isFirstChange()) {
-                this.renderer.removeClass(this.element.nativeElement, `color-${changes['color'].previousValue}`);
+                this.#renderer.removeClass(this.#element.nativeElement, `color-${changes['color'].previousValue}`);
             }
 
-            this.renderer.addClass(this.element.nativeElement, `color-${changes['color'].currentValue}`);
+            this.#renderer.addClass(this.#element.nativeElement, `color-${changes['color'].currentValue}`);
         }
     }
 }

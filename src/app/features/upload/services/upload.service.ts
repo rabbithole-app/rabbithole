@@ -1,7 +1,23 @@
 import { inject, Injectable } from '@angular/core';
 import { RxState } from '@rx-angular/state';
 import { from, mergeMap, Observable, of, onErrorResumeNext, Subject, merge, timer, forkJoin } from 'rxjs';
-import { filter, first, concatWith, connect, debounceTime, distinctUntilChanged, switchMap, exhaustMap, map, shareReplay, skip, takeUntil, tap, withLatestFrom, mergeAll } from 'rxjs/operators';
+import {
+    filter,
+    first,
+    concatWith,
+    connect,
+    debounceTime,
+    distinctUntilChanged,
+    switchMap,
+    exhaustMap,
+    map,
+    shareReplay,
+    skip,
+    takeUntil,
+    tap,
+    withLatestFrom,
+    mergeAll
+} from 'rxjs/operators';
 import { defaults, entries, isEqual, isPlainObject, isUndefined, orderBy, uniqBy, values, remove } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { arrayBufferToUint8Array } from '@dfinity/utils';
@@ -406,9 +422,9 @@ export class UploadService extends RxState<State> {
         this.add(files);
     }
 
-    async #listFilesAndDirsRecursively(dirHandle: FileSystemDirectoryHandle, cwd?: string): Promise<[{ file: File, path: string }[], string[]]> {
+    async #listFilesAndDirsRecursively(dirHandle: FileSystemDirectoryHandle, cwd?: string): Promise<[{ file: File; path: string }[], string[]]> {
         let path = cwd ? `${cwd}/${dirHandle.name}` : dirHandle.name;
-        const files: Array<{ file: File, path: string }> = [];
+        const files: Array<{ file: File; path: string }> = [];
         const directories: string[] = [path];
         for await (const [name, handle] of dirHandle.entries()) {
             if (this.#ignoreFileList.includes(name)) continue;
@@ -429,26 +445,31 @@ export class UploadService extends RxState<State> {
         const [files, directories] = await this.#listFilesAndDirsRecursively(dirHandle);
 
         const worker = this.get('worker');
-        this.#journalService.createPaths({ paths: this.#getUniquePaths(directories), parent }).pipe(
-            mergeAll(),
-            mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
-            mergeMap(({ file, parentId }) => from(file.arrayBuffer()).pipe(
-                map(buffer => ({
-                    id: uuidv4(),
-                    name: file.name,
-                    fileSize: file.size,
-                    contentType: file.type,
-                    parentId,
-                    data: buffer
-                }))
-            ))
-        ).subscribe(item => {
-            this.files.next(item);
-            if (worker) {
-                const uploadState = this.get('progress', item.id);
-                worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
-            }
-        });
+        this.#journalService
+            .createPaths({ paths: this.#getUniquePaths(directories), parent })
+            .pipe(
+                mergeAll(),
+                mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
+                mergeMap(({ file, parentId }) =>
+                    from(file.arrayBuffer()).pipe(
+                        map(buffer => ({
+                            id: uuidv4(),
+                            name: file.name,
+                            fileSize: file.size,
+                            contentType: file.type,
+                            parentId,
+                            data: buffer
+                        }))
+                    )
+                )
+            )
+            .subscribe(item => {
+                this.files.next(item);
+                if (worker) {
+                    const uploadState = this.get('progress', item.id);
+                    worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
+                }
+            });
     }
 
     #getUniquePaths(dirs: string[]): string[] {

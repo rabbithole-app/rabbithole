@@ -63,12 +63,26 @@
         border-radius: var(--folder-border-radius);
         background-color: #fff;
     }
+
+    .cover {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding-top: 10px;
+        ::ng-deep mat-icon {
+            z-index: 1;
+        }
+    }
 }
 
 @each $modifier, $colors in variables.$folder-colors {
     .folder--#{$modifier} {
         .folder-img--cover {
             color: list.nth($colors, 1);
+            .cover ::ng-deep .mat-icon {
+                color: list.nth($colors, 2);
+            }
         }
         .folder-img--back {
             color: list.nth($colors, 2);

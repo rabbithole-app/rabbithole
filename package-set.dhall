@@ -10,12 +10,12 @@ let additions =
     , repo = "https://github.com/dfinity/motoko-base"
     , version = "moc-0.9.1"
     , dependencies = [] : List Text
-    },{-
-     { name = "stableBTree"
+    },
+    { name = "stableBTree"
     , repo = "https://github.com/sardariuss/MotokoStableBTree"
     , version = "main"
     , dependencies = ["base", "matchers"]
-    },-}
+    },
     { name = "hashmap"
     , repo = "https://github.com/ZhenyaUsenko/motoko-hash-map"
     , version = "master"
