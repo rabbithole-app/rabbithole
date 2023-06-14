@@ -127,12 +127,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Создание дерева директорий
-    
-    // public shared ({ caller }) func createPaths(paths : [CreatePath]) : async [(Text, ID)] {
-    //     assert validateCaller(caller);
-    //     await journal.createPaths(caller, paths);
-    // };
-
     public shared ({ caller }) func createPaths(paths : [Text], ids : [ID], parentId : ?ID) : async [(Text, ID)] {
         assert validateCaller(caller);
         await journal.createPaths(paths, ids, parentId);
@@ -150,7 +144,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     public shared ({ caller }) func addFile(file : FileCreate) : async Result.Result<File, FileCreateError> {
         assert not Principal.isAnonymous(caller);
-        // assert Principal.equal(caller, owner);
         assert isStorage(caller);
         await journal.putFile(file);
     };
@@ -186,20 +179,15 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     system func postupgrade() {
-        // Debug.print(debug_show("postupgrade", { directories = stableDirectories.size(); files = stableFiles.size() }));
-        let dirsBuffer : Buffer.Buffer<(Text, Directory)> = Buffer.Buffer(stableDirectories.size());
-        for ((dir, path) in stableDirectories.vals()) dirsBuffer.add((path, dir));
-        let dirsIter = dirsBuffer.vals();
-        // Debug.print(debug_show("postupgrade", { directories = dirsBuffer.size() }));
-        // // dirsBuffer.clear();
-        let filesBuffer : Buffer.Buffer<(Text, File)> = Buffer.Buffer(stableFiles.size());
-        for ((file, path) in stableFiles.vals()) filesBuffer.add((path, file));
-        let filesIter = filesBuffer.vals();
-        // Debug.print(debug_show("postupgrade", { files = filesBuffer.size() }));
-        // filesBuffer.clear();
+        // let dirsBuffer : Buffer.Buffer<(Text, Directory)> = Buffer.Buffer(stableDirectories.size());
+        // for ((dir, path) in stableDirectories.vals()) dirsBuffer.add((path, dir));
+        // let dirsIter = dirsBuffer.vals();
+        // let filesBuffer : Buffer.Buffer<(Text, File)> = Buffer.Buffer(stableFiles.size());
+        // for ((file, path) in stableFiles.vals()) filesBuffer.add((path, file));
+        // let filesIter = filesBuffer.vals();
 
-        // let dirsIter = stableJournal.0.vals();
-        // let filesIter = stableJournal.1.vals();
+        let dirsIter = stableJournal.0.vals();
+        let filesIter = stableJournal.1.vals();
         journal := Journal.fromIter(dirsIter, filesIter);
 
         directories := BiMap.fromIter<Directory, Text>(
