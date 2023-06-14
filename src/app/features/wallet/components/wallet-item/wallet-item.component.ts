@@ -21,10 +21,10 @@ import { addFASvgIcons } from '@core/utils';
 })
 export class WalletItemComponent {
     @Input() tokenAmount: TokenAmount = TokenAmount.fromE8s({ amount: 0n, token: ICPToken });
-    @Input() loading: boolean = false;
+    @Input() loading = false;
     @HostBinding('class.actions')
     @Input()
-    actionsEnabled: boolean = true;
+    actionsEnabled = true;
     @Output() send: EventEmitter<void> = new EventEmitter<void>();
     @Output() refresh: EventEmitter<void> = new EventEmitter<void>();
     private matIconRegistry = inject(MatIconRegistry);

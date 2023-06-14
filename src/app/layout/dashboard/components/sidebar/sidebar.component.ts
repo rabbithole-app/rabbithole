@@ -72,7 +72,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.sidebarService.animationStart(event);
     }
 
-    captureDoneEvent(event: AnimationEvent) {
-        this.sidebarService.animationDone(event);
+    captureDoneEvent() {
+        this.sidebarService.animationDone();
     }
 }

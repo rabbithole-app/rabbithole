@@ -198,7 +198,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         const chunkedGridItems = this.state.get().chunkedGridItems;
 
         if (isNumber(activeItemIndex) && activeItemIndex > -1) {
-            let id = this.items[activeItemIndex].id;
+            const id = this.items[activeItemIndex].id;
             row = findIndex(chunkedGridItems, indexes => indexes.includes(id));
             column = chunkedGridItems[row].indexOf(id);
         }
@@ -281,7 +281,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
                 ),
                 takeUntilDestroyed()
             )
-            .subscribe(outside => {
+            .subscribe(() => {
                 this.selected.clear();
                 this.cdr.markForCheck();
             });
@@ -471,7 +471,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     handleDrop(event: DndDropEvent, item: DirectoryExtended) {
         this.state.set({ activeDirectory: null });
         this.dropExited.next();
-        let parentPath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
+        const parentPath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
         // JSON.parse(event.event.dataTransfer?.getData('text/plain') ?? '[]');
         const selected = this.#fileListService.selected();
         this.journalService.move(selected, parentPath);

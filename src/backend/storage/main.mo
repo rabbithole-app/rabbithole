@@ -40,35 +40,35 @@ import SHA256 "mo:mrr/Sha256";
 import Hex "mo:encoding/Hex";
 
 shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
-	type ID = Types.ID;
-	type Asset = StorageTypes.Asset;
-	type AssetKey = StorageTypes.AssetKey;
+    type ID = Types.ID;
+    type Asset = StorageTypes.Asset;
+    type AssetKey = StorageTypes.AssetKey;
     type AssetEncoding = StorageTypes.AssetEncoding;
-	type Chunk = StorageTypes.Chunk;
-	type Batch = StorageTypes.Batch;
-	type CommitBatch = StorageTypes.CommitBatch;
-	type UploadChunk = StorageTypes.UploadChunk;
-	type InitUpload = StorageTypes.InitUpload;
-	type CommitUploadError = StorageTypes.CommitUploadError;
-	type HttpRequest = HTTP.HttpRequest;
+    type Chunk = StorageTypes.Chunk;
+    type Batch = StorageTypes.Batch;
+    type CommitBatch = StorageTypes.CommitBatch;
+    type UploadChunk = StorageTypes.UploadChunk;
+    type InitUpload = StorageTypes.InitUpload;
+    type CommitUploadError = StorageTypes.CommitUploadError;
+    type HttpRequest = HTTP.HttpRequest;
     type HttpResponse = HTTP.HttpResponse;
     type HeaderField = HTTP.HeaderField;
     type StreamingCallbackHttpResponse = HTTP.StreamingCallbackHttpResponse;
     type StreamingCallbackToken = HTTP.StreamingCallbackToken;
     type StreamingStrategy = HTTP.StreamingStrategy;
 
-	let VERSION : Nat = 4;
-	let BATCH_EXPIRY_NANOS = 300_000_000_000; // 5 minutes
-	// let CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS : Nat = 3600; // 1 hour
-	
-	var nextBatchID : Nat = 0;
-	var nextChunkID : Nat = 0;
+    let VERSION : Nat = 4;
+    let BATCH_EXPIRY_NANOS = 300_000_000_000; // 5 minutes
+    // let CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS : Nat = 3600; // 1 hour
 
-	let { nhash; thash } = Map;
+    var nextBatchID : Nat = 0;
+    var nextChunkID : Nat = 0;
+
+    let { nhash; thash } = Map;
     stable var assets : Trie.Trie<ID, Asset> = Trie.empty();
-	var batches : Map.Map<Nat, Batch> = Map.new<Nat, Batch>(nhash);
+    var batches : Map.Map<Nat, Batch> = Map.new<Nat, Batch>(nhash);
     var chunks : Map.Map<Nat, Chunk> = Map.new<Nat, Chunk>(nhash);
-	let journal : JournalTypes.Self = actor (Principal.toText(installer));
+    let journal : JournalTypes.Self = actor (Principal.toText(installer));
     // let hashesQueue : Queue.Queue<{ chunkId : Nat }> = Queue.Queue<{}>();
 
     stable let certStore : CertTree.Store = CertTree.newStore();
@@ -78,8 +78,8 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     public query func getCertTree() : async MerkleTree.RawTree {
         MerkleTree.structure(certStore.tree);
     };
-	
-	public query func version() : async Nat { VERSION };
+
+    public query func version() : async Nat { VERSION };
 
     /**
      * HTTP
@@ -96,13 +96,13 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
                 };
             };
 
-            let #ok(asset)  = getAssetByURL(url) else return {
+            let #ok(asset) = getAssetByURL(url) else return {
                 body = Text.encodeUtf8("Permission denied. Could not perform this operation.");
                 headers = getHeaders(null);
                 status_code = 403;
                 streaming_strategy = null;
             };
-            
+
             {
                 body = asset.encoding.contentChunks[0];
                 headers = getHeaders(?asset);
@@ -155,7 +155,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
                     http_request_streaming_callback : query StreamingCallbackToken -> async StreamingCallbackHttpResponse;
                 };
 
-                ?#Callback({
+                ? #Callback({
                     token = streamingToken;
                     callback = canister.http_request_streaming_callback;
                 });
@@ -178,7 +178,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         streamingToken;
     };
 
-	/**
+    /**
      * Upload
      */
 
@@ -196,14 +196,14 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         //     };
         //     false;
         // };
-		// if (exists) {
-		// 	throw Error.reject("Asset already exists.");
-		// };
+        // if (exists) {
+        //     throw Error.reject("Asset already exists.");
+        // };
 
         nextBatchID := Nat.add(nextBatchID, 1);
         let now : Time.Time = Time.now();
-		clearExpiredBatches();
-		ignore Map.put(batches, nhash, nextBatchID, { key; expiresAt = now + BATCH_EXPIRY_NANOS });
+        clearExpiredBatches();
+        ignore Map.put(batches, nhash, nextBatchID, { key; expiresAt = now + BATCH_EXPIRY_NANOS });
         { batchId = nextBatchID };
     };
 
@@ -216,7 +216,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         ignore Map.put(batches, nhash, id, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
     };
 
-	public shared ({ caller }) func uploadChunk(chunk : Chunk) : async UploadChunk {
+    public shared ({ caller }) func uploadChunk(chunk : Chunk) : async UploadChunk {
         if (Principal.notEqual(caller, owner)) {
             throw Error.reject("User does not have the permission to a upload any chunks of content.");
         };
@@ -228,13 +228,13 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         { chunkId = nextChunkID };
     };
 
-	public shared ({ caller }) func commitUpload({ batchId; chunkIds; headers } : CommitBatch, notifyJournal : Bool) : async Result.Result<(), CommitUploadError> {
+    public shared ({ caller }) func commitUpload({ batchId; chunkIds; headers } : CommitBatch, notifyJournal : Bool) : async Result.Result<(), CommitUploadError> {
         if (Principal.notEqual(caller, owner)) {
             throw Error.reject("User does not have the permission to commit an upload.");
         };
 
         let ?batch = Map.get(batches, nhash, batchId) else return #err(#batchNotFound);
-		// Test batch is not expired
+        // Test batch is not expired
         let now : Time.Time = Time.now();
         if (now > batch.expiresAt) {
             clearExpiredBatches();
@@ -251,7 +251,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
             contentChunks.add(chunk.content);
         };
-        
+
         if (contentChunks.size() <= 0) {
             return #err(#empty);
         };
@@ -260,9 +260,9 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         for (chunk in contentChunks.vals()) {
             totalLength += chunk.size();
         };
-        
+
         let id : ID = await Utils.generateId();
-		let asset : Asset = {
+        let asset : Asset = {
             id;
             key = batch.key;
             headers;
@@ -283,7 +283,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             };
         };
 
-        switch(batch.key.sha256) {
+        switch (batch.key.sha256) {
             case (?v) {
                 // insert into CertTree
                 ct.put(["http_assets", Text.encodeUtf8("/" # id)], Blob.fromArray(v));
@@ -296,25 +296,33 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         #ok();
     };
 
-	func clearExpiredBatches() : () {
-		let now : Time.Time = Time.now();
-		batches := Map.mapFilter<Nat, Batch, Batch>(batches, nhash, func(batchId : Nat, batch : Batch) : ?Batch {
-			if (now > batch.expiresAt) null else ?batch;
-		});
-        chunks := Map.mapFilter<Nat, Chunk, Chunk>(chunks, nhash, func(chunkId : Nat, chunk : Chunk) : ?Chunk {
-            if (Map.has(batches, nhash, chunk.batchId)) ?chunk else null;
-        });
-	};
+    func clearExpiredBatches() : () {
+        let now : Time.Time = Time.now();
+        batches := Map.mapFilter<Nat, Batch, Batch>(
+            batches,
+            nhash,
+            func(batchId : Nat, batch : Batch) : ?Batch {
+                if (now > batch.expiresAt) null else ?batch;
+            }
+        );
+        chunks := Map.mapFilter<Nat, Chunk, Chunk>(
+            chunks,
+            nhash,
+            func(chunkId : Nat, chunk : Chunk) : ?Chunk {
+                if (Map.has(batches, nhash, chunk.batchId)) ?chunk else null;
+            }
+        );
+    };
 
-	func clearBatch({ batchId; chunkIds } : { batchId : Nat; chunkIds : [Nat] }) : () {
+    func clearBatch({ batchId; chunkIds } : { batchId : Nat; chunkIds : [Nat] }) : () {
         for (chunkId in chunkIds.vals()) {
             Map.delete(chunks, nhash, chunkId);
         };
 
         Map.delete(batches, nhash, batchId);
-	};
+    };
 
-	public shared ({ caller }) func getUsedMemorySize() : async Nat {
+    public shared ({ caller }) func getUsedMemorySize() : async Nat {
         if (Principal.notEqual(caller, installer) and not Utils.isAdmin(caller)) {
             throw Error.reject("User does not have the permission to get the size of stable memory.");
         };
@@ -332,19 +340,19 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         Nat64.toNat(size) + reservedMemory;
     };
 
-	// func startBatchMonitor() : () {
-	// 	switch(batchTimerId) {
-	// 		case null batchTimerId := ?recurringTimer(#seconds CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS, clearExpiredBatches);
-	// 		case (?id) {};
-	// 	};
-	// };
+    // func startBatchMonitor() : () {
+    //     switch(batchTimerId) {
+    //         case null batchTimerId := ?recurringTimer(#seconds CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS, clearExpiredBatches);
+    //         case (?id) {};
+    //     };
+    // };
 
-	// func stopBatchMonitor() : () {
-	// 	switch(batchTimerId) {
-	// 		case null {};
-	// 		case (?id) cancelTimer(id);
-	// 	};
-	// };
+    // func stopBatchMonitor() : () {
+    //     switch(batchTimerId) {
+    //         case null {};
+    //         case (?id) cancelTimer(id);
+    //     };
+    // };
 
     public shared ({ caller }) func delete(id : ID) : async () {
         if (Principal.notEqual(caller, installer)) {
@@ -370,16 +378,14 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         ("Referrer-Policy", "same-origin")
     ];
 
-    let defaultHeaders : [HeaderField] = [
-        ("Access-Control-Allow-Origin", "*")
-    ];
+    let defaultHeaders : [HeaderField] = [("Access-Control-Allow-Origin", "*")];
 
     func getHeaders(asset : ?Asset) : [HeaderField] {
         let buffer = Buffer.fromArray<HeaderField>(securityHeaders);
         let defaultHeadersBuffer = Buffer.fromArray<HeaderField>(defaultHeaders);
         buffer.append(defaultHeadersBuffer);
         defaultHeadersBuffer.clear();
-        switch(asset) {
+        switch (asset) {
             case null buffer.add(certificationHeader("/"));
             case (?{ id; headers; key }) {
                 let headersBuffer = Buffer.fromArray<HeaderField>(headers);
@@ -415,8 +421,8 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
                 // because it is called from a query (and it would do the wrong thing) :-(
                 //
                 // So just return erronous data instead
-                "getCertificate failed. Call this as a query call!" : Blob
-            }
+                "getCertificate failed. Call this as a query call!" : Blob;
+            };
         };
         ("ic-certificate", "certificate=:" # Utils.base64(cert) # ":, " # "tree=:" # Utils.base64(encoded) # ":");
     };
@@ -449,5 +455,5 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
     system func preupgrade() {
         csm.pruneAll();
-    }
-}
+    };
+};

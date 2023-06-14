@@ -10,7 +10,7 @@ import { RxState } from '@rx-angular/state';
 import { firstValueFrom } from 'rxjs';
 
 import { SettingsState, SETTINGS_RX_STATE } from '@core/stores';
-import { LocalStorageService, NotificationService, ProfileService, WINDOW_PROVIDERS } from '@core/services';
+import { LocalStorageService, NotificationService, ProfileService } from '@core/services';
 import { TranslocoRootModule } from './app/transloco-root.module';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
@@ -37,7 +37,6 @@ bootstrapApplication(AppComponent, {
         ProfileService,
         LocalStorageService,
         NotificationService,
-        WINDOW_PROVIDERS,
         {
             provide: APP_INITIALIZER,
             multi: true,

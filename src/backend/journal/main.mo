@@ -69,6 +69,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type Tokens = LedgerTypes.Tokens;
     type InviteCreate = Types.InviteCreate;
     type CreatePath = JournalTypes.CreatePath;
+    type NotFoundError = JournalTypes.NotFoundError;
 
     let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
     let CYCLE_SHARE = 500_000_000_000;
@@ -102,7 +103,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await journal.createDir(directory);
     };
 
-    public query ({ caller }) func checkDirname(dir : DirectoryCreate): async Result.Result<(), DirectoryCreateError> {
+    public query ({ caller }) func checkDirname(dir : DirectoryCreate) : async Result.Result<(), DirectoryCreateError> {
         assert validateCaller(caller);
         journal.checkDirname(dir);
     };
@@ -120,7 +121,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     };
 
     // Удаление директории со всеми дочерними поддиректориями и файлами
-    public shared ({ caller }) func deleteDirectory(sourcePath : Text) : async Result.Result<(), { #notFound }> {
+    public shared ({ caller }) func deleteDirectory(sourcePath : Text) : async Result.Result<(), NotFoundError> {
         assert validateCaller(caller);
         let preparedPath : Text = Text.trim(sourcePath, #char '/');
         await journal.deleteDir(preparedPath);
@@ -148,7 +149,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await journal.putFile(file);
     };
 
-    public shared ({ caller }) func deleteFile(sourcePath : Text) : async Result.Result<(), { #notFound }> {
+    public shared ({ caller }) func deleteFile(sourcePath : Text) : async Result.Result<(), NotFoundError> {
         assert validateCaller(caller);
         let preparedPath : Text = Text.trimStart(sourcePath, #text "/");
         await journal.deleteFile(preparedPath);
@@ -607,7 +608,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             Debug.print("[manager] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
             if (availableCycles <= amount) {
                 Debug.print("[manager] deposit " # debug_show ({ canisterId = self }));
-                let amount : Tokens = switch(await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
+                let amount : Tokens = switch (await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
                     case (#ok amount) amount;
                     case (#err balance) {
                         { e8s = Nat64.max(Nat64.fromNat(0), Nat64.sub(balance.e8s, FEE)) };
@@ -672,14 +673,10 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             #ok({ e8s });
         } else {
             #err balance;
-        }
+        };
     };
 
-    public shared ({ caller }) func createInvite(expiredAt : Time.Time) : async Result.Result<(), {
-        #transfer : LedgerTypes.TransferError;
-        #notify : CMCTypes.NotifyError;
-        #insufficientFunds : { balance : Tokens }
-    }> {
+    public shared ({ caller }) func createInvite(expiredAt : Time.Time) : async Result.Result<(), { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError; #insufficientFunds : { balance : Tokens } }> {
         assert validateCaller(caller);
         let self = Principal.fromActor(this);
         // let amount : Tokens = switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
@@ -704,9 +701,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             ),
             Int64.fromNat64(Nat64.fromNat(MANAGER_CYCLE_THRESHOLD))
         );
-        Debug.print("[invite] before create " # debug_show({ canisterId = self; balance; freezingThresholdInCycles }));
+        Debug.print("[invite] before create " # debug_show ({ canisterId = self; balance; freezingThresholdInCycles }));
         if (burnICP) {
-            cyclesShare := switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
+            cyclesShare := switch (await cyclesToE8s(INVITE_CYCLE_SHARE)) {
                 case (#ok amount) {
                     let result = await depositCycles(amount);
                     switch (result) {
@@ -720,7 +717,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
             };
         };
 
-        Debug.print("[invite] create " # debug_show({ canisterId = self; cycles = cyclesShare; }));
+        Debug.print("[invite] create " # debug_show ({ canisterId = self; cycles = cyclesShare }));
         let manager : actor { createInvite : shared (value : InviteCreate) -> async () } = actor (Principal.toText(installer));
         Cycles.add(cyclesShare);
         await manager.createInvite({

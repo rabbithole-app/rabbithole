@@ -18,7 +18,7 @@ export class ProgressMessageSnackbarComponent {
     readonly #snackBarRef = inject(MatSnackBarRef);
     readonly data$ = inject<Observable<string>>(MAT_SNACK_BAR_DATA);
 
-    cancel(event: MouseEvent) {
+    cancel() {
         this.#snackBarRef.dismissWithAction();
     }
 }

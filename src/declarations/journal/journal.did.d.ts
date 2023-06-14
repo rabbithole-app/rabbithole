@@ -118,6 +118,7 @@ export interface JournalBucket {
     upgradeStorages: ActorMethod<[], undefined>;
     withdraw: ActorMethod<[{ to: [] | [AccountIdentifier]; amount: Tokens }], TransferResult>;
 }
+export type NotFoundError = { notFound: null };
 export type NotifyError =
     | {
           Refunded: { block_index: [] | [BlockIndex__1]; reason: string };
@@ -130,7 +131,7 @@ export type Result = { ok: Directory } | { err: { alreadyExists: null } | { notF
 export type Result_1 = { ok: null } | { err: FileMoveError };
 export type Result_2 = { ok: null } | { err: DirectoryMoveError };
 export type Result_3 = { ok: DirectoryState } | { err: DirectoryStateError };
-export type Result_4 = { ok: null } | { err: { notFound: null } };
+export type Result_4 = { ok: null } | { err: NotFoundError };
 export type Result_5 =
     | { ok: null }
     | {

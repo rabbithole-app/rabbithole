@@ -104,4 +104,4 @@ export type Time = bigint;
 export interface UploadChunk {
     chunkId: bigint;
 }
-export interface _SERVICE extends Storage {}
+export type _SERVICE = Storage;

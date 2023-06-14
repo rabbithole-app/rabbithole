@@ -1,5 +1,5 @@
 import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, OnInit, TemplateRef, Signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, TemplateRef, Signal, computed } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -58,7 +58,7 @@ interface State {
     providers: [RxState, SnackbarProgressService, ContextMenuService, JournalService],
     standalone: true
 })
-export class FileListComponent implements OnInit {
+export class FileListComponent {
     @ViewChild(EmptyComponent, { read: ElementRef }) set emptyRef(value: ElementRef) {
         this.state.set({ emptyRef: value });
     }
@@ -87,7 +87,7 @@ export class FileListComponent implements OnInit {
         return this.state.get('itemsMenuTrigger');
     }
     readonly folderColors: string[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
-    folderColor: string = 'blue';
+    folderColor = 'blue';
     nextColor!: string;
     route = inject(ActivatedRoute);
     @ViewChild('contextItemsTemplate', { read: TemplateRef }) set contextItemsTemplate(value: TemplateRef<HTMLElement>) {
@@ -104,11 +104,7 @@ export class FileListComponent implements OnInit {
             .subscribe(data => this.fileListService.setData(data));
     }
 
-    async ngOnInit() {
-        // const path: string = await firstValueFrom(this.route.url.pipe(map(segments => segments.map(({ path }) => path).join('/'))));
-        // this.fileListService.getJournal(path);
-    }
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async openCreateDirectoryDialog(event: MouseEvent) {
         const parent = this.fileListService.parent();
 

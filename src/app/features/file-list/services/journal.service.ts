@@ -11,7 +11,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { selectSlice } from '@rx-angular/state/selections';
 
 import { BucketsService, NotificationService } from '@core/services';
-import { Directory, DirectoryCreateError, DirectoryMoveError, DirectoryState, _SERVICE as JournalBucketActor } from '@declarations/journal/journal.did';
+import {
+    Directory,
+    DirectoryCreateError,
+    DirectoryMoveError,
+    DirectoryState,
+    _SERVICE as JournalBucketActor,
+    NotFoundError
+} from '@declarations/journal/journal.did';
 import { DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
 import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
@@ -61,7 +68,7 @@ export class JournalService {
                 return this.wrapActionHandler(actor =>
                     actor.createPaths(
                         [item.name],
-                        Array.from({ length: item.name.split('/').length }).map(_ => uuidv4()),
+                        Array.from({ length: item.name.split('/').length }).map(() => uuidv4()),
                         toNullable(args.parent?.id)
                     )
                 ).pipe(
@@ -75,9 +82,9 @@ export class JournalService {
                 );
             };
 
-            this.snackbarProgressService.add(
+            this.snackbarProgressService.add<Task>(
                 'createPath',
-                args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' })),
+                args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' } as Task)),
                 handler
             );
             const subscription = this.snackbarProgressService.snackBarRef
@@ -158,8 +165,9 @@ export class JournalService {
             }).pipe(
                 map(result => {
                     if (has(result, 'err')) {
-                        // TODO: перевод ошибок
-                        throw Error(Object.keys(get(result, 'err') as unknown as Record<string, any>)[0]);
+                        const key = Object.keys(get(result, 'err') as unknown as NotFoundError)[0];
+                        const type = item.type === 'folder' ? 'directory' : 'file';
+                        throw Error(this.translocoService.translate(`fileList.${type}.remove.messages.err.${key}`));
                     }
 
                     return true;
@@ -200,7 +208,7 @@ export class JournalService {
                             directory: pick(dir, ['id', 'name', 'parentId', 'path'])
                         }))
                     ),
-                    catchError(err => of([]))
+                    catchError(() => of([]))
                 );
             })
         );
@@ -221,7 +229,7 @@ export class JournalService {
                         const journal = get(response, 'ok') as unknown as DirectoryState;
                         return journal.breadcrumbs.map(toDirectoryExtended);
                     }),
-                    catchError(err => of([]))
+                    catchError(() => of([]))
                 );
             })
         );

@@ -11,7 +11,9 @@ export function mapLedgerError<T>(): MonoTypeOperatorFunction<T> {
                 const [key, value] = Object.entries(get(result, 'err.notify') as NotifyError)[0];
                 throw Error(translate(`common.cmc.notify.errors.${key}`, { value }));
             } else if (has(result, 'err.transfer')) {
-                let [key, value] = Object.entries(get(result, 'err.transfer') as TransferError)[0];
+                const entry = Object.entries(get(result, 'err.transfer') as TransferError)[0];
+                const key = entry[0];
+                let value = entry[1];
                 if (key === 'InsufficientFunds') {
                     value = `${formatICP(value.balance.e8s)} ICP`;
                 }

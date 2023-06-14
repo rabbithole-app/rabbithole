@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import { TemplateRef, Type } from '@angular/core';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { AnimationBuilder, AnimationFactory, AnimationPlayer, useAnimation } from '@angular/animations';

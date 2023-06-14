@@ -4,6 +4,5 @@ export * from './crypto.service';
 export * from './local-storage.service';
 export * from './notification.service';
 export * from './overlay.service';
-export * from './window.service';
 export * from './profile.service';
 export * from './buckets.service';

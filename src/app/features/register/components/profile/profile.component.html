@@ -18,7 +18,13 @@
         </mat-form-field>
     </form>
     <ng-container [ngSwitch]="userStatus$ | push">
-        <button class="action-button" *ngSwitchCase="userStatus.Unregistered" mat-raised-button color="primary" (click)="register()" [disabled]="disabled$ | push">
+        <button
+            class="action-button"
+            *ngSwitchCase="userStatus.Unregistered"
+            mat-raised-button
+            color="primary"
+            (click)="register()"
+            [disabled]="disabled$ | push">
             <mat-icon svgIcon="far:user-plus"></mat-icon>
             <span>{{ t('create') }}</span>
         </button>

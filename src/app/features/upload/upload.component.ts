@@ -78,7 +78,7 @@ export class UploadComponent implements OnDestroy {
         this.state.set({ animationDisabled: true });
     }
 
-    clearCompleted(event: MouseEvent) {
+    clearCompleted() {
         this.uploadService.clearCompleted();
     }
 

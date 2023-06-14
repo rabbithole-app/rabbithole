@@ -54,10 +54,10 @@ module {
     };
 
     public func generateId() : async ID {
-		let ae = AsyncSource.Source();
-		let id = await ae.new();
-		Text.map(UUID.toText(id), Prim.charToLower);
-	};
+        let ae = AsyncSource.Source();
+        let id = await ae.new();
+        Text.map(UUID.toText(id), Prim.charToLower);
+    };
 
     public func base64(b : Blob) : Text {
         let bytes = Blob.toArray(b);
@@ -65,11 +65,13 @@ module {
     };
 
     func arrayToText(arr : [Nat8]) : Text {
-        Text.fromIter(Iter.fromArray(
-            Array.map<Nat8, Char>(
-                arr,
-                func (n : Nat8) : Char = Char.fromNat32(Nat32.fromNat(Nat8.toNat(n)))
-            ),
-        ));
+        Text.fromIter(
+            Iter.fromArray(
+                Array.map<Nat8, Char>(
+                    arr,
+                    func(n : Nat8) : Char = Char.fromNat32(Nat32.fromNat(Nat8.toNat(n)))
+                )
+            )
+        );
     };
 };

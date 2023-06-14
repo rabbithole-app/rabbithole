@@ -1,8 +1,12 @@
 <ng-container *transloco="let t">
-    <button mat-button color="primary" class="upload-button" [matTooltip]="t('invite.title')"
-    matTooltipClass="rh-tooltip"
-    matTooltipPosition="after"
-    [matTooltipDisabled]="isFull$ | push">
+    <button
+        mat-button
+        color="primary"
+        class="upload-button"
+        [matTooltip]="t('invite.title')"
+        matTooltipClass="rh-tooltip"
+        matTooltipPosition="after"
+        [matTooltipDisabled]="isFull$ | push">
         <div class="mat-content-wrapper">
             <mat-icon svgIcon="fab:twitter"></mat-icon>
             <span *rxIf="isFull$" @textAnimation>{{ t('sidebar.upload') }}</span>

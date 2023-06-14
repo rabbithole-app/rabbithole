@@ -10,13 +10,21 @@
         <button #itemsTrigger [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false" aria-hidden="true"></button>
     </ng-container>
     <mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">
-        <ng-template matMenuContent let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
+        <ng-template
+            matMenuContent
+            let-items="items"
+            let-everyFile="everyFile"
+            let-everyFolder="everyFolder"
+            let-someFile="someFile"
+            let-someFolder="someFolder">
             <ng-container [ngSwitch]="items.length">
                 <ng-container *ngSwitchCase="0">
                     <ng-container [ngTemplateOutlet]="emptyAreaTemplate"></ng-container>
                 </ng-container>
                 <ng-container *ngSwitchDefault>
-                    <ng-container [ngTemplateOutlet]="contextItemsTemplate" [ngTemplateOutletContext]="{ items, everyFile, everyFolder, someFile, someFolder }"></ng-container>
+                    <ng-container
+                        [ngTemplateOutlet]="contextItemsTemplate"
+                        [ngTemplateOutletContext]="{ items, everyFile, everyFolder, someFile, someFolder }"></ng-container>
                 </ng-container>
             </ng-container>
         </ng-template>
@@ -36,20 +44,26 @@
             <span>{{ t('context.uploadFolder') }}</span>
         </button>
     </ng-template>
-    <ng-template #contextItemsTemplate let-items="items" let-everyFile="everyFile" let-everyFolder="everyFolder" let-someFile="someFile" let-someFolder="someFolder">
+    <ng-template
+        #contextItemsTemplate
+        let-items="items"
+        let-everyFile="everyFile"
+        let-everyFolder="everyFolder"
+        let-someFile="someFile"
+        let-someFolder="someFolder">
         <!--<h3 *ngFor="let item of items" class="mat-typography">{{ item.name }} [{{ item.id }}]</h3>-->
         <ng-container *rxIf="everyFolder">
             <div class="choose-color">
                 <div class="label" [innerHTML]="t('context.color', { color: nextColor })"></div>
                 <div class="tag-colors">
-                    <span
+                    <button
                         *rxFor="let color of folderColors"
                         [class]="'tag-color tag-color--' + color"
                         (mouseenter)="nextColor = color"
                         (mouseleave)="nextColor = ''"
                         (click)="folderColor = color">
                         <mat-icon svgIcon="far:plus"></mat-icon>
-                    </span>
+                    </button>
                 </div>
             </div>
             <mat-divider></mat-divider>

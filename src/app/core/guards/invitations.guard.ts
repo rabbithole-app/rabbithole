@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { Router } from '@angular/router';
 import { ProfileService } from '@core/services';
 import { map } from 'rxjs';
 
-export const invitationsGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export const invitationsGuard = () => {
     const router = inject(Router);
     return inject(ProfileService)
         .select('canInvite')

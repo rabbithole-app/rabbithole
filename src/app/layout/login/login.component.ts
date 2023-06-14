@@ -1,5 +1,5 @@
 import { NgSwitch, NgSwitchCase } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
@@ -22,7 +22,7 @@ import { PushPipe } from '@rx-angular/template/push';
     styleUrls: ['./login.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
     authService = inject(AuthService);
     private authState = inject(AUTH_RX_STATE);
     status$: Observable<AuthStatus> = this.authState.select('status');

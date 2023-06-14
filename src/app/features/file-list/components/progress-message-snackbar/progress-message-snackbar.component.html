@@ -1,5 +1,5 @@
-<ng-container *transloco="let t; read 'fileList.notification'">
+<ng-container *transloco="let t; read: 'fileList.notification'">
     <mat-spinner diameter="20" color=""></mat-spinner>
     <span>{{ data$ | push }}</span>
-    <button mat-button color="warn" (click)="cancel($event)">{{ t('actions.cancel') }}</button>
+    <button mat-button color="warn" (click)="cancel()">{{ t('actions.cancel') }}</button>
 </ng-container>

@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-// import { ACCOUNT_RX_STATE } from '@core/stores';
 import { convertStringToE8s } from '@dfinity/nns';
-import { combineLatest, first, firstValueFrom, map, Observable, shareReplay, tap } from 'rxjs';
+import { combineLatest, first, map, Observable } from 'rxjs';
 import { WalletService } from '../services';
 
 @Injectable()
@@ -22,7 +21,6 @@ export class AmountAsyncValidator implements AsyncValidator {
     validate(control: AbstractControl): Observable<ValidationErrors | null> | Promise<ValidationErrors | null> {
         return combineLatest([this.walletService.select('icpAmount'), this.walletService.select('transactionFee')]).pipe(
             first(),
-            // tap(v => console.log('validate', v)),
             map(([amount, transactionFee]) => {
                 let value = control.value;
 
@@ -32,7 +30,6 @@ export class AmountAsyncValidator implements AsyncValidator {
 
                 return value + transactionFee > amount.toE8s() ? { amount: true } : null;
             })
-            // shareReplay(1)
         );
     }
 }

@@ -7,7 +7,7 @@ export function mapDeleteInviteError<T>(): MonoTypeOperatorFunction<T> {
     return pipe(
         map(result => {
             if (has(result, 'err')) {
-                let [key, value] = Object.entries(get(result, 'err') as InviteDeleteError)[0];
+                const [key, value] = Object.entries(get(result, 'err') as InviteDeleteError)[0];
                 throw Error(translate(`invites.delete.errors.${key}`, { value }));
             }
 

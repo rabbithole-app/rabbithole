@@ -64,7 +64,10 @@
                 "glob": "**/*",
                 "input": "src/assets/",
                 "output": "/assets/",
-                "ignore": ["fonts/**/*", "favicon/**/*"]
+                "ignore": [
+                  "fonts/**/*",
+                  "favicon/**/*"
+                ]
               },
               {
                 "glob": "**/*",
@@ -80,10 +83,26 @@
             "customWebpackConfig": {
               "path": "./custom-webpack.config.js"
             },
-            "allowedCommonJsDependencies": ["lodash", "borc", "js-sha256", "simple-cbor", "base64-arraybuffer", "buffer", "tweetnacl", "flat", "animate-css-grid", "buffer-crc32", "@mswjs/interceptors/fetch", "@messageformat/core", "file-saver"],
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "borc",
+              "js-sha256",
+              "simple-cbor",
+              "base64-arraybuffer",
+              "buffer",
+              "tweetnacl",
+              "flat",
+              "animate-css-grid",
+              "buffer-crc32",
+              "@mswjs/interceptors/fetch",
+              "@messageformat/core",
+              "file-saver"
+            ],
             "scripts": [],
             "stylePreprocessorOptions": {
-              "includePaths": ["src/styles"]
+              "includePaths": [
+                "src/styles"
+              ]
             },
             "webWorkerTsConfig": "tsconfig.worker.json"
           },
@@ -140,8 +159,22 @@
           "options": {
             "browserTarget": "ng-rabbithole:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
+  },
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

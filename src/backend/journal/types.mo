@@ -7,7 +7,7 @@ import Result "mo:base/Result";
 module {
     type BucketId = Types.BucketId;
     type ID = Types.ID;
-    
+
     public type CommonAttributes = {
         id : ID;
         name : Text;
@@ -42,11 +42,12 @@ module {
     public type FileCreateError = EntryCreateError<File>;
     public type DirectoryMoveError = { #invalidParams; #notFound; #sourceNotFound; #targetNotFound };
     public type FileMoveError = { #invalidParams; #notFound; #sourceNotFound; #targetNotFound };
+    public type NotFoundError = { #notFound };
     public type DirectoryState = {
         id : ?ID;
         dirs : [Directory];
         files : [File];
-        breadcrumbs : [Directory]
+        breadcrumbs : [Directory];
     };
     public type DirectoryStateError = { #notFound };
     public type DirectoryAction = {
@@ -94,4 +95,4 @@ module {
         addFile : shared (file : FileCreate) -> async Result.Result<File, FileCreateError>;
         // topupCanister : shared (value : Topup) -> async ();
     };
-}
+};

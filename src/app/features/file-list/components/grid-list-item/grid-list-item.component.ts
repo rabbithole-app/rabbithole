@@ -19,12 +19,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RxState } from '@rx-angular/state';
 import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
+import { WINDOW } from 'ngx-window-token';
 
 import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { ContextMenuService } from '@features/file-list/services';
-import { OverlayService, WINDOW } from '@core/services';
+import { OverlayService } from '@core/services';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 import { addFASvgIcons } from '@core/utils';
 
@@ -53,15 +54,15 @@ export class GridListItemComponent implements Highlightable {
 
     @Input() active?: boolean = false;
     @Output() openContext: EventEmitter<{ trigger: MatMenuTrigger; position: Point }> = new EventEmitter<{ trigger: MatMenuTrigger; position: Point }>();
-    folderColor: string = 'blue';
+    folderColor = 'blue';
     @HostBinding('attr.tabindex') tabindex = '-1';
     @HostBinding('attr.role') role = 'listitem';
     @HostBinding('attr.aria-label') get label() {
         return this.data.name;
     }
-    @HostBinding('class.disabled') @Input() disabled: boolean = false;
+    @HostBinding('class.disabled') @Input() disabled = false;
     @HostBinding('class.loading') @Input() loading?: boolean = false;
-    @HostBinding('class.selected') @Input() selected: boolean = false;
+    @HostBinding('class.selected') @Input() selected = false;
     private _isActive = false;
 
     /*

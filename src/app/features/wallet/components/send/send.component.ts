@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AccountIdentifier, TokenAmount, Token } from '@dfinity/nns';
@@ -70,8 +69,8 @@ export class SendComponent extends RxState<State> {
     get accountId(): string {
         return this.get('accountId');
     }
-    @Input() loadingTransfer: boolean = false;
-    @Input() loadingBalance: boolean = false;
+    @Input() loadingTransfer = false;
+    @Input() loadingBalance = false;
     @Output() transfer: EventEmitter<{ to: AccountIdentifier; amount: Tokens }> = new EventEmitter();
     @Output() refresh: EventEmitter<void> = new EventEmitter<void>();
     sendControl = new FormControl<{

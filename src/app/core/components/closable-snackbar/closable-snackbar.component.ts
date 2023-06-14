@@ -19,7 +19,7 @@ export class ClosableSnackbarComponent {
         addFASvgIcons(['xmark'], 'far');
     }
 
-    close(event: MouseEvent) {
+    close() {
         this.snackBarRef.dismissWithAction();
     }
 }

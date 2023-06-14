@@ -134,10 +134,8 @@ export const idlFactory = ({ IDL }) => {
         })
     });
     const ID__1 = IDL.Text;
-    const Result_4 = IDL.Variant({
-        ok: IDL.Null,
-        err: IDL.Variant({ notFound: IDL.Null })
-    });
+    const NotFoundError = IDL.Variant({ notFound: IDL.Null });
+    const Result_4 = IDL.Variant({ ok: IDL.Null, err: NotFoundError });
     const BucketId__1 = IDL.Principal;
     const Canister = IDL.Record({
         status: IDL.Opt(canister_status_response),

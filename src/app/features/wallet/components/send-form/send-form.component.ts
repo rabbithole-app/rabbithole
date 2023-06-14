@@ -12,22 +12,7 @@ import { convertStringToE8s, TokenAmount, Token } from '@dfinity/nns';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { TranslocoModule } from '@ngneat/transloco';
-import {
-    AsyncSubject,
-    combineLatest,
-    combineLatestWith,
-    defer,
-    distinctUntilChanged,
-    filter,
-    fromEvent,
-    iif,
-    map,
-    merge,
-    of,
-    switchMap,
-    takeUntil,
-    withLatestFrom
-} from 'rxjs';
+import { combineLatest, combineLatestWith, defer, distinctUntilChanged, filter, fromEvent, iif, map, of, switchMap, takeUntil, withLatestFrom } from 'rxjs';
 import { isEqual, trimEnd } from 'lodash';
 
 import { AccountValidators, AmountAsyncValidator } from '@features/wallet/validators';
@@ -103,8 +88,10 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
             nonNullable: true
         })
     });
-    onChanged: Function = (value: Send) => {};
-    onTouched: Function = () => {};
+    // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
+    onChanged = (value: Send) => {};
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onTouched = () => {};
     @ViewChildren(MatInput, { read: ElementRef }) set inputs(value: QueryList<ElementRef>) {
         this.set({ inputs: value });
     }
@@ -220,11 +207,11 @@ export class SendFormComponent extends RxState<State> implements ControlValueAcc
         }
     }
 
-    registerOnChange(fn: Function): void {
+    registerOnChange(fn: () => void): void {
         this.onChanged = fn;
     }
 
-    registerOnTouched(fn: Function): void {
+    registerOnTouched(fn: () => void): void {
         this.onTouched = fn;
     }
 

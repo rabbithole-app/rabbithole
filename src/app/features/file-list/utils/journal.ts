@@ -1,11 +1,11 @@
 import { fromNullable } from '@dfinity/utils';
 import { isUndefined } from 'lodash';
 import { Directory, DirectoryColor as JournalDirectoryColor, File } from '@declarations/journal/journal.did.js';
-import { DirectoryColor, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { DirectoryColor, DirectoryExtended, FileInfoExtended } from '@features/file-list/models';
 import { environment } from 'environments/environment';
 
-export const fromNullableOption = <T extends {}, K>(value: [] | [T], defaultValue: K): K => {
-    let v: T | undefined = fromNullable(value);
+export const fromNullableOption = <T extends Record<string, null>, K>(value: [] | [T], defaultValue: K): K => {
+    const v: T | undefined = fromNullable(value);
 
     return isUndefined(v) ? defaultValue : (Object.keys(v)[0] as unknown as K);
 };

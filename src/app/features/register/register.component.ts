@@ -113,15 +113,15 @@ export class RegisterComponent extends RxState<State> {
         );
     }
 
-    handleCreateInvoice(event: MouseEvent): void {
+    handleCreateInvoice(): void {
         this.registerService.createInvoice();
     }
 
-    handleCreateJournal(event: MouseEvent): void {
+    handleCreateJournal(): void {
         this.registerService.createJournal();
     }
 
-    handleRedeem(event: MouseEvent): void {
+    handleRedeem(): void {
         this.dialog.open(RedeemInviteDialogComponent, { width: '450px' });
     }
 }

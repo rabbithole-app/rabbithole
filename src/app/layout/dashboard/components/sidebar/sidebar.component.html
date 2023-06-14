@@ -14,8 +14,7 @@
             matTooltipPosition="after"
             [matTooltipDisabled]="isFull$ | push"
             (click)="authService.signOut()"
-            [attr.aria-label]="t('application.sign-out')"
-            >
+            [attr.aria-label]="t('application.sign-out')">
             <div class="mat-content-wrapper">
                 <mat-icon svgIcon="far:arrow-right-from-bracket"></mat-icon>
                 <span *rxIf="isFull$" @textAnimation>{{ t('application.sign-out') }}</span>

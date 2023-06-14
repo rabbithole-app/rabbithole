@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { ActorSubclass } from '@dfinity/agent';
 import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
 import {
@@ -112,7 +111,9 @@ export class WalletService extends RxState<State> {
                     defer(() => (actor as NonNullable<typeof actor>).withdraw(params)).pipe(
                         map(result => {
                             if (has(result, 'err')) {
-                                let [key, value] = Object.entries(get(result, 'err') as unknown as TransferError)[0];
+                                const entry = Object.entries(get(result, 'err') as unknown as TransferError)[0];
+                                const key = entry[0];
+                                let value = entry[1];
                                 if (key === 'InsufficientFunds') {
                                     value = `${formatICP(value.balance.e8s)} ICP`;
                                 }

@@ -135,6 +135,22 @@
                     },
                     "ok": "Directory was successfully created"
                 }
+            },
+            "remove": {
+                "messages": {
+                    "err": {
+                        "notFound": "Directory not found"
+                    }
+                }
+            }
+        },
+        "file": {
+            "remove": {
+                "messages": {
+                    "err": {
+                        "notFound": "File not found"
+                    }
+                }
             }
         },
         "notification": {

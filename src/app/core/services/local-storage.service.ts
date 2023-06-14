@@ -4,6 +4,7 @@ const APP_PREFIX = 'RH-';
 
 @Injectable()
 export class LocalStorageService {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     set(key: string, value: any) {
         localStorage.setItem(`${APP_PREFIX}${key}`, JSON.stringify(value));
     }

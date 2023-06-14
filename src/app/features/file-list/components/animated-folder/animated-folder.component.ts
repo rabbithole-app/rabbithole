@@ -8,8 +8,8 @@ import { Component, ChangeDetectionStrategy, ElementRef, Renderer2, Input, HostB
     standalone: true
 })
 export class AnimatedFolderComponent implements OnChanges {
-    @Input() color: string = 'blue';
-    @HostBinding('class.active') @Input() active: boolean = false;
+    @Input() color = 'blue';
+    @HostBinding('class.active') @Input() active = false;
     #renderer = inject(Renderer2);
     #element = inject(ElementRef);
 

@@ -9,7 +9,7 @@ import { has } from 'lodash';
 interface State {
     trigger: MatMenuTrigger | null;
     point: Point;
-    menuData: any;
+    menuData: unknown;
     origin: ElementRef;
 }
 

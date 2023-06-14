@@ -1,12 +1,7 @@
-import { ChangeDetectionStrategy, Component, Inject, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { RxFor } from '@rx-angular/template/for';
 import { entries } from 'lodash';
-
-type Item = {
-    name: string;
-    errorMessage: string;
-};
 
 @Component({
     selector: 'app-show-errors-dialog',

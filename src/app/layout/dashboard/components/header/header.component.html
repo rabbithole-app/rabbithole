@@ -1,11 +1,15 @@
-
-<button mat-icon-button class="sidebar-toggle" (click)="toggleSidebar()" [disabled]="isCompact$ | push" [attr.aria-label]="'application.toggle-sidebar' | transloco">
+<button
+    mat-icon-button
+    class="sidebar-toggle"
+    (click)="toggleSidebar()"
+    [disabled]="isCompact$ | push"
+    [attr.aria-label]="'application.toggle-sidebar' | transloco">
     <mat-icon svgIcon="far:bars"></mat-icon>
 </button>
 <div class="header-portal-outlet">
     <router-outlet name="header"></router-outlet>
 </div>
-    <!-- <app-avatar #triggerButton (click)="open()"></app-avatar> -->
+<!-- <app-avatar #triggerButton (click)="open()"></app-avatar> -->
 <!-- <ng-template #menuTemplate>
     <div class="mat-mdc-menu-panel mdc-menu-surface mdc-menu-surface--open mat-mdc-elevation-specific">
         <div class="mat-mdc-menu-content mdc-list">

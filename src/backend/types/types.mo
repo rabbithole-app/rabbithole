@@ -25,7 +25,7 @@ module {
     public type ProfileCreateError = {
         #journalNotFound;
         #username : UsernameError;
-        #alreadyExists
+        #alreadyExists;
     };
 
     public type ProfileError = { #notFound; #notAuthorized };
@@ -88,7 +88,7 @@ module {
 
     public type TransferNotifyError = {
         #transfer : LedgerTypes.TransferError;
-        #notify : CMCTypes.NotifyError
+        #notify : CMCTypes.NotifyError;
     };
 
     public type InviteError = { #notFound; #expired; #alreadyUsed };

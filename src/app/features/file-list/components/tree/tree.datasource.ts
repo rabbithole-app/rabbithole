@@ -1,6 +1,6 @@
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { Observable, firstValueFrom, from, merge } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, from, merge } from 'rxjs';
 import { concatMap, filter, switchMap } from 'rxjs/operators';
 import { WritableSignal, effect, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -22,6 +22,7 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
     #data: WritableSignal<DirectoryFlatNode[]> = signal([this.#rootNode]);
     #data$ = toObservable(this.#data);
     #journalService = inject(JournalService);
+    #treeSubscription!: Subscription;
 
     constructor(private treeControl: FlatTreeControl<DirectoryFlatNode, string>, private path: string, private disableSubtree: boolean = false) {
         effect(() => {
@@ -31,7 +32,7 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
     }
 
     connect(collectionViewer: CollectionViewer): Observable<DirectoryFlatNode[]> {
-        this.treeControl.expansionModel.changed
+        this.#treeSubscription = this.treeControl.expansionModel.changed
             .pipe(
                 filter(change => change.added.length > 0 || change.removed.length > 0),
                 concatMap(change =>
@@ -46,7 +47,10 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
         return merge(collectionViewer.viewChange.pipe(switchMap(() => this.#data$)), this.#data$);
     }
 
-    disconnect(collectionViewer: CollectionViewer): void {}
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    disconnect(collectionViewer: CollectionViewer): void {
+        this.#treeSubscription.unsubscribe();
+    }
 
     setOptions(opts: { path?: string; disableSubtree?: boolean }) {
         if (opts.path) {
@@ -98,6 +102,7 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
             data.splice(index + 1, 0, ...nodes);
         } else {
             let count = 0;
+            // eslint-disable-next-line no-empty
             for (let i = index + 1; i < data.length && data[i].level > data[index].level; i++, count++) {}
             const removed = data.splice(index + 1, count);
             const deselect = removed.filter(({ directory }) => this.treeControl.expansionModel.isSelected(directory.id)).map(node => node.directory.id);

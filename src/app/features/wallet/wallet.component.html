@@ -27,6 +27,12 @@
 </ng-container> -->
 <!-- <app-send [data]="icp$ | push" [accountId]="accountState.select('accountId') | push"></app-send> -->
 <app-account></app-account>
-<app-send [loadingBalance]="loadingBalance$ | push" [amount]="amount$ | push" [token]="token"
-    [transactionFee]="transactionFee$ | push" [accountId]="accountId$ | push"
-    [loadingTransfer]="loadingTransfer$ | push" (transfer)="transferICP($event)" (refresh)="refreshBalance()"></app-send>
+<app-send
+    [loadingBalance]="loadingBalance$ | push"
+    [amount]="amount$ | push"
+    [token]="token"
+    [transactionFee]="transactionFee$ | push"
+    [accountId]="accountId$ | push"
+    [loadingTransfer]="loadingTransfer$ | push"
+    (transfer)="transferICP($event)"
+    (refresh)="refreshBalance()"></app-send>

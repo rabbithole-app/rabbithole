@@ -423,7 +423,7 @@ export class UploadService extends RxState<State> {
     }
 
     async #listFilesAndDirsRecursively(dirHandle: FileSystemDirectoryHandle, cwd?: string): Promise<[{ file: File; path: string }[], string[]]> {
-        let path = cwd ? `${cwd}/${dirHandle.name}` : dirHandle.name;
+        const path = cwd ? `${cwd}/${dirHandle.name}` : dirHandle.name;
         const files: Array<{ file: File; path: string }> = [];
         const directories: string[] = [path];
         for await (const [name, handle] of dirHandle.entries()) {
@@ -475,7 +475,7 @@ export class UploadService extends RxState<State> {
     #getUniquePaths(dirs: string[]): string[] {
         const result: string[] = [];
         const sortedDirs = orderBy(dirs, v => v.split('/').length, 'desc');
-        for (let dir of sortedDirs) {
+        for (const dir of sortedDirs) {
             if (!result.some(v => v.startsWith(dir + '/'))) {
                 result.push(dir);
             }

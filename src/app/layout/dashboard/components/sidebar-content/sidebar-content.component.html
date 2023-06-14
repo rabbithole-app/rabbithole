@@ -1,10 +1,14 @@
 <ng-container *transloco="let t">
-    <button mat-raised-button [matMenuTriggerFor]="menu" color="primary" class="upload-button"
-        [attr.aria-label]="t('sidebar.upload')">
+    <button mat-raised-button [matMenuTriggerFor]="menu" color="primary" class="upload-button" [attr.aria-label]="t('sidebar.upload')">
         <div class="mat-content-wrapper">
             <mat-icon svgIcon="far:cloud-arrow-up"></mat-icon>
-            <span *rxIf="isFull$" @textAnimation (@textAnimation.start)="sidebarService.animationStart($event)"
-                (@textAnimation.done)="sidebarService.animationDone($event)">{{ t('sidebar.upload') }}</span>
+            <span
+                *rxIf="isFull$"
+                @textAnimation
+                (@textAnimation.start)="sidebarService.animationStart($event)"
+                (@textAnimation.done)="sidebarService.animationDone()"
+                >{{ t('sidebar.upload') }}</span
+            >
         </div>
     </button>
     <mat-menu #menu="matMenu" class="upload-menu">
@@ -18,13 +22,21 @@
         </button>
     </mat-menu>
     <nav class="navigation">
-        <a *rxFor="let item of navigation$; trackBy: trackNavItem; let index = index" [routerLink]="item.disabled ? null : [item.path]"
-            class="navigation-link" rel="noopener noreferrer" routerLinkActive="active" queryParamsHandling="preserve"
-            #rla="routerLinkActive" [matTooltip]="t(item.label)" matTooltipClass="rh-tooltip" matTooltipPosition="after"
-            [matTooltipDisabled]="isFull$ | push" [class.disabled]="item.disabled ?? false"
+        <a
+            *rxFor="let item of navigation$; trackBy: trackNavItem; let index = index"
+            [routerLink]="item.disabled ? null : [item.path]"
+            class="navigation-link"
+            rel="noopener noreferrer"
+            routerLinkActive="active"
+            queryParamsHandling="preserve"
+            #rla="routerLinkActive"
+            [matTooltip]="t(item.label)"
+            matTooltipClass="rh-tooltip"
+            matTooltipPosition="after"
+            [matTooltipDisabled]="isFull$ | push"
+            [class.disabled]="item.disabled ?? false"
             [attr.aria-disabled]="item.disabled ?? false"
-            [attr.aria-label]="item.disabled ? null : t(item.label)"
-            >
+            [attr.aria-label]="item.disabled ? null : t(item.label)">
             <mat-icon [svgIcon]="$any(rla.isActive ? item.activeIcon : item.icon)"></mat-icon>
             <span *rxIf="isFull$" @textAnimation>{{ t(item.label) }}</span>
         </a>

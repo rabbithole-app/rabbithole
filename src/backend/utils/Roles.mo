@@ -8,18 +8,16 @@ import BiTrieMap "mo:bimap/BiTrieMap";
 module {
     public type Role = Text;
 
-    public type StableUsers = [
-        (Principal, [Role])
-    ];
+    public type StableUsers = [(Principal, [Role])];
 
     // User has ALL roles, even custom defined roles.
-    public let ALL           = "auth:all";
+    public let ALL = "auth:all";
     // User can add other users and roles.
-    public let USERS_ADD    = "auth:users/add";
+    public let USERS_ADD = "auth:users/add";
     // User can remove other users and roles.
     public let USERS_REMOVE = "auth:users/remove";
     // User can get all roles.
-    public let USERS_GET    = "auth:users/get";
+    public let USERS_GET = "auth:users/get";
 
     public func toStable(owner : Principal, a : Users) : StableUsers {
         Iter.toArray(a.entries(owner));
@@ -27,25 +25,28 @@ module {
 
     public type Interface = {
         // @auth : add
-        addUser          : (caller : Principal, user : Principal)                 -> ();
+        addUser : (caller : Principal, user : Principal) -> ();
         addUserWithRoles : (caller : Principal, user : Principal, roles : [Role]) -> ();
-        addRoles         : (caller : Principal, user : Principal, roles : [Role]) -> ();
+        addRoles : (caller : Principal, user : Principal, roles : [Role]) -> ();
 
         // @auth : get
-        entries          : (caller : Principal)                                   -> Iter.Iter<(Principal, [Role])>; 
-        getRoles         : (caller : Principal, user : Principal)                 -> [Role];
+        entries : (caller : Principal) -> Iter.Iter<(Principal, [Role])>;
+        getRoles : (caller : Principal, user : Principal) -> [Role];
 
         // @auth : remove
-        removeUser       : (caller : Principal, user : Principal)                 -> ();
-        removeRoles      : (caller : Principal, user : Principal, roles : [Role]) -> ();
+        removeUser : (caller : Principal, user : Principal) -> ();
+        removeRoles : (caller : Principal, user : Principal, roles : [Role]) -> ();
 
-        hasRole          : (user : Principal, role : Role)                        -> Bool;
-        hasOneOfRoles    : (user : Principal, roles : [Role])                     -> Bool;
+        hasRole : (user : Principal, role : Role) -> Bool;
+        hasOneOfRoles : (user : Principal, roles : [Role]) -> Bool;
     };
 
     public class Users(state : StableUsers) : Interface {
         private let users = HashMap.fromIter<Principal, [Role]>(
-            state.vals(), 0, Principal.equal, Principal.hash,
+            state.vals(),
+            0,
+            Principal.equal,
+            Principal.hash
         );
 
         public func addUser(caller : Principal, user : Principal) = addUserWithRoles(caller, user, []);
@@ -93,9 +94,12 @@ module {
                 case (?aRoles) {
                     users.put(
                         user,
-                        Array.filter<Role>(aRoles, func (r : Role) : Bool {
-                            not _containsRole(aRoles, r);
-                        }),
+                        Array.filter<Role>(
+                            aRoles,
+                            func(r : Role) : Bool {
+                                not _containsRole(aRoles, r);
+                            }
+                        )
                     );
                 };
             };
@@ -107,8 +111,8 @@ module {
 
         public func hasOneOfRoles(user : Principal, roles : [Role]) : Bool {
             switch (users.get(user)) {
-                case (null)    { false; };
-                case (? aRoles) {
+                case (null) { false };
+                case (?aRoles) {
                     if (_containsRole(aRoles, ALL)) return true;
 
                     for (r in roles.vals()) {
@@ -119,8 +123,8 @@ module {
             };
         };
 
-        private func _canAdd(user : Principal)    : Bool = hasOneOfRoles(user, [ALL, USERS_ADD]);
-        private func _canGet(user : Principal)    : Bool = hasOneOfRoles(user, [ALL, USERS_GET]);
+        private func _canAdd(user : Principal) : Bool = hasOneOfRoles(user, [ALL, USERS_ADD]);
+        private func _canGet(user : Principal) : Bool = hasOneOfRoles(user, [ALL, USERS_GET]);
         private func _canRemove(user : Principal) : Bool = hasOneOfRoles(user, [ALL, USERS_REMOVE]);
 
         private func _containsRole(roles : [Role], role : Role) : Bool {
@@ -128,6 +132,6 @@ module {
                 if (r == role) return true;
             };
             false;
-        }
+        };
     };
 };

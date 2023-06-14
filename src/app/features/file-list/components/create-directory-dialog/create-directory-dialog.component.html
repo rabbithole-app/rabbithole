@@ -1,4 +1,4 @@
-<ng-container *transloco="let t; read 'fileList.directory.create'">
+<ng-container *transloco="let t; read: 'fileList.directory.create'">
     <h1 mat-dialog-title>{{ t('title') }}</h1>
     <form [formGroup]="form">
         <mat-dialog-content class="mat-typography">
@@ -10,8 +10,7 @@
         </mat-dialog-content>
         <mat-dialog-actions align="end">
             <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
-            <button mat-raised-button color="primary" [mat-dialog-close]="{ name: name?.value, parent: data.parent }"
-                [disabled]="form.invalid">
+            <button mat-raised-button color="primary" [mat-dialog-close]="{ name: name?.value, parent: data.parent }" [disabled]="form.invalid">
                 {{ t('actions.create') }}
             </button>
         </mat-dialog-actions>

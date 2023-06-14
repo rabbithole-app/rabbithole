@@ -1,45 +1,44 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Rabbithole</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="mask-icon" href="safari-pinned-tab.svg" color="#efa441">
-  <link rel="shortcut icon" href="favicon.ico">
-  <meta name="msapplication-TileColor" content="#efa441">
-  <meta name="msapplication-config" content="browserconfig.xml">
-  <meta name="theme-color" content="#ffffff">
-</head>
-<style>
-  .spinner {
-    position: fixed;
-    top: calc(50% - 4rem);
-    left: calc(50% - 2rem);
-    width: 4rem;
-    height: 4rem;
-    border: 0.25rem solid #1976d2;
-    border-bottom: 0.25rem solid rgba(0, 0, 0, 0);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 9999;
-  }
+    <head>
+        <meta charset="utf-8" />
+        <title>Rabbithole</title>
+        <base href="/" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+        <link rel="manifest" href="site.webmanifest" />
+        <link rel="mask-icon" href="safari-pinned-tab.svg" color="#efa441" />
+        <link rel="shortcut icon" href="favicon.ico" />
+        <meta name="msapplication-TileColor" content="#efa441" />
+        <meta name="msapplication-config" content="browserconfig.xml" />
+        <meta name="theme-color" content="#ffffff" />
+    </head>
+    <style>
+        .spinner {
+            position: fixed;
+            top: calc(50% - 4rem);
+            left: calc(50% - 2rem);
+            width: 4rem;
+            height: 4rem;
+            border: 0.25rem solid #1976d2;
+            border-bottom: 0.25rem solid rgba(0, 0, 0, 0);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 9999;
+        }
 
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-</style>
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 
-<body>
-  <app-root>
-    <div class="spinner"></div>
-  </app-root>
-</body>
-
+    <body>
+        <app-root>
+            <div class="spinner"></div>
+        </app-root>
+    </body>
 </html>

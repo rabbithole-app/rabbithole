@@ -20,6 +20,12 @@
             "options": {
                 "parser": "angular"
             }
+        },
+        {
+            "files": "*.mo",
+            "options": {
+                "bracketSpacing": true
+            }
         }
     ]
 }

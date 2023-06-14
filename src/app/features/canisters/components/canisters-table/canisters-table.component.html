@@ -1,7 +1,6 @@
 <table mat-table [dataSource]="dataSource" class="mat-elevation-z0" multiTemplateDataRows>
     <tr mat-header-row *matHeaderRowDef="columnsToDisplayWithExpand"></tr>
-    <tr mat-row class="item-row" (click)="handleExpand($event, item.id)"
-        *matRowDef="let item; columns: columnsToDisplayWithExpand"></tr>
+    <tr mat-row class="item-row" (click)="handleExpand($event, item.id)" *matRowDef="let item; columns: columnsToDisplayWithExpand"></tr>
     <tr mat-row class="detail-row" *matRowDef="let row; columns: ['expandedDetail']"></tr>
     <!-- <ng-container matColumnDef="id">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Canister ID</th>
@@ -64,8 +63,13 @@
             <ng-container [ngSwitch]="item.loading">
                 <mat-spinner diameter="16" *ngSwitchCase="true"></mat-spinner>
                 <ng-container *ngSwitchDefault>
-                    <button mat-icon-button type="button" class="delete-button" color="warn"
-                        (click)="action.emit({ type: 'delete', id: item.id })" *ngIf="item.status == 'active'">
+                    <button
+                        mat-icon-button
+                        type="button"
+                        class="delete-button"
+                        color="warn"
+                        (click)="action.emit({ type: 'delete', id: item.id })"
+                        *ngIf="item.status === 'active'">
                         <mat-icon svgIcon="far:trash-can"></mat-icon>
                     </button>
                 </ng-container>

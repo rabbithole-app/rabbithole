@@ -19,7 +19,7 @@ import { ReviewTransaction } from '@features/wallet/models';
 })
 export class ReviewComponent {
     @Input() data!: ReviewTransaction;
-    @Input() loading: boolean = false;
+    @Input() loading = false;
     @Output() edit: EventEmitter<void> = new EventEmitter<void>();
     @Output() send: EventEmitter<void> = new EventEmitter<void>();
 

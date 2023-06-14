@@ -35,7 +35,7 @@ export class InvitationsComponent {
         addFASvgIcons(['envelope'], 'far');
     }
 
-    handleCreate(event: MouseEvent) {
+    handleCreate() {
         const dialogRef = this.dialog.open(CreateInviteDialogComponent, {
             width: '600px'
         });

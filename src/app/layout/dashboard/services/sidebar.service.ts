@@ -9,7 +9,7 @@ import { get } from 'lodash';
 import { SETTINGS_RX_STATE } from '@core/stores';
 
 interface TransitionAnimationPlayer extends AnimationEvent {
-    destroy: Function;
+    destroy: () => void;
 }
 
 export interface State {
@@ -57,7 +57,7 @@ export class SidebarService extends RxState<State> {
         this.set({ activePlayers: players });
     }
 
-    animationDone(event: AnimationEvent) {
+    animationDone() {
         this.set({ activePlayers: [] });
     }
 

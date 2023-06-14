@@ -200,7 +200,7 @@ export class RegisterService extends RxState<State> {
                     if (has(result, 'err.alreadyExists')) {
                         throw Error(this.translocoService.translate('createProfile.answers.alreadyExists'));
                     } else if (has(result, 'err.username')) {
-                        let key = Object.keys(get(result, 'err.username') as unknown as UsernameError)[0]
+                        const key = Object.keys(get(result, 'err.username') as unknown as UsernameError)[0]
                             .replace('illegalCharacters', 'pattern')
                             .replace('maxLength', 'maxlength')
                             .replace('minLength', 'minlength');
@@ -239,7 +239,7 @@ export class RegisterService extends RxState<State> {
                 switchMap(actor => actor.redeemInvite(id)),
                 map(response => {
                     if (has(response, 'err')) {
-                        let key = Object.keys(get(response, 'err') as unknown as InviteError)[0];
+                        const key = Object.keys(get(response, 'err') as unknown as InviteError)[0];
                         throw Error(this.translocoService.translate(`invite.invite.errors.${key}`));
                     }
 

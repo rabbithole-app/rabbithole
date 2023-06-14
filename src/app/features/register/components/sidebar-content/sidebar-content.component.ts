@@ -12,7 +12,6 @@ import { shareReplay } from 'rxjs';
 
 import { SETTINGS_RX_STATE } from '@core/stores';
 import { SidebarService } from 'app/layout/dashboard/services/sidebar.service';
-import { addFASvgIcons } from '@core/utils';
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 
 @Component({

@@ -16,8 +16,7 @@
             {{ t('actions.loading') }}
         </button>
         <ng-template #redeemButton>
-            <button mat-button cdkFocusInitial color="primary" (click)="handleRedeem($event)"
-                [disabled]="control.invalid">
+            <button mat-button cdkFocusInitial color="primary" (click)="handleRedeem()" [disabled]="control.invalid">
                 <mat-icon svgIcon="far:envelope"></mat-icon>
                 {{ t('actions.redeem') }}
             </button>

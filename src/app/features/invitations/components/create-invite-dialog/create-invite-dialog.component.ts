@@ -15,7 +15,7 @@ import { enUS, ru } from 'date-fns/locale';
 import { DATE_FORMATS } from '@core/config';
 
 @Component({
-    selector: 'create-add-invite-dialog',
+    selector: 'app-create-add-invite-dialog',
     standalone: true,
     imports: [NgIf, MatButtonModule, MatDialogModule, TranslocoModule, MatInputModule, MatDatepickerModule, MatDateFnsModule, ReactiveFormsModule],
     templateUrl: './create-invite-dialog.component.html',

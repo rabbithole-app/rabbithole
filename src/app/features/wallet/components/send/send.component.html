@@ -1,11 +1,20 @@
 <ng-container *transloco="let t; read: 'wallet.send'">
-    <mat-tab-group dynamicHeight class="send-tabs" #tabs [disablePagination]="true"
-        [selectedIndex]="get('selectedTabIndex')">
+    <mat-tab-group dynamicHeight class="send-tabs" #tabs [disablePagination]="true" [selectedIndex]="get('selectedTabIndex')">
         <mat-tab [label]="t('token.label')">
-            <app-wallet-item [loading]="loadingBalance" [tokenAmount]="amount" (send)="set({ selectedTabIndex: Tabs.Form })" (refresh)="refresh.next()"></app-wallet-item>
+            <app-wallet-item
+                [loading]="loadingBalance"
+                [tokenAmount]="amount"
+                (send)="set({ selectedTabIndex: Tabs.Form })"
+                (refresh)="refresh.next()"></app-wallet-item>
         </mat-tab>
         <mat-tab [label]="t('send.label')">
-            <app-send-form [amount]="amount" [token]="token" [transactionFee]="transactionFee" (cancel)="set({ selectedTabIndex: Tabs.Start })" (review)="set({ selectedTabIndex: Tabs.Review })" [formControl]="sendControl"></app-send-form>
+            <app-send-form
+                [amount]="amount"
+                [token]="token"
+                [transactionFee]="transactionFee"
+                (cancel)="set({ selectedTabIndex: Tabs.Start })"
+                (review)="set({ selectedTabIndex: Tabs.Review })"
+                [formControl]="sendControl"></app-send-form>
         </mat-tab>
         <mat-tab [label]="t('review.label')">
             <ng-container *rxLet="review$; let data">

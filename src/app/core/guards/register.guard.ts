@@ -1,18 +1,18 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { Router } from '@angular/router';
 import { combineLatestWith, map } from 'rxjs';
 
 import { hasJournalGuard, hasProfileGuard } from '.';
 
-export const registerGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export const registerGuard = () => {
     const router = inject(Router);
-    return hasProfileGuard(next, state).pipe(map(hasProfile => (hasProfile ? router.createUrlTree(['/drive']) : true)));
+    return hasProfileGuard().pipe(map(hasProfile => (hasProfile ? router.createUrlTree(['/drive']) : true)));
 };
 
-export const createProfileGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export const createProfileGuard = () => {
     const router = inject(Router);
-    return hasJournalGuard(next, state).pipe(
-        combineLatestWith(hasProfileGuard(next, state)),
+    return hasJournalGuard().pipe(
+        combineLatestWith(hasProfileGuard()),
         map(([hasJournal, hasProfile]) => (hasProfile ? router.createUrlTree(['/drive']) : hasJournal))
     );
 };

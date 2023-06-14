@@ -20,10 +20,8 @@
             </button>
         </ng-container>
         <ng-template #buttonsTemplate>
-            <button class="back-button" mat-raised-button type="button"
-                (click)="edit.next()">{{ t('review.actions.edit') }}</button>
-            <button class="send-button" mat-raised-button type="button" color="primary"
-                (click)="send.next()">{{ t('review.actions.send') }}</button>
+            <button class="back-button" mat-raised-button type="button" (click)="edit.next()">{{ t('review.actions.edit') }}</button>
+            <button class="send-button" mat-raised-button type="button" color="primary" (click)="send.next()">{{ t('review.actions.send') }}</button>
         </ng-template>
     </div>
 </ng-container>

@@ -1,5 +1,5 @@
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TrackByFunction } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TrackByFunction } from '@angular/core';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,8 +35,8 @@ import { TreeDataSource } from './tree.datasource';
 })
 export class TreeComponent implements OnChanges {
     @Input({ required: true }) path!: string;
-    @Input() disableSubtree: boolean = false;
-    @Output() select = new EventEmitter<{ id: string; path: string } | null>();
+    @Input() disableSubtree = false;
+    @Output() selectPath = new EventEmitter<{ id: string; path: string } | null>();
     selected: SelectionModel<string> = new SelectionModel<string>(false);
     getLevel = (node: DirectoryFlatNode) => node.level;
     isExpandable = (node: DirectoryFlatNode) => node.expandable;
@@ -82,6 +82,6 @@ export class TreeComponent implements OnChanges {
         const { id, path } = node.directory;
         if (this.path === path) return;
         this.selected.select(id);
-        this.select.emit(id && path ? { id, path } : null);
+        this.selectPath.emit(id && path ? { id, path } : null);
     }
 }

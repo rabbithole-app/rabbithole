@@ -64,6 +64,7 @@ export class OverlayService {
         ];
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     open<R = any, T = any>({ origin, content, data, overlayConfig }: OverlayParams<T>): CustomOverlayRef<R> {
         const overlayRef = this.overlay.create(this.getOverlayConfig(origin, overlayConfig));
         const customOverlayRef = new CustomOverlayRef<R, T>(overlayRef, origin, content, data, this.animationBuilder, this.document);

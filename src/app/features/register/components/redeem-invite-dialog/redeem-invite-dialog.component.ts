@@ -80,7 +80,7 @@ export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
         this.destroyed.complete();
     }
 
-    handleRedeem(event: MouseEvent) {
+    handleRedeem() {
         this.registerService.redeemInvite(this.control.value ?? '');
     }
 }

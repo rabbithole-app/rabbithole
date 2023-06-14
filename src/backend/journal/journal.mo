@@ -72,12 +72,12 @@ module {
 
         // список директорий по id родителя
         public func listDirs(id : ?ID) : [Directory] {
-            let filtered = Map.filter<Text, Directory>(directories, thash, func (k, v) = v.parentId == id);
+            let filtered = Map.filter<Text, Directory>(directories, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.vals(filtered));
         };
 
         public func listDirsExtend(id : ?ID) : [Directory] {
-            let filtered = Map.filter<Text, Directory>(directories, thash, func (k, v) = v.parentId == id);
+            let filtered = Map.filter<Text, Directory>(directories, thash, func(k, v) = v.parentId == id);
             let buffer : Buffer.Buffer<Directory> = Buffer.Buffer(Map.size(filtered));
             for ((path, dir) in Map.entries(filtered)) {
                 let children = (listDirs(?dir.id), listFiles(?dir.id));
@@ -87,18 +87,18 @@ module {
         };
 
         func listDirEntries(id : ?ID) : [(Text, Directory)] {
-            let filtered = Map.filter<Text, Directory>(directories, thash, func (k, v) = v.parentId == id);
+            let filtered = Map.filter<Text, Directory>(directories, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.entries(filtered));
         };
 
         func listFileEntries(id : ?ID) : [(Text, File)] {
-            let filtered = Map.filter<Text, File>(files, thash, func (k, v) = v.parentId == id);
+            let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.entries(filtered));
         };
 
         // список файлов по id родителя
         public func listFiles(id : ?ID) : [File] {
-            let filtered = Map.filter<Text, File>(files, thash, func (k, v) = v.parentId == id);
+            let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.vals(filtered));
         };
 
@@ -113,7 +113,7 @@ module {
         };
 
         func findDirEntry(id : ID) : ?(Text, Directory) {
-            Map.find<Text, Directory>(directories, func (k, v) = v.id == id);
+            Map.find<Text, Directory>(directories, func(k, v) = v.id == id);
         };
 
         func validateName(name : Text) : Bool {
@@ -126,7 +126,7 @@ module {
             true;
         };
 
-        public func checkDirname({ name; parentId } : DirectoryCreate): Result.Result<(), DirectoryCreateError> {
+        public func checkDirname({ name; parentId } : DirectoryCreate) : Result.Result<(), DirectoryCreateError> {
             if (not validateName(name)) return #err(#illegalCharacters);
             let path : Text = switch (parentId) {
                 case null name;
@@ -147,7 +147,7 @@ module {
             var parentPath : ?Text = null;
             label dirLoop for (dirname in dirnames) {
                 if (Text.equal(dirname, "")) continue dirLoop;
-                let currentPath : Text = switch(parentPath) {
+                let currentPath : Text = switch (parentPath) {
                     case null dirname;
                     case (?v) v # "/" # dirname;
                 };
@@ -169,7 +169,7 @@ module {
                     let path = Text.trim(v, #char '/');
                     let ?{ id } : ?Directory = Map.get<Text, Directory>(directories, thash, path) else return #err(#notFound);
                     (?id, getBreadcrumbs(path));
-                }
+                };
             };
             #ok({ id; dirs = listDirs(id); files = listFiles(id); breadcrumbs });
         };
@@ -188,7 +188,7 @@ module {
                 case null {
                     let now = Time.now();
                     let id = await Utils.generateId();
-                    let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ?#blue; children = null; path = null };
+                    let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ? #blue; children = null; path = null };
                     Map.set(directories, thash, path, directory);
                     #ok directory;
                 };
@@ -484,7 +484,7 @@ module {
             let buffer = Buffer.Buffer<(Text, ID)>(0);
             let idsBuffer = Buffer.fromArray<ID>(ids);
             var idIndex : Nat = 0;
-            let parent : (Text, ?ID) = switch(_parentId) {
+            let parent : (Text, ?ID) = switch (_parentId) {
                 case null ("", null);
                 case (?v) {
                     let ?(path, dir) = findDirEntry(v) else return throw Error.reject("Parent not found");
@@ -518,11 +518,20 @@ module {
                                         if (Text.equal(name, "")) continue newPathLoop;
                                         let id = ids.get(idIndex);
                                         let now = Time.now();
-                                        let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ?#blue; children = null; path = null };
+                                        let directory : Directory = {
+                                            id;
+                                            name;
+                                            parentId;
+                                            createdAt = now;
+                                            updatedAt = now;
+                                            color = ? #blue;
+                                            children = null;
+                                            path = null;
+                                        };
                                         currentPath := joinPath(parentPath, name);
                                         Map.set(directories, thash, currentPath, directory);
                                         buffer.add((currentPath, id));
-                                        
+
                                         parentId := ?id;
                                         parentPath := currentPath;
                                         idIndex += 1;
@@ -564,5 +573,5 @@ module {
         j.putDirs(dirsIter);
         j.putFiles(filesIter);
         j;
-    }
-}
+    };
+};

@@ -1,12 +1,17 @@
 <ng-container *transloco="let t; read: 'wallet'">
     <mat-card class="mat-typography invoice">
         <mat-card-content>
-            <app-wallet-item [loading]="loadingBalance$ | push" (refresh)="registerService.checkBalance()"
-                [tokenAmount]="balance$ | push" [actionsEnabled]="false"></app-wallet-item>
+            <app-wallet-item
+                [loading]="loadingBalance$ | push"
+                (refresh)="registerService.checkBalance()"
+                [tokenAmount]="balance$ | push"
+                [actionsEnabled]="false"></app-wallet-item>
             <mat-divider></mat-divider>
             <dl>
                 <dt>{{ t('amount') }}:</dt>
-                <dd><app-copy-id [content]="amount$ | push"> {{ tokenSymbol$ | push }}</app-copy-id></dd>
+                <dd>
+                    <app-copy-id [content]="amount$ | push"> {{ tokenSymbol$ | push }}</app-copy-id>
+                </dd>
                 <dt>{{ t('accountId') }}:</dt>
                 <dd>
                     <app-copy-id [content]="accountId$ | push"></app-copy-id>

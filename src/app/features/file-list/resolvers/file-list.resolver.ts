@@ -1,9 +1,9 @@
 import { inject } from '@angular/core';
-import { Router, RouterStateSnapshot, ActivatedRouteSnapshot } from '@angular/router';
+import { Router, ActivatedRouteSnapshot } from '@angular/router';
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
-import { EMPTY, catchError, filter, from, iif, map, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, catchError, filter, from, iif, map, switchMap, throwError } from 'rxjs';
 import { get, has, isNull } from 'lodash';
 
 import { BucketsService, NotificationService } from '@core/services';
@@ -11,7 +11,7 @@ import { Directory, File, DirectoryState, DirectoryStateError } from '@declarati
 import { toDirectoryExtended, toFileExtended } from '../utils';
 import { JournalItem } from '../models';
 
-export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export const fileListResolver = (route: ActivatedRouteSnapshot) => {
     const router = inject(Router);
     const translocoService = inject(TranslocoService);
     const notificationService = inject(NotificationService);

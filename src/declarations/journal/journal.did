@@ -61,7 +61,7 @@ type Result_5 =
  };
 type Result_4 = 
  variant {
-   err: variant {notFound;};
+   err: NotFoundError;
    ok;
  };
 type Result_3 = 
@@ -101,6 +101,7 @@ type NotifyError =
              };
    TransactionTooOld: BlockIndex__1;
  };
+type NotFoundError = variant {notFound;};
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;

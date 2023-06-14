@@ -61,14 +61,13 @@ actor Rabbithole {
     type TimerId = Timer.TimerId;
 
     let CYCLE_SHARE = 1_000_000_000_000;
-    
+
     let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
     let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
     let MEMO_CREATE_CANISTER : LedgerTypes.Memo = 0x41455243; // == 'CREA'
     let FEE : Nat64 = 10_000;
     // let self = Principal.fromText("q4eej-kyaaa-aaaaa-aaaha-cai");
     // var users = Roles.Users([(self, [Roles.ALL])]);
-    
 
     stable var journals : Trie.Trie<Principal, BucketId> = Trie.empty();
     let ic : IC.Self = actor "aaaaa-aa";
@@ -97,7 +96,7 @@ actor Rabbithole {
                         if (Principal.equal(caller, user)) break exit(?invite.owner);
                     };
                     case _ {};
-                }
+                };
             };
             null;
         };
@@ -286,7 +285,7 @@ actor Rabbithole {
     // stable var depositDeque : Deque.Deque<Deposit> = Deque.empty<Deposit>();
     // var depositing : ?Deposit = null;
     // stable var depositQueue : List.List<Deposit> = List.nil<Deposit>();
-    
+
     public shared ({ caller }) func createInvoice() : async Invoice {
         assert not Principal.isAnonymous(caller);
         if (Nat.greaterOrEqual(invoices.size(), MAX_COUNT_OF_INVOICES)) {
@@ -303,9 +302,18 @@ actor Rabbithole {
                 let now : Time.Time = Time.now();
                 let timerId : Nat = Timer.recurringTimer(
                     #seconds INVOICE_CHECK_INTERVAL_SECONDS,
-                    func job() : async () { await checkInvoice(caller); }
+                    func job() : async () { await checkInvoice(caller) }
                 );
-                let newInvoice : Invoice = { id; owner = caller; amount; stage; createdAt = now; expiredAt = now + INVOICE_EXPIRY_NANOS; timerId = ?timerId; errorMessage = null };
+                let newInvoice : Invoice = {
+                    id;
+                    owner = caller;
+                    amount;
+                    stage;
+                    createdAt = now;
+                    expiredAt = now + INVOICE_EXPIRY_NANOS;
+                    timerId = ?timerId;
+                    errorMessage = null;
+                };
                 invoices.put(caller, newInvoice);
                 newInvoice;
             };
@@ -331,7 +339,7 @@ actor Rabbithole {
             func(owner, invoice) {
                 let timerId : Nat = Timer.recurringTimer(
                     #seconds INVOICE_CHECK_INTERVAL_SECONDS,
-                    func job() : async () { await checkInvoice(owner); }
+                    func job() : async () { await checkInvoice(owner) }
                 );
                 let now = Time.now();
                 if (invoice.stage == #active and now < invoice.expiredAt) ?{ invoice with timerId = ?timerId } else null;
@@ -357,11 +365,11 @@ actor Rabbithole {
 
     func checkInvoice(owner : Principal) : async () {
         Debug.print("[main] beforeCheckInvoice " # debug_show ({ owner }));
-        switch(invoices.get(owner)) {
+        switch (invoices.get(owner)) {
             case null {};
             case (?invoice) {
                 let now : Time.Time = Time.now();
-                switch(invoice.stage, invoice.timerId) {
+                switch (invoice.stage, invoice.timerId) {
                     case (#paid, ?timerId) {
                         Timer.cancelTimer(timerId);
                         let updated : Invoice = { invoice with timerId = null };
@@ -376,7 +384,7 @@ actor Rabbithole {
                         } else if (now > invoice.expiredAt) {
                             Timer.cancelTimer(timerId);
                             invoices.delete(invoice.owner);
-                        }
+                        };
                     };
                     case (_, _) {};
                 };
@@ -384,7 +392,7 @@ actor Rabbithole {
         };
     };
 
-    public shared ({ caller }) func createJournal(invoiceId : ID) : async Result.Result<(), TransferNotifyError or { #notFound; #wrongStage; }> {
+    public shared ({ caller }) func createJournal(invoiceId : ID) : async Result.Result<(), TransferNotifyError or { #notFound; #wrongStage }> {
         assert not Principal.isAnonymous(caller);
         switch (invoices.get(caller)) {
             case null #err(#notFound);
@@ -394,13 +402,13 @@ actor Rabbithole {
 
     //NOTE - создание предоплаченного журнала
     func createJournal_(invoice : Invoice) : async Result.Result<(), TransferNotifyError or { #wrongStage }> {
-        switch(invoice.stage) {
+        switch (invoice.stage) {
             case (#paid) {
                 // также проверяем наличие журнала у пользователя
                 let updated : Invoice = switch (Trie.get<Principal, BucketId>(journals, Utils.keyPrincipal(invoice.owner), Principal.equal)) {
-                    case null { { invoice with stage = #createCanister(invoice.amount) }; };
+                    case null { { invoice with stage = #createCanister(invoice.amount) } };
                     // если журнал уже есть, то переходим к шагу возвращения неиспользованных средств в журнал пользователя
-                    case (?bucketId) { { invoice with stage = #transferUnusedFunds(bucketId) }; };
+                    case (?bucketId) { { invoice with stage = #transferUnusedFunds(bucketId) } };
                 };
                 invoices.put(invoice.owner, updated);
                 await createJournal_(updated);
@@ -562,13 +570,18 @@ actor Rabbithole {
             #seconds INVITE_CHECK_INTERVAL_SECONDS,
             func job() : async () {
                 let now = Time.now();
-                invites := TrieMap.map<Text, Invite, Invite>(invites, Text.equal, Text.hash, func(id, invite) {
-                    if (invite.status == #active and now > invite.expiredAt) {
-                        topupQueue := List.push<Topup>({ canisterId = invite.canisterId; amount = invite.cycles }, topupQueue);
-                        return { invite with status = #expired };
-                    };
-                    invite;
-                });
+                invites := TrieMap.map<Text, Invite, Invite>(
+                    invites,
+                    Text.equal,
+                    Text.hash,
+                    func(id, invite) {
+                        if (invite.status == #active and now > invite.expiredAt) {
+                            topupQueue := List.push<Topup>({ canisterId = invite.canisterId; amount = invite.cycles }, topupQueue);
+                            return { invite with status = #expired };
+                        };
+                        invite;
+                    }
+                );
             }
         );
     };
@@ -584,7 +597,7 @@ actor Rabbithole {
     };
 
     var topupTimerId : ?TimerId = null;
-    
+
     func startTopup() : () {
         if (Option.isSome(topupTimerId)) return;
         topupTimerId := ?Timer.recurringTimer(#seconds INVITE_REFUND_INTERVAL_SECONDS, topup);
@@ -605,7 +618,7 @@ actor Rabbithole {
         startMonitorInvites();
         startMonitorInvoices();
     };
-    
+
     // создание приглашения, запускается только из дочерней канистры-журнала
     public shared ({ caller }) func createInvite(value : InviteCreate) : async () {
         assert not Principal.isAnonymous(caller) and isJournal(caller);
@@ -648,7 +661,7 @@ actor Rabbithole {
     };
 
     public query ({ caller }) func checkInvite(id : ID) : async Result.Result<(), InviteError> {
-        switch(invites.get(id)) {
+        switch (invites.get(id)) {
             case null #err(#notFound);
             case (?{ status }) {
                 switch (status) {
@@ -657,7 +670,7 @@ actor Rabbithole {
                     case (#active) #ok();
                 };
             };
-        }
+        };
     };
 
     public shared ({ caller }) func deleteInvite(id : ID) : async Result.Result<(), InviteDeleteError> {
@@ -683,14 +696,14 @@ actor Rabbithole {
             };
         };
     };
-    
+
     public query ({ caller }) func getInvites() : async [Invite] {
         assert not Principal.isAnonymous(caller);
         let buffer : Buffer.Buffer<Invite> = Buffer.Buffer<Invite>(0);
         for (invite in invites.vals()) {
             if (Principal.equal(invite.owner, caller)) {
                 buffer.add(invite);
-            }
+            };
         };
         Buffer.toArray(buffer);
     };
@@ -705,15 +718,15 @@ actor Rabbithole {
     /* -------------------------------------------------------------------------- */
 
     func isJournal(caller : Principal) : Bool {
-        Trie.some<Principal, BucketId>(journals, func (owner, bucketId) = Principal.equal(caller, bucketId));
+        Trie.some<Principal, BucketId>(journals, func(owner, bucketId) = Principal.equal(caller, bucketId));
     };
 
     stable var registrationMode : RegistrationMode = #prepaid;
-    public shared ({ caller }) func setRegistrationMode(mode : RegistrationMode): async () {
+    public shared ({ caller }) func setRegistrationMode(mode : RegistrationMode) : async () {
         assert not Principal.isAnonymous(caller) and Utils.isAdmin(caller);
         registrationMode := mode;
     };
-    public query ({ caller }) func getRegistrationMode(): async RegistrationMode {
+    public query ({ caller }) func getRegistrationMode() : async RegistrationMode {
         assert not Principal.isAnonymous(caller);
         registrationMode;
     };

@@ -113,14 +113,14 @@ module {
                             };
                             case (#Err(err)) {
                                 depositing := null;
-                                Util.setUserStatus(user, ?#DepositError(debug_show (err)));
+                                Util.setUserStatus(user, ? #DepositError(debug_show (err)));
                             };
                         };
                     } catch (err) {
                         // TODO: notify user?
                         ignore log("AfterTransfer " # show_error(err));
                         depositing := null;
-                        Util.setUserStatus(user, ?#DepositError(Error.message(err)));
+                        Util.setUserStatus(user, ? #DepositError(Error.message(err)));
                     };
                 };
                 case (?(deposit, #Notify(block_height))) {
@@ -155,9 +155,9 @@ module {
                             );
                             ignore log("TopUpCycle " # debug_show ({ user = beneficiary.id; delegate = beneficiary.id != user.id; old = old_cycle; new = beneficiary.balance.cycle }));
                         };
-                        Util.setUserStatus(user, ?#DepositSuccess);
+                        Util.setUserStatus(user, ? #DepositSuccess);
                     } catch (err) {
-                        Util.setUserStatus(user, ?#DepositError(Error.message(err)));
+                        Util.setUserStatus(user, ? #DepositError(Error.message(err)));
                         ignore log("AfterNotify " # show_error(err));
                     };
                     depositing := null;

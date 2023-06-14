@@ -15,7 +15,7 @@ import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
     imports: [MatIconModule, MatButtonModule, MatTooltipModule, ClipboardModule, TranslocoModule]
 })
 export class CopyIDComponent {
-    @Input() content: string = '';
+    @Input() content = '';
     private clipboard = inject(Clipboard);
 
     constructor() {

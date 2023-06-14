@@ -124,7 +124,7 @@ export class BreadcrumbsComponent {
         const entered = this.entered();
         let parentPath: string | null = null;
         if (entered !== 'root' && isString(entered)) {
-            let item = this.items().find(({ id }) => id === entered);
+            const item = this.items().find(({ id }) => id === entered);
             if (item) {
                 parentPath = isUndefined(item.path) ? item.name : `${item.path}/${item.name}`;
             }
@@ -141,7 +141,7 @@ export class BreadcrumbsComponent {
         this.dragEnterCount.update(count => count + 1);
     }
 
-    handleDragleave(event: DragEvent) {
+    handleDragleave() {
         this.dragEnterCount.update(count => count - 1);
         if (this.dragEnterCount() === 0) {
             this.entered.set(null);

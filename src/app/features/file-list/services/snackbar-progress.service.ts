@@ -42,7 +42,8 @@ export class SnackbarProgressService extends RxState<State> {
     dialog = inject(MatDialog);
     translocoService = inject(TranslocoService);
     private tasks = new Subject<{
-        value: any;
+        value: Task;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handler: (item: any) => Observable<unknown>;
     }>();
     readonly concurrentTasksCount = 5;
@@ -74,7 +75,7 @@ export class SnackbarProgressService extends RxState<State> {
             'progressMessage',
             this.$.pipe(
                 map(({ name, done, failed, total, actions }) => ({ name, done, failed, total, actions })),
-                filter(({ actions, done, failed, total }) => actions.length > 0 && total > 0),
+                filter(({ actions, total }) => actions.length > 0 && total > 0),
                 distinctUntilChanged(isEqual),
                 map(({ name, done, failed, total, actions }) => {
                     const isPreparing = done === 0 && failed === 0;
@@ -181,7 +182,8 @@ export class SnackbarProgressService extends RxState<State> {
             });
     }
 
-    add<T extends Task, R = unknown>(action: Action, items: T[], handler: (item: T) => Observable<R>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    add<T extends Task>(action: Action, items: T[], handler: (item: any) => Observable<unknown>) {
         let { snackBarRef } = this.get();
 
         if (!snackBarRef) {

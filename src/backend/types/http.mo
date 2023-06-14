@@ -24,7 +24,7 @@ module {
     public type StreamingStrategy = {
         #Callback : {
             token : StreamingCallbackToken;
-            callback: query StreamingCallbackToken -> async StreamingCallbackHttpResponse;
+            callback : query StreamingCallbackToken -> async StreamingCallbackHttpResponse;
         };
     };
 

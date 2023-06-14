@@ -10,8 +10,8 @@ import { has } from 'lodash';
 import { AuthStatus, AUTH_RX_STATE } from '@core/stores';
 import { Profile } from '@core/models/profile';
 import { NotificationService } from './notification.service';
-
-type CanisterResult = { ok: null } | { err: any };
+import { UsernameError } from '@declarations/rabbithole/rabbithole.did';
+import { CanisterResult } from '@core/models';
 
 export interface State {
     profile: Profile | null;
@@ -60,14 +60,14 @@ export class ProfileService extends RxState<State> {
         this.connect(merge(profile$, canInvite$));
     }
 
-    checkUsername(username: string): Observable<CanisterResult> {
+    checkUsername(username: string): Observable<CanisterResult<null, UsernameError>> {
         return this.authState.select('actor').pipe(switchMap(actor => actor.checkUsername(username)));
     }
 
     checkUsernameValidator(): AsyncValidatorFn {
         return (control: AbstractControl): Observable<ValidationErrors | null> => {
             return this.checkUsername(control.value).pipe(
-                map((response: CanisterResult) => {
+                map((response: CanisterResult<null, UsernameError>) => {
                     if (has(response, 'err.minLength')) {
                         return { minLength: true };
                     } else if (has(response, 'err.maxLength')) {

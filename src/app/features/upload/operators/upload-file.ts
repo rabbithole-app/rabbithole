@@ -122,7 +122,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                         ),
                         map(response => {
                             if (has(response, 'err')) {
-                                let key = Object.keys(get(response, 'err') as unknown as CommitUploadError)[0];
+                                const key = Object.keys(get(response, 'err') as unknown as CommitUploadError)[0];
                                 throw new Error(`upload.commit.errors.${key}`);
                             }
 
