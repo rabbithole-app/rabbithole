@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { OverlayContentType } from '@core/models';
+import { OverlayContentType } from '@core/models/overlay';
 import { CustomOverlayRef } from '@core/components/overlay/custom-overlay-ref';
 
 @Component({

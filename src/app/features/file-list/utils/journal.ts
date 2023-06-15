@@ -27,7 +27,7 @@ export function toDirectoryExtended(directory: Directory): DirectoryExtended {
         color: fromNullableOption<JournalDirectoryColor, DirectoryColor>(directory.color, 'blue'),
         children: children ? [dirs, files] : undefined,
         path: fromNullable(directory.path)
-    } as DirectoryExtended;
+    };
 }
 
 export function toFileExtended(file: File): FileInfoExtended {

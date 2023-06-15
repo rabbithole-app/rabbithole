@@ -1,5 +1,17 @@
 import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, HostListener, ViewChild, inject, ElementRef, TemplateRef, Signal, computed } from '@angular/core';
+import {
+    Component,
+    ChangeDetectionStrategy,
+    HostListener,
+    ViewChild,
+    inject,
+    ElementRef,
+    TemplateRef,
+    Signal,
+    computed,
+    WritableSignal,
+    signal
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -16,7 +28,7 @@ import { RxFor } from '@rx-angular/template/for';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
-import { JournalItem, MenuItemAction } from '@features/file-list/models';
+import { DirectoryColor, DirectoryExtended, JournalItem, MenuItemAction } from '@features/file-list/models';
 import { ContextMenuService, JournalService } from '@features/file-list/services';
 import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
@@ -86,9 +98,9 @@ export class FileListComponent {
     get itemsMenuTrigger(): MatMenuTrigger {
         return this.state.get('itemsMenuTrigger');
     }
-    readonly folderColors: string[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
+    readonly folderColors: DirectoryColor[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
     folderColor = 'blue';
-    nextColor!: string;
+    hoverColor: WritableSignal<string | null> = signal(null);
     route = inject(ActivatedRoute);
     @ViewChild('contextItemsTemplate', { read: TemplateRef }) set contextItemsTemplate(value: TemplateRef<HTMLElement>) {
         this.fileListService.contextMenuTemplate.set(value);
@@ -157,5 +169,9 @@ export class FileListComponent {
     handleEmptyContextMenu(event: MouseEvent) {
         event.preventDefault();
         this.handleContextMenu({ event, origin: this.emptyRef });
+    }
+
+    handleChangeColor(items: DirectoryExtended[], color: DirectoryColor) {
+        this.journalService.updateDir(items, { color });
     }
 }

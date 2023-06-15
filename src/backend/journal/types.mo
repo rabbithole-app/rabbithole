@@ -43,6 +43,7 @@ module {
     public type DirectoryMoveError = { #invalidParams; #notFound; #sourceNotFound; #targetNotFound };
     public type FileMoveError = { #invalidParams; #notFound; #sourceNotFound; #targetNotFound };
     public type NotFoundError = { #notFound };
+    public type AlreadyExistsError<T> = { #alreadyExists : T };
     public type DirectoryState = {
         id : ?ID;
         dirs : [Directory];

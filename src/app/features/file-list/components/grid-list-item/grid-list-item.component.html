@@ -1,25 +1,23 @@
 <div class="item">
     <div class="icon-container">
-        <ng-container [ngSwitch]="data.type">
-            <ng-container *ngSwitchCase="'folder'">
-                <!--<mat-icon svgIcon="filetype:folder" [class]="'folder folder&#45;&#45;' + (loading || disabled ? 'gray' : folderColor)">
+        <ng-container *rxIf="isDirectory(data); else fileIcon">
+            <!--<mat-icon svgIcon="filetype:folder" [class]="'folder folder&#45;&#45;' + (loading || disabled ? 'gray' : folderColor)">
                     &lt;!&ndash;<ng-container [ngTemplateOutlet]="progressTemplate"></ng-container>&ndash;&gt;
                 </mat-icon>-->
-                <app-animated-folder [color]="loading || disabled ? 'gray' : folderColor" [active]="active ?? false">
-                    <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:users"></mat-icon> -->
-                </app-animated-folder>
-            </ng-container>
-            <ng-container *ngSwitchDefault>
-                <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
-            </ng-container>
+            <app-animated-folder [color]="loading || disabled ? 'gray' : data.color" [active]="active ?? false">
+                <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:users"></mat-icon> -->
+            </app-animated-folder>
         </ng-container>
+        <ng-template #fileIcon>
+            <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
+        </ng-template>
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;loading" *ngIf="loading" @zoomOutOnLeave>
             <mat-spinner mode="indeterminate" diameter="20"></mat-spinner>
         </div>-->
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;success" *ngIf="statusIcon$ | async" [@zoomInOnEnter]="statusAnimationParams" [@zoomOutOnLeave]="statusAnimationParams">
             <fa-icon icon="check"></fa-icon>
         </div>-->
-        <div class="progress-wrapper" *ngIf="loading" @fadeOutDownOnLeave>
+        <div class="progress-wrapper" *rxIf="loading" @fadeOutDownOnLeave>
             <mat-progress-bar mode="indeterminate" class="folder"></mat-progress-bar>
         </div>
     </div>

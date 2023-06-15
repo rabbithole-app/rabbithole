@@ -6,7 +6,7 @@ import { AsyncSubject, fromEvent, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 
 import { overlayCloseAnimation, overlayOpenAnimation } from '@core/animations';
-import { OverlayCloseEvent, OverlayOpenEvent } from '@core/models';
+import { OverlayCloseEvent, OverlayOpenEvent } from '@core/models/overlay';
 
 // R = Response Data Type, T = тип переданных данных
 export class CustomOverlayRef<R = any, T = any> {

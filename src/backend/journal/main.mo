@@ -70,6 +70,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type InviteCreate = Types.InviteCreate;
     type CreatePath = JournalTypes.CreatePath;
     type NotFoundError = JournalTypes.NotFoundError;
+    type AlreadyExistsError<T> = JournalTypes.AlreadyExistsError<T>;
 
     let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
     let CYCLE_SHARE = 500_000_000_000;
@@ -108,7 +109,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         journal.checkDirname(dir);
     };
 
-    public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, { #notFound; #alreadyExists }> {
+    public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>> {
         assert validateCaller(caller);
         journal.updateDir(action, fields);
     };

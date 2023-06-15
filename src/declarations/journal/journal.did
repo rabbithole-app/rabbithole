@@ -82,7 +82,7 @@ type Result_1 =
 type Result = 
  variant {
    err: variant {
-          alreadyExists;
+          alreadyExists: Directory;
           notFound;
         };
    ok: Directory;

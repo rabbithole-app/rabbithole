@@ -5,7 +5,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { AnimationBuilder } from '@angular/animations';
 import { take } from 'rxjs/operators';
 
-import { OverlayParams } from '@core/models';
+import { OverlayParams } from '@core/models/overlay';
 import { CustomOverlayRef, OverlayComponent } from '@core/components/overlay';
 
 @Injectable()

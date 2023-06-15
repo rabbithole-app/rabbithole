@@ -33,6 +33,9 @@ module {
     type FileMoveError = Types.FileMoveError;
     type DirectoryState = Types.DirectoryState;
     type DirectoryStateError = Types.DirectoryStateError;
+    type NotFoundError = Types.NotFoundError;
+    type AlreadyExistsError<T> = Types.AlreadyExistsError<T>;
+
     public type Journal = {
         putDirs : Iter.Iter<(Text, Directory)> -> ();
         // putDirs : [(Text, Directory)] -> ();
@@ -49,7 +52,7 @@ module {
         moveFile : (Text, ?Text) -> async Result.Result<(), FileMoveError>;
         deleteDir : Text -> async Result.Result<(), { #notFound }>;
         deleteFile : Text -> async Result.Result<(), { #notFound }>;
-        updateDir : (DirectoryAction, DirectoryUpdatableFields) -> Result.Result<Directory, { #notFound; #alreadyExists }>;
+        updateDir : (DirectoryAction, DirectoryUpdatableFields) -> Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>>;
         showDirectoriesTree : ?ID -> Text;
         createPaths : ([Text], [ID], ?ID) -> async [(Text, ID)];
         putFile : FileCreate -> async Result.Result<File, FileCreateError>;
@@ -387,7 +390,7 @@ module {
             #ok();
         };
 
-        public func updateDir(action : DirectoryAction, fields : DirectoryUpdatableFields) : Result.Result<Directory, { #notFound; #alreadyExists }> {
+        public func updateDir(action : DirectoryAction, fields : DirectoryUpdatableFields) : Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>> {
             switch (action) {
                 case (#rename id) {
                     let ?(path, dir) = findDirEntry(id) else return #err(#notFound);
@@ -403,7 +406,7 @@ module {
                             ignore Map.put(directories, thash, path, directory);
                             #ok(directory);
                         };
-                        case (?v) #err(#alreadyExists);
+                        case (?v) #err(#alreadyExists v);
                     };
                 };
                 case (#changeColor id) {

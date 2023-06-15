@@ -179,7 +179,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const Result = IDL.Variant({
         ok: Directory,
-        err: IDL.Variant({ alreadyExists: IDL.Null, notFound: IDL.Null })
+        err: IDL.Variant({ alreadyExists: Directory, notFound: IDL.Null })
     });
     const TransferResult = IDL.Variant({
         Ok: BlockIndex,

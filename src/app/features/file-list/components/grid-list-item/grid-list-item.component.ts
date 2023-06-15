@@ -1,37 +1,17 @@
-import {
-    Component,
-    ChangeDetectionStrategy,
-    Input,
-    ElementRef,
-    HostBinding,
-    Inject,
-    Output,
-    EventEmitter,
-    NgZone,
-    ChangeDetectorRef,
-    inject
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, ElementRef, HostBinding, Output, EventEmitter, inject } from '@angular/core';
 import { Highlightable } from '@angular/cdk/a11y';
 import { Point } from '@angular/cdk/drag-drop';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { RxState } from '@rx-angular/state';
 import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
-import { WINDOW } from 'ngx-window-token';
+import { RxIf } from '@rx-angular/template/if';
 
-import { JournalItem } from '@features/file-list/models';
+import { DirectoryExtended, JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { ContextMenuService } from '@features/file-list/services';
-import { OverlayService } from '@core/services';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 import { addFASvgIcons } from '@core/utils';
-
-interface State {
-    data: JournalItem;
-}
 
 @Component({
     selector: 'app-grid-list-item',
@@ -39,19 +19,11 @@ interface State {
     styleUrls: ['./grid-list-item.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     animations: [fadeInOnEnterAnimation({ duration: 250 }), fadeOutOnLeaveAnimation({ duration: 250 }), fadeOutDownOnLeaveAnimation({ duration: 250 })],
-    providers: [RxState],
-    imports: [CommonModule, AnimatedFolderComponent, MatIconModule, MatProgressBarModule],
+    imports: [RxIf, AnimatedFolderComponent, MatIconModule, MatProgressBarModule],
     standalone: true
 })
 export class GridListItemComponent implements Highlightable {
-    @Input()
-    set data(data: JournalItem) {
-        this.state.set({ data });
-    }
-    get data(): JournalItem {
-        return this.state.get('data');
-    }
-
+    @Input({ required: true }) data!: JournalItem;
     @Input() active?: boolean = false;
     @Output() openContext: EventEmitter<{ trigger: MatMenuTrigger; position: Point }> = new EventEmitter<{ trigger: MatMenuTrigger; position: Point }>();
     folderColor = 'blue';
@@ -74,6 +46,7 @@ export class GridListItemComponent implements Highlightable {
 
     hostAnimationParams = { value: '', params: { duration: 250, delay: 0 } };
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
+    element = inject(ElementRef);
 
     @HostBinding('class.active') get isActive() {
         return this._isActive;
@@ -94,15 +67,7 @@ export class GridListItemComponent implements Highlightable {
         return this.hostAnimationParams;
     }*/
 
-    constructor(
-        public element: ElementRef,
-        private overlayService: OverlayService,
-        private contextMenuService: ContextMenuService,
-        private ngZone: NgZone,
-        private cdr: ChangeDetectorRef,
-        private state: RxState<State>,
-        @Inject(WINDOW) private window: Window
-    ) {
+    constructor() {
         addFASvgIcons(['users'], 'far');
     }
 
@@ -114,5 +79,9 @@ export class GridListItemComponent implements Highlightable {
 
     setInactiveStyles(): void {
         this._isActive = false;
+    }
+
+    isDirectory(data: JournalItem): data is DirectoryExtended {
+        return data.type === 'folder';
     }
 }

@@ -54,14 +54,14 @@
         <!--<h3 *ngFor="let item of items" class="mat-typography">{{ item.name }} [{{ item.id }}]</h3>-->
         <ng-container *rxIf="everyFolder">
             <div class="choose-color">
-                <div class="label" [innerHTML]="t('context.color', { color: nextColor })"></div>
+                <div class="label" [innerHTML]="t('context.color', { color: hoverColor() })"></div>
                 <div class="tag-colors">
                     <button
                         *rxFor="let color of folderColors"
                         [class]="'tag-color tag-color--' + color"
-                        (mouseenter)="nextColor = color"
-                        (mouseleave)="nextColor = ''"
-                        (click)="folderColor = color">
+                        (mouseenter)="hoverColor.set(color)"
+                        (mouseleave)="hoverColor.set(null)"
+                        (click)="handleChangeColor(items, color)">
                         <mat-icon svgIcon="far:plus"></mat-icon>
                     </button>
                 </div>

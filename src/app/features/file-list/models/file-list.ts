@@ -1,5 +1,8 @@
+import { OptKeys } from '@core/models';
+import { DirectoryColor as OptDirectoryColor } from '@declarations/journal/journal.did';
+
 export type JournalItemType = 'file' | 'folder';
-export type DirectoryColor = 'blue' | 'gray' | 'orange' | 'pink' | 'purple' | 'green' | 'yellow';
+export type DirectoryColor = OptKeys<OptDirectoryColor>;
 
 type ItemsCommonAttrs = {
     loading?: boolean;

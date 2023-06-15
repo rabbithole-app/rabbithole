@@ -104,7 +104,6 @@ updateJournal
         withLatestFrom(state.select('journal')),
         switchMap(([path, actor]) =>
             from(actor.getJournal(toNullable(path || undefined))).pipe(
-                tap(console.log),
                 map(response => {
                     if (has(response, 'err')) {
                         const err = Object.keys(get(response, 'err') as unknown as DirectoryStateError)[0];

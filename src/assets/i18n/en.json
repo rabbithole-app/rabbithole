@@ -185,6 +185,13 @@
                 "warning": "An error occurred while removing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
                 "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} removed} other {Removed # {type, select, 0 {files} 1 {directories} other {items}}}}",
                 "failed": "An error occurred while removing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
+            },
+            "update": {
+                "prepare": "Preparing to update {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Updated{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while updating {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} updated} other {Updated # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while updating {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
             }
             
         },

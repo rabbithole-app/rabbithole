@@ -10,7 +10,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { ProgressMessageSnackbarComponent } from '@features/file-list/components/progress-message-snackbar/progress-message-snackbar.component';
 import { ShowErrorsDialogComponent } from '@features/file-list/components/show-errors-dialog/show-errors-dialog.component';
 
-type Action = 'createPath' | 'move' | 'remove';
+type Action = 'createPath' | 'move' | 'remove' | 'update';
 enum ItemType {
     File,
     Folder,

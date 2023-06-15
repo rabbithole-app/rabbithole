@@ -16,10 +16,13 @@ import {
     DirectoryCreateError,
     DirectoryMoveError,
     DirectoryState,
+    DirectoryUpdatableFields,
+    DirectoryColor as OptDirectoryColor,
     _SERVICE as JournalBucketActor,
-    NotFoundError
+    NotFoundError,
+    Result
 } from '@declarations/journal/journal.did';
-import { DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { DirectoryColor, DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';
 import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
 import { FileListService } from './file-list.service';
@@ -192,6 +195,57 @@ export class JournalService {
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
             .subscribe(() => this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: false }));
+    }
+
+    #prepareFields(
+        fields: Partial<{
+            name: string;
+            color: DirectoryColor;
+            parentId: string;
+        }>
+    ): DirectoryUpdatableFields {
+        return {
+            name: toNullable(fields.name),
+            color: toNullable(fields.color ? <OptDirectoryColor>{ [fields.color]: null } : undefined),
+            parentId: toNullable(fields.parentId)
+        };
+    }
+
+    updateDir(
+        selected: DirectoryExtended[],
+        updateFields: Partial<{
+            name: string;
+            color: DirectoryColor;
+            parentId: string;
+        }>
+    ) {
+        const selectedIds = selected.map(({ id }) => id);
+        this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
+        const fields = this.#prepareFields(updateFields);
+        const handler: (dir: DirectoryExtended) => Observable<unknown> = dir =>
+            this.wrapActionHandler(actor => actor.updateDirectory({ changeColor: dir.id }, fields)).pipe(
+                map(result => {
+                    if (has(result, 'err')) {
+                        const key = Object.keys(get(result, 'err') as unknown as NotFoundError | { alreadyExists: Directory })[0];
+                        throw Error(this.translocoService.translate(`fileList.directory.update.messages.err.${key}`));
+                    }
+
+                    return toDirectoryExtended(get(result, 'ok') as unknown as Directory);
+                }),
+                tap({
+                    error: err => console.error(err),
+                    next: value => this.#fileListService.updateItems(id => id === dir.id, value),
+                    finalize: () => {
+                        this.#fileListService.updateItems(id => id === dir.id, { disabled: false });
+                        this.#fileListService.updateBreadcrumbs(id => id === dir.id, { loading: false });
+                    }
+                })
+            );
+        this.snackbarProgressService.add<DirectoryExtended>('update', selected, handler);
+        this.snackbarProgressService.snackBarRef
+            ?.afterDismissed()
+            .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
+            .subscribe(() => this.#fileListService.update());
     }
 
     get(id?: string): Observable<Partial<DirectoryFlatNode>[]> {

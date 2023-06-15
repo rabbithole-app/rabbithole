@@ -127,7 +127,7 @@ export type NotifyError =
     | { Other: { error_message: string; error_code: bigint } }
     | { Processing: null }
     | { TransactionTooOld: BlockIndex__1 };
-export type Result = { ok: Directory } | { err: { alreadyExists: null } | { notFound: null } };
+export type Result = { ok: Directory } | { err: { alreadyExists: Directory } | { notFound: null } };
 export type Result_1 = { ok: null } | { err: FileMoveError };
 export type Result_2 = { ok: null } | { err: DirectoryMoveError };
 export type Result_3 = { ok: DirectoryState } | { err: DirectoryStateError };
