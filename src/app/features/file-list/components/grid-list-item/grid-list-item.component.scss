@@ -168,6 +168,8 @@ mat-icon.file-icon {
     display: flex;
     align-items: flex-end;
     height: 74px;
+    justify-content: center;
+    max-width: 80px;
     position: relative;
 
     .spinner-wrapper {
@@ -206,4 +208,10 @@ mat-icon.file-icon {
     left: 0.375rem;
     bottom: 0.375rem;
     z-index: 100;
+}
+
+.thumbnail {
+    user-select: none;
+    pointer-events: none;
+    border-radius: 3px;
 }

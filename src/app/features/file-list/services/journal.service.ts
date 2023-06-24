@@ -19,8 +19,7 @@ import {
     DirectoryUpdatableFields,
     DirectoryColor as OptDirectoryColor,
     _SERVICE as JournalBucketActor,
-    NotFoundError,
-    Result
+    NotFoundError
 } from '@declarations/journal/journal.did';
 import { DirectoryColor, DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { toDirectoryExtended } from '@features/file-list/utils';

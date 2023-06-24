@@ -29,6 +29,7 @@ export type FileUpload = {
     fileSize: number;
     contentType: string;
     sha256?: Uint8Array;
+    thumbnail?: string;
 };
 
 export type BatchInfo = {

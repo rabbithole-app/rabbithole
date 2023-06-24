@@ -20,7 +20,8 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
             name: item.name,
             parentId: toNullable<string>(item.parentId),
             fileSize: BigInt(item.fileSize),
-            sha256: toNullable(item.sha256)
+            sha256: toNullable(item.sha256),
+            thumbnail: toNullable(item.thumbnail)
         };
         const hasSameCanisterId = (canisterId: string) => canisterId === state.canisterId;
         const hasValidBatch = has(state, 'batch.id') && differenceInSeconds((state.batch as BatchInfo).expiredAt, Date.now()) > 0;

@@ -3,6 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export interface AssetKey {
     sha256: [] | [Uint8Array | number[]];
+    thumbnail: [] | [string];
     name: string;
     fileSize: bigint;
     parentId: [] | [ID];
@@ -26,6 +27,7 @@ export type CommitUploadError =
     | { batchExpired: null };
 export interface File {
     id: ID__3;
+    thumbnail: [] | [string];
     name: string;
     createdAt: Time;
     bucketId: BucketId;
@@ -33,7 +35,7 @@ export interface File {
     updatedAt: Time;
     parentId: [] | [ID__3];
 }
-export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File };
+export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
 export type HeaderField = [string, string];
 export interface HttpRequest {
     url: string;
@@ -104,4 +106,4 @@ export type Time = bigint;
 export interface UploadChunk {
     chunkId: bigint;
 }
-export type _SERVICE = Storage;
+export interface _SERVICE extends Storage {}

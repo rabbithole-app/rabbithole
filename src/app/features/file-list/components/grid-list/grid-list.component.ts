@@ -13,7 +13,6 @@ import {
     Output,
     EventEmitter,
     Inject,
-    Renderer2,
     ChangeDetectorRef,
     inject,
     signal,
@@ -21,10 +20,10 @@ import {
     computed,
     Signal
 } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { ActiveDescendantKeyManager } from '@angular/cdk/a11y';
-import { DragDrop, Point } from '@angular/cdk/drag-drop';
+import { Point } from '@angular/cdk/drag-drop';
 import { SelectionModel } from '@angular/cdk/collections';
 import { DndDropEvent, DndModule } from 'ngx-drag-drop';
 import { RxState } from '@rx-angular/state';
@@ -48,6 +47,9 @@ import {
 import { filter, map, pluck, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PushPipe } from '@rx-angular/template/push';
+import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
 
 import { GridListItemComponent } from '@features/file-list/components/grid-list-item/grid-list-item.component';
 import { DirectoryExtended, JournalItem } from '@features/file-list/models';
@@ -55,7 +57,6 @@ import { DragPreviewComponent } from '@features/file-list/components/drag-previe
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { AnimateCssGridDirective } from '@core/directives';
 import { addSvgIcons } from '@features/file-list/utils';
-import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
 import { OverlayService } from '@core/services';
 import { JournalService } from '@features/file-list/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
@@ -81,16 +82,8 @@ interface State {
     templateUrl: './grid-list.component.html',
     styleUrls: ['./grid-list.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [
-        RxState,
-        RxEffects,
-        OverlayService,
-        {
-            provide: FILE_LIST_ICONS_CONFIG,
-            useValue: GRAY_ICONS_CONFIG
-        }
-    ],
-    imports: [CommonModule, GridListItemComponent, DragPreviewComponent, DndModule, AnimateCssGridDirective],
+    providers: [RxState, RxEffects, OverlayService],
+    imports: [PushPipe, RxFor, RxIf, GridListItemComponent, DragPreviewComponent, AnimateCssGridDirective, DndModule],
     standalone: true
 })
 export class GridListComponent implements OnDestroy, AfterViewInit {
@@ -126,7 +119,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         return this.state.get().activeDirectory;
     }
 
-    private selectingPause: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    #selectingPause: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
     animationDisabled$: Observable<boolean> = this.state.select('animationDisabled');
@@ -138,8 +131,8 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         @Inject(DOCUMENT) public document: Document,
         private element: ElementRef,
         private router: Router,
-        private renderer: Renderer2,
-        private dragDropService: DragDrop,
+        // private renderer: Renderer2,
+        // private dragDropService: DragDrop,
         private cdr: ChangeDetectorRef,
         // инъекция через конструктор позволяет передать тип состояния
         private state: RxState<State>
@@ -265,7 +258,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         this.hostResizeObserver.observe(this.element.nativeElement);
 
         // очистка выделения при клике вне рабочей области
-        this.selectingPause
+        this.#selectingPause
             .asObservable()
             .pipe(
                 switchMap(value =>

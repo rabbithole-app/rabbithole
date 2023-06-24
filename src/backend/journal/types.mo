@@ -21,6 +21,8 @@ module {
         children : ?([Directory], [File]);
         // добавляется для хлебных крошек
         path : ?Text;
+        // размер данных в папке
+        size : ?Nat;
     };
     public type DirectoryError = {
         #notFound;
@@ -28,7 +30,10 @@ module {
         #illegalCharacters;
         #notAuthorized;
     };
-    public type File = CommonAttributes and {
+    public type Thumbnail = {
+        thumbnail : ?Text;
+    };
+    public type File = CommonAttributes and Thumbnail and {
         fileSize : Nat;
         bucketId : BucketId;
     };
@@ -65,10 +70,9 @@ module {
         id : ID;
         name : Text;
         parentId : ?ID;
-        // token : ?Text;
         fileSize : Nat;
         bucketId : BucketId;
-    };
+    } and Thumbnail;
     public type Canister = {
         canisterId : BucketId;
         owner : Principal;

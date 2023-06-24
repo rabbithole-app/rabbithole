@@ -39,6 +39,7 @@
     "@rx-angular/cdk": "^15.0.0",
     "@rx-angular/state": "^15.0.0",
     "@rx-angular/template": "^15.2.0",
+    "@silvia-odwyer/photon": "^0.3.2",
     "angular-animations": "^0.11.0",
     "animate-css-grid": "^1.4.3",
     "animejs": "^3.2.1",

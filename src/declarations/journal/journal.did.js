@@ -5,6 +5,7 @@ export const idlFactory = ({ IDL }) => {
     const BucketId = IDL.Principal;
     const FileCreate = IDL.Record({
         id: ID,
+        thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
@@ -13,6 +14,7 @@ export const idlFactory = ({ IDL }) => {
     const Time = IDL.Int;
     const File__1 = IDL.Record({
         id: ID,
+        thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         createdAt: Time,
         bucketId: BucketId,
@@ -22,6 +24,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const File = IDL.Record({
         id: ID,
+        thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         createdAt: Time,
         bucketId: BucketId,
@@ -73,6 +76,7 @@ export const idlFactory = ({ IDL }) => {
             createdAt: Time,
             path: IDL.Opt(IDL.Text),
             color: IDL.Opt(DirectoryColor),
+            size: IDL.Opt(IDL.Nat),
             children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
             updatedAt: Time,
             parentId: IDL.Opt(ID)
@@ -93,6 +97,7 @@ export const idlFactory = ({ IDL }) => {
         createdAt: Time,
         path: IDL.Opt(IDL.Text),
         color: IDL.Opt(DirectoryColor),
+        size: IDL.Opt(IDL.Nat),
         children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
         updatedAt: Time,
         parentId: IDL.Opt(ID)

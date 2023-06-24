@@ -1,23 +1,37 @@
-import { Component, ChangeDetectionStrategy, Input, OnChanges, SimpleChanges, ElementRef, Renderer2, HostBinding, OnDestroy, inject } from '@angular/core';
+import {
+    Component,
+    ChangeDetectionStrategy,
+    Input,
+    ElementRef,
+    Renderer2,
+    HostBinding,
+    OnDestroy,
+    inject,
+    WritableSignal,
+    signal,
+    Signal,
+    computed
+} from '@angular/core';
 import { Point } from '@angular/cdk/drag-drop';
 import { animate, AnimationBuilder, AnimationPlayer, group, keyframes, style } from '@angular/animations';
 import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
-import { head, isArray } from 'lodash';
-import { RxState } from '@rx-angular/state';
+import { MatIconModule } from '@angular/material/icon';
+import { RxIf } from '@rx-angular/template/if';
+import { LetDirective } from '@rx-angular/template/let';
 
 import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 
-interface DragPreviewState {
-    count: number;
-    blankIcon: string;
-    type?: 'file' | 'folder';
-    icon?: string;
+enum Mode {
+    File,
+    Folder,
+    Stack
 }
+type FileMode = { type: Mode.File; icon: string };
+type FolderMode = { type: Mode.Folder };
+type StackMode = { type: Mode.Stack; count: number };
 
 @Component({
     selector: 'app-drag-preview',
@@ -25,44 +39,33 @@ interface DragPreviewState {
     styleUrls: ['./drag-preview.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     animations: [bounceOutOnLeaveAnimation(), bounceInOnEnterAnimation()],
-    providers: [RxState],
-    imports: [CommonModule, MatIconModule, AnimatedFolderComponent],
+    imports: [RxIf, LetDirective, MatIconModule, AnimatedFolderComponent],
     standalone: true
 })
-export class DragPreviewComponent implements OnChanges, OnDestroy {
-    @Input() selected: Partial<JournalItem>[] | null = [];
+export class DragPreviewComponent implements OnDestroy {
+    @Input() set selected(value: Partial<JournalItem>[]) {
+        this.selectedItems.set(value);
+    }
     private player!: AnimationPlayer;
     private readonly width: number = 60;
     private readonly height: number = 60;
     private readonly hostAnimationParams = { value: '', params: { duration: 500, delay: 0 } };
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
-    state = inject(RxState<DragPreviewState>);
-
-    count$ = this.state.select('count');
-    type$ = this.state.select('type');
-    icon$ = this.state.select('icon');
-
-    get blankIcon() {
-        return this.state.get().blankIcon;
-    }
-
-    constructor(public element: ElementRef, private renderer: Renderer2, private animationBuilder: AnimationBuilder) {
-        this.state.set({
-            count: 0,
-            blankIcon: `${this.iconsConfig.namespace}:blank`
-        });
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['selected'] && isArray(changes['selected'].currentValue)) {
-            const selected = changes['selected'].currentValue;
-            const count = selected.length;
-            const item = count === 1 ? (head(selected) as JournalItem) : undefined;
-            const type = item ? item.type : undefined;
-            const filename = item?.type === 'file' ? item.name : undefined;
-            this.state.set({ count, type, icon: getIconByFilename(this.iconsConfig, filename) });
+    selectedItems: WritableSignal<Partial<JournalItem>[]> = signal([]);
+    mode: Signal<FileMode | FolderMode | StackMode> = computed(() => {
+        const selected = this.selectedItems();
+        const count = selected.length;
+        if (count === 1 && selected[0].type === 'file') {
+            return { type: Mode.File, icon: getIconByFilename(this.iconsConfig, selected[0].name) };
+        } else if (count === 1 && selected[0].type === 'folder') {
+            return { type: Mode.Folder };
         }
-    }
+
+        return { type: Mode.Stack, count };
+    });
+    readonly blankIcon = `${this.iconsConfig.namespace}:blank`;
+
+    constructor(public element: ElementRef, private renderer: Renderer2, private animationBuilder: AnimationBuilder) {}
 
     @HostBinding('@bounceInOnEnter') get bounceInOnEnter() {
         return this.hostAnimationParams;
@@ -98,5 +101,17 @@ export class DragPreviewComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         this.player?.destroy();
+    }
+
+    isSingleFile(mode: FileMode | FolderMode | StackMode): mode is FileMode {
+        return mode.type === Mode.File;
+    }
+
+    isFolder(mode: FileMode | FolderMode | StackMode): mode is FolderMode {
+        return mode.type === Mode.Folder;
+    }
+
+    isStack(mode: FileMode | FolderMode | StackMode): mode is StackMode {
+        return mode.type === Mode.Stack;
     }
 }

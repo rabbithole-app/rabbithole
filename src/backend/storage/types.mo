@@ -6,6 +6,7 @@ import JournalTypes "../journal/types";
 
 module {
     type ID = Types.ID;
+    type Thumbnail = JournalTypes.Thumbnail;
 
     public type Chunk = {
         batchId : Nat;
@@ -25,7 +26,7 @@ module {
         // A sha256 representation of the raw content calculated on the frontend side.
         // used for duplicate detection and certification
         sha256 : ?[Nat8];
-    };
+    } and Thumbnail;
 
     public type Asset = {
         id : ID;

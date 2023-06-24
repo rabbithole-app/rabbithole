@@ -4,30 +4,11 @@ import { RxState } from '@rx-angular/state';
 import { ActorSubclass, Identity } from '@dfinity/agent';
 import { arrayBufferToUint8Array, fromNullable } from '@dfinity/utils';
 import { Principal } from '@dfinity/principal';
-import {
-    Observable,
-    Subject,
-    concatWith,
-    connect,
-    exhaustMap,
-    filter,
-    first,
-    forkJoin,
-    from,
-    map,
-    merge,
-    mergeMap,
-    of,
-    skip,
-    switchMap,
-    takeUntil,
-    tap,
-    timer,
-    toArray,
-    withLatestFrom
-} from 'rxjs';
+import { Observable, Subject, connect, forkJoin, from, merge, of, timer, defer } from 'rxjs';
+import { catchError, concatWith, exhaustMap, filter, first, map, mergeMap, skip, switchMap, takeUntil, tap, toArray, withLatestFrom } from 'rxjs/operators';
 import { isNull, isUndefined } from 'lodash';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
+import { PhotonImage, resize } from '@silvia-odwyer/photon';
 
 import { createActor, loadIdentity } from '@core/utils';
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
@@ -39,6 +20,8 @@ import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 import { Bucket, FileUpload, FileUploadState, UPLOAD_STATUS } from '../models';
 import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '../constants';
 import { getStorageBySize, uploadFile } from '../operators';
+import { uint8ToBase64 } from '@features/file-list/utils';
+import { MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
 
 interface State {
     identity: Identity;
@@ -251,12 +234,28 @@ const fileUpload$ = files.asObservable().pipe(
             concatWith(
                 forkJoin([
                     from(crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data))).pipe(map(arrayBufferToUint8Array)),
-                    getStorage(BigInt(item.fileSize))
+                    getStorage(BigInt(item.fileSize)),
+                    defer(() => {
+                        let photonImage = PhotonImage.new_from_byteslice(arrayBufferToUint8Array(item.data));
+                        let thumbWidth = MAX_THUMBNAIL_WIDTH;
+                        let thumbHeight = MAX_THUMBNAIL_HEIGHT;
+                        const [width, height] = [photonImage.get_width(), photonImage.get_height()];
+                        if (width > height) {
+                            thumbHeight = Math.round(thumbWidth / (width / height));
+                        } else if (height > width) {
+                            thumbWidth = Math.round(thumbHeight / (height / width));
+                        }
+                        photonImage = resize(photonImage, thumbWidth, thumbHeight, 5);
+                        const thumbnail = ['image/gif', 'image/png'].includes(item.contentType)
+                            ? photonImage.get_base64()
+                            : `data:image/jpeg;base64,${uint8ToBase64(photonImage.get_bytes_jpeg(90))}`;
+                        return of(thumbnail);
+                    }).pipe(catchError(() => of(undefined)))
                 ]).pipe(
-                    switchMap(([sha256, storage]) =>
+                    switchMap(([sha256, storage, thumbnail]) =>
                         uploadFile({
                             storage,
-                            item: { ...item, sha256 },
+                            item: { ...item, sha256, thumbnail },
                             options: {
                                 concurrentChunksCount: CONCURRENT_CHUNKS_COUNT,
                                 chunkSize: CHUNK_SIZE

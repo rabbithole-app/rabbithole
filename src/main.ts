@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { APP_INITIALIZER, enableProdMode, importProvidersFrom } from '@angular/core';
 import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
@@ -32,7 +32,7 @@ bootstrapApplication(AppComponent, {
     providers: [
         importProvidersFrom(BrowserAnimationsModule, MatSnackBarModule, TranslocoRootModule),
         provideRouter(appRoutes, withPreloading(PreloadAllModules), withComponentInputBinding()),
-        provideHttpClient(/*withInterceptors([])*/),
+        provideHttpClient(withFetch() /*withInterceptors([])*/),
         { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } },
         ProfileService,
         LocalStorageService,

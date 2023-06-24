@@ -4,6 +4,14 @@ import { Directory, DirectoryColor as JournalDirectoryColor, File } from '@decla
 import { DirectoryColor, DirectoryExtended, FileInfoExtended } from '@features/file-list/models';
 import { environment } from 'environments/environment';
 
+export const uint8ToBase64 = (arr: Uint8Array): string =>
+    btoa(
+        Array(arr.length)
+            .fill('')
+            .map((_, i) => String.fromCharCode(arr[i]))
+            .join('')
+    );
+
 export const fromNullableOption = <T extends Record<string, null>, K>(value: [] | [T], defaultValue: K): K => {
     const v: T | undefined = fromNullable(value);
 
@@ -34,5 +42,12 @@ export function toFileExtended(file: File): FileInfoExtended {
     const bucketId = file.bucketId.toText();
     const host: string = environment.production ? `https://${bucketId}.raw.ic0.app` : `http://${bucketId}.localhost:8080`;
     const downloadUrl = `${host}/${file.id}`;
-    return { ...file, bucketId, downloadUrl, type: 'file', parentId: fromNullable(file.parentId) } as FileInfoExtended;
+    return {
+        ...file,
+        bucketId,
+        downloadUrl,
+        type: 'file',
+        parentId: fromNullable(file.parentId),
+        thumbnail: fromNullable(file.thumbnail)
+    } as FileInfoExtended;
 }

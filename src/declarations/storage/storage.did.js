@@ -11,6 +11,7 @@ export const idlFactory = ({ IDL }) => {
     const BucketId = IDL.Principal;
     const File = IDL.Record({
         id: ID__3,
+        thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         createdAt: Time,
         bucketId: BucketId,
@@ -20,7 +21,8 @@ export const idlFactory = ({ IDL }) => {
     });
     const FileCreateError = IDL.Variant({
         illegalCharacters: IDL.Null,
-        alreadyExists: File
+        alreadyExists: File,
+        parentNotFound: IDL.Null
     });
     const CommitUploadError = IDL.Variant({
         chunkWrongBatch: IDL.Nat,
@@ -81,6 +83,7 @@ export const idlFactory = ({ IDL }) => {
     const ID = IDL.Text;
     const AssetKey = IDL.Record({
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         fileSize: IDL.Nat,
         parentId: IDL.Opt(ID)

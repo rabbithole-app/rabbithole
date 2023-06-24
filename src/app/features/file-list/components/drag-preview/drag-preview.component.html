@@ -1,16 +1,16 @@
-<ng-container [ngSwitch]="type$ | async">
-    <ng-container *ngSwitchCase="'folder'">
+<ng-container *rxLet="mode(); let m">
+    <ng-container *rxIf="isFolder(m)">
         <app-animated-folder class="small"></app-animated-folder>
     </ng-container>
-    <ng-container *ngSwitchCase="'file'">
-        <mat-icon [svgIcon]="icon$ | async"></mat-icon>
+    <ng-container *rxIf="isSingleFile(m)">
+        <mat-icon [svgIcon]="m.icon"></mat-icon>
     </ng-container>
-    <ng-container *ngSwitchDefault>
+    <ng-container *rxIf="isStack(m)">
         <div class="stack">
             <mat-icon [svgIcon]="blankIcon"></mat-icon>
             <mat-icon [svgIcon]="blankIcon"></mat-icon>
             <mat-icon [svgIcon]="blankIcon"></mat-icon>
-            <span class="badge">{{ count$ | async }}</span>
+            <span class="badge">{{ m.count }}</span>
         </div>
     </ng-container>
 </ng-container>

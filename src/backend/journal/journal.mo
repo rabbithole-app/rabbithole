@@ -79,12 +79,22 @@ module {
             Iter.toArray(Map.vals(filtered));
         };
 
+        func getDirSize(path : Text) : Nat {
+            var size = 0;
+            for ((fpath, file) in Map.entries(files)) {
+                if (Text.startsWith(fpath, #text(path # "/"))) {
+                    size += file.fileSize;
+                };
+            };
+            size;
+        };
+
         public func listDirsExtend(id : ?ID) : [Directory] {
             let filtered = Map.filter<Text, Directory>(directories, thash, func(k, v) = v.parentId == id);
             let buffer : Buffer.Buffer<Directory> = Buffer.Buffer(Map.size(filtered));
             for ((path, dir) in Map.entries(filtered)) {
                 let children = (listDirs(?dir.id), listFiles(?dir.id));
-                buffer.add({ dir with path = ?path; children = ?children });
+                buffer.add({ dir with path = ?path; children = ?children; size = ?getDirSize(path) });
             };
             Buffer.toArray(buffer);
         };
@@ -174,7 +184,7 @@ module {
                     (?id, getBreadcrumbs(path));
                 };
             };
-            #ok({ id; dirs = listDirs(id); files = listFiles(id); breadcrumbs });
+            #ok({ id; dirs = listDirsExtend(id); files = listFiles(id); breadcrumbs });
         };
 
         public func createDir({ name; parentId } : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
@@ -191,7 +201,17 @@ module {
                 case null {
                     let now = Time.now();
                     let id = await Utils.generateId();
-                    let directory : Directory = { id; name; parentId; createdAt = now; updatedAt = now; color = ? #blue; children = null; path = null };
+                    let directory : Directory = {
+                        id;
+                        name;
+                        parentId;
+                        createdAt = now;
+                        updatedAt = now;
+                        color = ? #blue;
+                        children = null;
+                        path = null;
+                        size = null;
+                    };
                     Map.set(directories, thash, path, directory);
                     #ok directory;
                 };
@@ -530,6 +550,7 @@ module {
                                             color = ? #blue;
                                             children = null;
                                             path = null;
+                                            size = null;
                                         };
                                         currentPath := joinPath(parentPath, name);
                                         Map.set(directories, thash, currentPath, directory);

@@ -5,7 +5,7 @@ import { ActorSubclass, Identity } from '@dfinity/agent';
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { Principal } from '@dfinity/principal';
 import { EMPTY, Observable, Subject, from, merge } from 'rxjs';
-import { catchError, connect, filter, first, map, switchMap, withLatestFrom, tap } from 'rxjs/operators';
+import { catchError, connect, filter, first, map, switchMap, withLatestFrom } from 'rxjs/operators';
 import { get, has, isUndefined } from 'lodash';
 
 import { createActor, loadIdentity } from '@core/utils';
