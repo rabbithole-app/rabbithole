@@ -74,7 +74,8 @@
                 "input": "src/.well-known",
                 "output": "/.well-known"
               },
-              "src/.ic-assets.json"
+              "src/.ic-assets.json",
+              "src/vetkd_user_lib"
             ],
             "styles": [
               "node_modules/the-new-css-reset/css/reset.css",

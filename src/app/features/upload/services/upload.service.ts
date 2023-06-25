@@ -30,7 +30,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
 import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
 import { uploadFile } from '../operators';
-import { BucketsService } from '@core/services';
+import { BucketsService, CryptoService } from '@core/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
 import { JournalService } from '@features/file-list/services';
 
@@ -48,6 +48,7 @@ export class UploadService extends RxState<State> {
     #bucketService = inject(BucketsService);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
+    #cryptoService = inject(CryptoService);
 
     readonly concurrentFilesCount = CONCURRENT_FILES_COUNT;
     readonly concurrentChunksCount = CONCURRENT_CHUNKS_COUNT;

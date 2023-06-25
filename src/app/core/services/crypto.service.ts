@@ -1,50 +1,65 @@
-import { inject, Injectable } from '@angular/core';
-import { RxState } from '@rx-angular/state';
+import { effect, inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { selectSlice } from '@rx-angular/state/selections';
-import { defer, from, iif, of, switchMap, map } from 'rxjs';
+import { from, of, switchMap, map, first } from 'rxjs';
 import { arrayBufferToUint8Array } from '@dfinity/utils';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { isNull } from 'lodash';
 import { AUTH_RX_STATE } from '../stores';
 
-interface State {
+// Usage of the imported bindings only works if the respective .wasm was loaded, which is done in main.ts.
+// See also https://github.com/rollup/plugins/tree/master/packages/wasm#using-with-wasm-bindgen-and-wasm-pack
+import { default as vetkd, TransportSecretKey } from 'vetkd_user_lib/ic_vetkd';
+
+@Injectable({ providedIn: 'root' })
+export class CryptoService {
+    #authState = inject(AUTH_RX_STATE);
     // Private key associated with logged in device. Used to encrypt the symmetric secretKey
     // for each device associated with the current principal, to be stored by the dapp in encrypted form
-    publicKey: CryptoKey | null;
     // Symmetric AES key, used to encrypt and decrypt the notes stored in the dapp
-    secretKey: CryptoKey | null;
-
-    secret: string | null;
-}
-
-@Injectable()
-export class CryptoService extends RxState<State> {
-    private authState = inject(AUTH_RX_STATE);
+    #keyPair: WritableSignal<CryptoKeyPair | null> = signal(null);
+    #secret: WritableSignal<string | null> = signal(null);
 
     constructor() {
-        super();
-        this.connect(from(this.generate()));
-        const encryptedKey$ = this.authState.select(selectSlice(['actor', 'isAuthenticated'])).pipe(
-            switchMap(({ actor, isAuthenticated }) =>
-                iif(
-                    () => isAuthenticated,
-                    defer(() =>
-                        this.select('publicKey').pipe(
-                            map(tpk => tpk as CryptoKey),
-                            switchMap(tpk =>
-                                from(window.crypto.subtle.exportKey('spki', tpk)).pipe(
-                                    map(buffer => CryptoService.ab2str(buffer)),
-                                    switchMap(publicKey => actor.getKey(publicKey))
-                                )
+        effect(() => console.log({ keyPair: this.#keyPair(), secret: this.#secret() }));
+        this.#init();
+        this.#authState
+            .select(selectSlice(['actor', 'isAuthenticated']))
+            .pipe(
+                switchMap(({ actor, isAuthenticated }) => {
+                    if (!isAuthenticated) {
+                        return of(null);
+                    }
+
+                    return toObservable(this.#keyPair).pipe(
+                        first(pair => !isNull(pair)),
+                        map(keyPair => (keyPair as NonNullable<typeof keyPair>).publicKey),
+                        switchMap(tpk =>
+                            from(window.crypto.subtle.exportKey('spki', tpk)).pipe(
+                                map(buffer => CryptoService.ab2str(buffer)),
+                                switchMap(publicKey => actor.getKey(publicKey))
                             )
                         )
-                    ),
-                    of(null)
-                )
+                    );
+                }),
+                takeUntilDestroyed()
             )
-        );
-        this.connect(encryptedKey$.pipe(map(secret => ({ secret }))));
+            .subscribe(encryptedKey => this.#secret.set(encryptedKey));
     }
 
-    private generate(): Promise<CryptoKeyPair> {
+    async #init() {
+        await vetkd('vetkd_user_lib/ic_vetkd_bg.wasm');
+        // Showcase that the integration of the vetkd user library works
+        const seed = window.crypto.getRandomValues(new Uint8Array(32));
+        const tsk = new TransportSecretKey(seed);
+        console.log('Successfully used vetKD user library via WASM to create new transport secret key');
+        console.log(tsk);
+        const tpk = tsk.public_key();
+        console.log(tpk);
+        const keyPair = await this.#generate();
+        this.#keyPair.set(keyPair);
+    }
+
+    #generate(): Promise<CryptoKeyPair> {
         return crypto.subtle.generateKey(
             {
                 name: 'RSA-OAEP',
