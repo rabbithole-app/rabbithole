@@ -8,12 +8,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
 import { RxIf } from '@rx-angular/template/if';
 
-import { DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
+import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 import { addFASvgIcons } from '@core/utils';
 import { MiddleEllipsisComponent } from '@core/components/middle-ellipsis/middle-ellipsis.component';
+import { JournalService } from '@features/file-list/services';
 
 @Component({
     selector: 'app-grid-list-item',
@@ -48,6 +49,7 @@ export class GridListItemComponent implements Highlightable {
     hostAnimationParams = { value: '', params: { duration: 250, delay: 0 } };
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
     element = inject(ElementRef);
+    journalService = inject(JournalService);
 
     @HostBinding('class.active') get isActive() {
         return this._isActive;
@@ -80,13 +82,5 @@ export class GridListItemComponent implements Highlightable {
 
     setInactiveStyles(): void {
         this._isActive = false;
-    }
-
-    isDirectory(data: JournalItem): data is DirectoryExtended {
-        return data.type === 'folder';
-    }
-
-    isFile(data: JournalItem): data is FileInfoExtended {
-        return data.type === 'file';
     }
 }

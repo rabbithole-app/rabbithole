@@ -38,7 +38,7 @@ export class CreateDirectoryDialogComponent {
             map(() => {
                 if (this.name?.errors) {
                     const key = Object.keys(this.name.errors)[0];
-                    return this.#translocoService.translate(`fileList.directory.create.name.errors.${key}`);
+                    return this.#translocoService.translate(`fileList.directory.create.name.errors.${key}`, { type: 'folder' });
                 }
 
                 return;

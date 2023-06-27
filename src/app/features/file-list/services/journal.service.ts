@@ -19,15 +19,18 @@ import {
     DirectoryUpdatableFields,
     DirectoryColor as OptDirectoryColor,
     _SERVICE as JournalBucketActor,
-    NotFoundError
+    NotFoundError,
+    DirectoryAction,
+    File
 } from '@declarations/journal/journal.did';
 import { DirectoryColor, DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
-import { toDirectoryExtended } from '@features/file-list/utils';
+import { toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
 import { FileListService } from './file-list.service';
 import { DirectoryFlatNode } from '../components/tree/tree.models';
+import { OptKeys } from '@core/models';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class JournalService {
     private bucketsService = inject(BucketsService);
     private notificationService = inject(NotificationService);
@@ -53,7 +56,7 @@ export class JournalService {
             .subscribe({
                 error: err => this.notificationService.error(err.message),
                 next: directory => this.#fileListService.add(directory),
-                complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.messages.ok'))
+                complete: () => this.notificationService.success(this.translocoService.translate('fileList.directory.create.messages.createOk'))
             });
     }
 
@@ -117,14 +120,14 @@ export class JournalService {
         );
     }
 
-    move(selected: JournalItem[], targetPath: string | null) {
+    move(selected: JournalItem[], targetPath?: string) {
         const selectedIds = selected.map(({ id }) => id);
         this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
         const handler: (item: JournalItem) => Observable<unknown> = item =>
             this.wrapActionHandler(actor => {
-                const sourcePath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
-                const preparedTargetPath = toNullable(targetPath ?? undefined);
-                return item.type === 'folder' ? actor.moveDirectory(sourcePath, preparedTargetPath) : actor.moveFile(sourcePath, preparedTargetPath);
+                const path = item.path ?? item.name;
+                const preparedTargetPath = toNullable(targetPath);
+                return item.type === 'folder' ? actor.moveDirectory(path, preparedTargetPath) : actor.moveFile(path, preparedTargetPath);
             }).pipe(
                 map(result => {
                     if (has(result, 'err')) {
@@ -162,7 +165,7 @@ export class JournalService {
         this.#fileListService.updateBreadcrumbs(id => selectedIds.includes(id), { loading: true });
         const handler: (item: JournalItem) => Observable<unknown> = item =>
             this.wrapActionHandler(actor => {
-                const path = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
+                const path = item.path ?? item.name;
                 return item.type === 'folder' ? actor.deleteDirectory(path) : actor.deleteFile(path);
             }).pipe(
                 map(result => {
@@ -210,8 +213,50 @@ export class JournalService {
         };
     }
 
-    updateDir(
+    rename(item: JournalItem, name: string) {
+        if (this.isDirectory(item)) {
+            this.#renameDir(item, name);
+        } else {
+            this.#renameFile(item, name);
+        }
+    }
+
+    changeDirColor(selected: DirectoryExtended[], color: DirectoryColor) {
+        this.#updateDir(selected, 'changeColor', { color });
+    }
+
+    #renameDir(directory: DirectoryExtended, name: string) {
+        this.#updateDir([directory], 'rename', { name });
+    }
+
+    #renameFile(file: FileInfoExtended, name: string) {
+        this.#fileListService.updateItems(id => id === file.id, { disabled: true });
+        const handler: (item: FileInfoExtended) => Observable<unknown> = item =>
+            this.wrapActionHandler(actor => actor.renameFile(item.id, name)).pipe(
+                map(result => {
+                    if (has(result, 'err')) {
+                        const key = Object.keys(get(result, 'err') as unknown as NotFoundError | { alreadyExists: File } | { illegalCharacters: null })[0];
+                        throw Error(this.translocoService.translate(`fileList.directory.update.messages.err.${key}`));
+                    }
+
+                    return toFileExtended(get(result, 'ok') as unknown as File);
+                }),
+                tap({
+                    error: err => console.error(err),
+                    next: value => this.#fileListService.updateItems(id => id === item.id, value),
+                    finalize: () => this.#fileListService.updateItems(id => id === item.id, { disabled: false })
+                })
+            );
+        this.snackbarProgressService.add<FileInfoExtended>('update', [file], handler);
+        this.snackbarProgressService.snackBarRef
+            ?.afterDismissed()
+            .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
+            .subscribe(() => this.#fileListService.update());
+    }
+
+    #updateDir(
         selected: DirectoryExtended[],
+        action: OptKeys<DirectoryAction>,
         updateFields: Partial<{
             name: string;
             color: DirectoryColor;
@@ -220,9 +265,10 @@ export class JournalService {
     ) {
         const selectedIds = selected.map(({ id }) => id);
         this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
+        this.#fileListService.updateBreadcrumbs(id => selectedIds.includes(id), { loading: true });
         const fields = this.#prepareFields(updateFields);
         const handler: (dir: DirectoryExtended) => Observable<unknown> = dir =>
-            this.wrapActionHandler(actor => actor.updateDirectory({ changeColor: dir.id }, fields)).pipe(
+            this.wrapActionHandler(actor => actor.updateDirectory(<DirectoryAction>{ [action]: dir.id }, fields)).pipe(
                 map(result => {
                     if (has(result, 'err')) {
                         const key = Object.keys(get(result, 'err') as unknown as NotFoundError | { alreadyExists: Directory })[0];
@@ -233,7 +279,10 @@ export class JournalService {
                 }),
                 tap({
                     error: err => console.error(err),
-                    next: value => this.#fileListService.updateItems(id => id === dir.id, value),
+                    next: value => {
+                        this.#fileListService.updateItems(id => id === dir.id, value);
+                        this.#fileListService.updateBreadcrumbs(id => id === dir.id, value);
+                    },
                     finalize: () => {
                         this.#fileListService.updateItems(id => id === dir.id, { disabled: false });
                         this.#fileListService.updateBreadcrumbs(id => id === dir.id, { loading: false });
@@ -286,6 +335,14 @@ export class JournalService {
                 );
             })
         );
+    }
+
+    isDirectory(item: JournalItem): item is DirectoryExtended {
+        return item.type === 'folder';
+    }
+
+    isFile(item: JournalItem): item is FileInfoExtended {
+        return item.type === 'file';
     }
 
     /*

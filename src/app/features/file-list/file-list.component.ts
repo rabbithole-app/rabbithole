@@ -37,6 +37,7 @@ import { PageHeaderComponent } from '@features/file-list/components/page-header/
 import { EmptyComponent } from '@core/components/empty/empty.component';
 import { UploadService } from '@features/upload/services';
 import { FileListService } from './services/file-list.service';
+import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
 
 interface State {
     emptyRef: ElementRef;
@@ -65,7 +66,8 @@ interface State {
         NgTemplateOutlet,
         RxFor,
         NgIf,
-        RxIf
+        RxIf,
+        RenameDialogComponent
     ],
     providers: [RxState, SnackbarProgressService, ContextMenuService, JournalService],
     standalone: true
@@ -99,7 +101,6 @@ export class FileListComponent {
         return this.state.get('itemsMenuTrigger');
     }
     readonly folderColors: DirectoryColor[] = ['blue', 'yellow', 'orange', 'purple', 'pink', 'gray', 'green'];
-    folderColor = 'blue';
     hoverColor: WritableSignal<string | null> = signal(null);
     route = inject(ActivatedRoute);
     @ViewChild('contextItemsTemplate', { read: TemplateRef }) set contextItemsTemplate(value: TemplateRef<HTMLElement>) {
@@ -107,7 +108,7 @@ export class FileListComponent {
     }
 
     constructor(private dialog: MatDialog, private location: Location, private contextMenuService: ContextMenuService, private state: RxState<State>) {
-        addFASvgIcons(['plus', 'trash-can', 'download'], 'far');
+        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square'], 'far');
         this.route.data
             .pipe(
                 map(({ fileList }) => fileList),
@@ -172,6 +173,19 @@ export class FileListComponent {
     }
 
     handleChangeColor(items: DirectoryExtended[], color: DirectoryColor) {
-        this.journalService.updateDir(items, { color });
+        this.journalService.changeDirColor(items, color);
+    }
+
+    async openRenameDialog(event: MouseEvent, item: JournalItem) {
+        const dialogRef = this.dialog.open(RenameDialogComponent, {
+            width: '450px',
+            data: { item }
+        });
+
+        dialogRef.afterClosed().subscribe((data?: { name: string }) => {
+            if (data) {
+                this.journalService.rename(item, data.name);
+            }
+        });
     }
 }

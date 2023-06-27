@@ -24,7 +24,7 @@ module {
     type FileCreateError = Types.FileCreateError;
     type CreatePath = Types.CreatePath;
     type Directory = Types.Directory;
-    type DirectoryCreate = Types.DirectoryCreate;
+    type EntryCreate = Types.EntryCreate;
     type DirectoryCreateError = Types.DirectoryCreateError;
     type DirectoryMoveError = Types.DirectoryMoveError;
     type DirectoryAction = Types.DirectoryAction;
@@ -44,15 +44,18 @@ module {
         listDirs : ?ID -> [Directory];
         listDirsExtend : ?ID -> [Directory];
         listFiles : ?ID -> [File];
-        checkDirname : DirectoryCreate -> Result.Result<(), DirectoryCreateError>;
+        listFilesExtend : ?ID -> [File];
+        checkDirname : EntryCreate -> Result.Result<(), DirectoryCreateError>;
+        checkFilename : EntryCreate -> Result.Result<(), FileCreateError>;
         getJournal : (?Text) -> Result.Result<DirectoryState, DirectoryStateError>;
-        createDir : DirectoryCreate -> async Result.Result<Directory, DirectoryCreateError>;
+        createDir : EntryCreate -> async Result.Result<Directory, DirectoryCreateError>;
         moveDir : (Text, ?Text) -> async* Result.Result<(), DirectoryMoveError>;
         mergeDir : (Text, Text) -> async* Result.Result<(), DirectoryMoveError>;
         moveFile : (Text, ?Text) -> async Result.Result<(), FileMoveError>;
         deleteDir : Text -> async Result.Result<(), { #notFound }>;
         deleteFile : Text -> async Result.Result<(), { #notFound }>;
-        updateDir : (DirectoryAction, DirectoryUpdatableFields) -> Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>>;
+        renameFile : (Text, Text) -> Result.Result<File, NotFoundError or { #illegalCharacters } or AlreadyExistsError<File>>;
+        updateDir : (DirectoryAction, DirectoryUpdatableFields) -> async* Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>>;
         showDirectoriesTree : ?ID -> Text;
         createPaths : ([Text], [ID], ?ID) -> async [(Text, ID)];
         putFile : FileCreate -> async Result.Result<File, FileCreateError>;
@@ -115,6 +118,15 @@ module {
             Iter.toArray(Map.vals(filtered));
         };
 
+        public func listFilesExtend(id : ?ID) : [File] {
+            let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
+            let buffer : Buffer.Buffer<File> = Buffer.Buffer(Map.size(filtered));
+            for ((path, file) in Map.entries(filtered)) {
+                buffer.add({ file with path = ?path });
+            };
+            Buffer.toArray(buffer);
+        };
+
         func findDir(id : ID) : ?Directory {
             let ?(path, dir) = findDirEntry(id) else return null;
             ?dir;
@@ -129,6 +141,10 @@ module {
             Map.find<Text, Directory>(directories, func(k, v) = v.id == id);
         };
 
+        func findFileEntry(id : ID) : ?(Text, File) {
+            Map.find<Text, File>(files, func(k, v) = v.id == id);
+        };
+
         func validateName(name : Text) : Bool {
             for (c : Char in name.chars()) {
                 let isNonPrintableChar : Bool = Char.fromNat32(0x00) <= c and c <= Char.fromNat32(0x1f);
@@ -139,16 +155,31 @@ module {
             true;
         };
 
-        public func checkDirname({ name; parentId } : DirectoryCreate) : Result.Result<(), DirectoryCreateError> {
-            if (not validateName(name)) return #err(#illegalCharacters);
-            let path : Text = switch (parentId) {
-                case null name;
+        public func checkDirname(dir : EntryCreate) : Result.Result<(), DirectoryCreateError> {
+            if (not validateName(dir.name)) return #err(#illegalCharacters);
+            let path : Text = switch (dir.parentId) {
+                case null dir.name;
                 case (?v) {
                     let ?path = findPath(v) else return #err(#parentNotFound);
-                    path # "/" # name;
+                    path # "/" # dir.name;
                 };
             };
-            switch (Map.get<Text, Directory>(directories, thash, path)) {
+            switch (Map.get(directories, thash, path)) {
+                case (?v) #err(#alreadyExists(v));
+                case null #ok();
+            };
+        };
+
+        public func checkFilename(file : EntryCreate) : Result.Result<(), FileCreateError> {
+            if (not validateName(file.name)) return #err(#illegalCharacters);
+            let path : Text = switch (file.parentId) {
+                case null file.name;
+                case (?v) {
+                    let ?path = findPath(v) else return #err(#parentNotFound);
+                    path # "/" # file.name;
+                };
+            };
+            switch (Map.get(files, thash, path)) {
                 case (?v) #err(#alreadyExists(v));
                 case null #ok();
             };
@@ -166,7 +197,7 @@ module {
                 };
                 switch (Map.get<Text, Directory>(directories, thash, currentPath)) {
                     case null {};
-                    case (?v) buffer.add({ v with path = parentPath });
+                    case (?v) buffer.add({ v with path = ?currentPath });
                 };
                 parentPath := ?currentPath;
             };
@@ -184,10 +215,10 @@ module {
                     (?id, getBreadcrumbs(path));
                 };
             };
-            #ok({ id; dirs = listDirsExtend(id); files = listFiles(id); breadcrumbs });
+            #ok({ id; dirs = listDirsExtend(id); files = listFilesExtend(id); breadcrumbs });
         };
 
-        public func createDir({ name; parentId } : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
+        public func createDir({ name; parentId } : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
             if (not validateName(name)) return #err(#illegalCharacters);
             let path : Text = switch (parentId) {
                 case null name;
@@ -213,7 +244,7 @@ module {
                         size = null;
                     };
                     Map.set(directories, thash, path, directory);
-                    #ok directory;
+                    #ok({ directory with path = ?path });
                 };
             };
         };
@@ -410,23 +441,59 @@ module {
             #ok();
         };
 
-        public func updateDir(action : DirectoryAction, fields : DirectoryUpdatableFields) : Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>> {
+        func updateSubPaths(id : Text, path : Text) : async* () {
+            let dirEntries : [(Text, Directory)] = listDirEntries(?id);
+            let fileEntries : [(Text, File)] = listFileEntries(?id);
+
+            for ((key, value) in Iter.fromArray(fileEntries)) {
+                Map.delete(files, thash, key);
+                Map.set(files, thash, path # "/" # value.name, value);
+            };
+
+            for ((key, value) in Iter.fromArray<(Text, Directory)>(dirEntries)) {
+                Map.delete(directories, thash, key);
+                let newPath : Text = path # "/" # value.name;
+                Map.set(directories, thash, newPath, value);
+                await* updateSubPaths(value.id, newPath);
+            };
+        };
+
+        public func renameFile(id : Text, name : Text) : Result.Result<File, NotFoundError or { #illegalCharacters } or AlreadyExistsError<File>> {
+            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+            if (not validateName(file.name)) return #err(#illegalCharacters);
+            let segments : [var Text] = Iter.toArrayMut(Text.split(path, #char '/'));
+            segments[segments.size() - 1] := name;
+            let newPath : Text = Text.join("/", Iter.fromArrayMut(segments));
+            switch (Map.get(files, thash, newPath)) {
+                case (?v) #err(#alreadyExists v);
+                case null {
+                    Map.delete(files, thash, path);
+                    let value : File = { file with updatedAt = Time.now(); name };
+                    Map.set(files, thash, newPath, value);
+                    #ok(value);
+                };
+            };
+
+        };
+
+        public func updateDir(action : DirectoryAction, fields : DirectoryUpdatableFields) : async* Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>> {
             switch (action) {
                 case (#rename id) {
                     let ?(path, dir) = findDirEntry(id) else return #err(#notFound);
                     let newName : Text = Option.get(fields.name, dir.name);
-                    let siblingDirs : [Directory] = listDirs(dir.parentId);
-                    let found : ?Directory = Array.find<Directory>(
-                        siblingDirs,
-                        func v = Text.equal(v.name, newName) and Text.notEqual(v.id, dir.id)
-                    );
-                    switch (found) {
-                        case null {
-                            let directory : Directory = { dir with updatedAt = Time.now(); name = newName };
-                            ignore Map.put(directories, thash, path, directory);
-                            #ok(directory);
-                        };
+                    let segments : [var Text] = Iter.toArrayMut(Text.split(path, #char '/'));
+                    segments[segments.size() - 1] := newName;
+                    let newPath : Text = Text.join("/", Iter.fromArrayMut(segments));
+                    switch (Map.get(directories, thash, newPath)) {
                         case (?v) #err(#alreadyExists v);
+                        case null {
+                            let _files : [(Text, File)] = listFileEntries(?dir.id);
+                            Map.delete(directories, thash, path);
+                            let directory : Directory = { dir with updatedAt = Time.now(); name = newName };
+                            Map.set(directories, thash, newPath, directory);
+                            await* updateSubPaths(directory.id, newPath);
+                            #ok({ directory with path = ?newPath });
+                        };
                     };
                 };
                 case (#changeColor id) {
@@ -434,7 +501,7 @@ module {
                     let color : ?DirectoryColor = ?Option.get(fields.color, Option.get(dir.color, #blue));
                     let directory : Directory = { dir with updatedAt = Time.now(); color };
                     ignore Map.put(directories, thash, path, directory);
-                    #ok(directory);
+                    #ok({ directory with path = ?path });
                 };
                 // case _ throw Error.reject("Wrong action");
             };
@@ -580,7 +647,7 @@ module {
                 };
             };
             let now = Time.now();
-            let value : File = { file and { createdAt = now; updatedAt = now } };
+            let value : File = { file and { createdAt = now; updatedAt = now; path = null } };
             let ?replaced = Map.put(files, thash, path, value) else return #ok(value);
             let storageBucket : actor { delete : shared (id : ID) -> async () } = actor (Principal.toText(replaced.bucketId));
             ignore storageBucket.delete(replaced.id);

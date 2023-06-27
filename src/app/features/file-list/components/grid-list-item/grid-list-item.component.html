@@ -1,6 +1,6 @@
 <div class="item">
     <div class="icon-container">
-        <ng-container *rxIf="isDirectory(data)">
+        <ng-container *rxIf="journalService.isDirectory(data)">
             <!--<mat-icon svgIcon="filetype:folder" [class]="'folder folder&#45;&#45;' + (loading || disabled ? 'gray' : folderColor)">
                     &lt;!&ndash;<ng-container [ngTemplateOutlet]="progressTemplate"></ng-container>&ndash;&gt;
                 </mat-icon>-->
@@ -8,7 +8,7 @@
                 <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:users"></mat-icon> -->
             </app-animated-folder>
         </ng-container>
-        <ng-container *rxIf="isFile(data)">
+        <ng-container *rxIf="journalService.isFile(data)">
             <mat-icon *rxIf="!data.thumbnail; else thumbTemplate" class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
             <ng-template #thumbTemplate>
                 <img class="thumbnail" [src]="data.thumbnail" alt="" />

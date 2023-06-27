@@ -67,6 +67,10 @@
                 </div>
             </div>
             <mat-divider></mat-divider>
+            <button *rxIf="items.length === 1" mat-menu-item (click)="openRenameDialog($event, items[0])">
+                <mat-icon svgIcon="far:pen-to-square"></mat-icon>
+                <span>{{ t('actions.rename') }}</span>
+            </button>
         </ng-container>
         <!-- <button mat-menu-item (click)="handleItemsAction('share', items)">
             <mat-icon svgIcon="far:share"></mat-icon>
@@ -77,6 +81,10 @@
             &lt;!&ndash;<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>&ndash;&gt;
             <span>Open</span>
         </button>-->
+        <button *rxIf="everyFile && items.length === 1" mat-menu-item (click)="openRenameDialog($event, items[0])">
+            <mat-icon svgIcon="far:pen-to-square"></mat-icon>
+            <span>{{ t('actions.rename') }}</span>
+        </button>
         <button *rxIf="everyFile" mat-menu-item class="warn" (click)="handleItemsAction('download', items)">
             <mat-icon svgIcon="far:download"></mat-icon>
             <span>{{ t('actions.download', { count: items?.length }) }}</span>

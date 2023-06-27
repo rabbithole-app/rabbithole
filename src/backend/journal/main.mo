@@ -53,7 +53,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type Directory = JournalTypes.Directory;
     type DirectoryError = JournalTypes.DirectoryError;
     type DirectoryMoveError = JournalTypes.DirectoryMoveError;
-    type DirectoryCreate = JournalTypes.DirectoryCreate;
+    type EntryCreate = JournalTypes.EntryCreate;
     type DirectoryCreateError = JournalTypes.DirectoryCreateError;
     type DirectoryAction = JournalTypes.DirectoryAction;
     type DirectoryUpdatableFields = JournalTypes.DirectoryUpdatableFields;
@@ -99,19 +99,29 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     );
     var journal = Journal.New();
 
-    public shared ({ caller }) func createDirectory(directory : DirectoryCreate) : async Result.Result<Directory, DirectoryCreateError> {
+    public shared ({ caller }) func createDirectory(directory : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
         assert validateCaller(caller);
         await journal.createDir(directory);
     };
 
-    public query ({ caller }) func checkDirname(dir : DirectoryCreate) : async Result.Result<(), DirectoryCreateError> {
+    public query ({ caller }) func checkDirname(entry : EntryCreate) : async Result.Result<(), DirectoryCreateError> {
         assert validateCaller(caller);
-        journal.checkDirname(dir);
+        journal.checkDirname(entry);
+    };
+
+    public query ({ caller }) func checkFilename(entry : EntryCreate) : async Result.Result<(), FileCreateError> {
+        assert validateCaller(caller);
+        journal.checkFilename(entry);
+    };
+
+    public shared ({ caller }) func renameFile(id : Text, name : Text) : async Result.Result<File, NotFoundError or { #illegalCharacters } or AlreadyExistsError<File>> {
+        assert validateCaller(caller);
+        journal.renameFile(id, name);
     };
 
     public shared ({ caller }) func updateDirectory(action : DirectoryAction, fields : DirectoryUpdatableFields) : async Result.Result<Directory, NotFoundError or AlreadyExistsError<Directory>> {
         assert validateCaller(caller);
-        journal.updateDir(action, fields);
+        await* journal.updateDir(action, fields);
     };
 
     public shared ({ caller }) func moveDirectory(sourcePath : Text, targetPath : ?Text) : async Result.Result<(), DirectoryMoveError> {

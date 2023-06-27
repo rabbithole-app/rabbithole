@@ -30,7 +30,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
 import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
 import { uploadFile } from '../operators';
-import { BucketsService, CryptoService } from '@core/services';
+import { BucketsService, NotificationService } from '@core/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
 import { JournalService } from '@features/file-list/services';
 
@@ -46,9 +46,10 @@ export class UploadService extends RxState<State> {
     #fileListService = inject(FileListService);
     #journalService = inject(JournalService);
     #bucketService = inject(BucketsService);
+    #notificationService = inject(NotificationService);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
-    #cryptoService = inject(CryptoService);
+    // #cryptoService = inject(CryptoService);
 
     readonly concurrentFilesCount = CONCURRENT_FILES_COUNT;
     readonly concurrentChunksCount = CONCURRENT_CHUNKS_COUNT;
@@ -417,10 +418,14 @@ export class UploadService extends RxState<State> {
     }
 
     async showOpenFilePicker() {
-        const files = await showOpenFilePicker({
-            multiple: true
-        });
-        this.add(files);
+        try {
+            const files = await showOpenFilePicker({
+                multiple: true
+            });
+            this.add(files);
+        } catch (err) {
+            this.#notificationService.error((<DOMException>err).message);
+        }
     }
 
     async #listFilesAndDirsRecursively(dirHandle: FileSystemDirectoryHandle, cwd?: string): Promise<[{ file: File; path: string }[], string[]]> {
@@ -441,36 +446,40 @@ export class UploadService extends RxState<State> {
     }
 
     async showDirectoryPicker() {
-        const dirHandle = await showDirectoryPicker();
-        const parent = this.#fileListService.parent();
-        const [files, directories] = await this.#listFilesAndDirsRecursively(dirHandle);
+        try {
+            const dirHandle = await showDirectoryPicker();
+            const parent = this.#fileListService.parent();
+            const [files, directories] = await this.#listFilesAndDirsRecursively(dirHandle);
 
-        const worker = this.get('worker');
-        this.#journalService
-            .createPaths({ paths: this.#getUniquePaths(directories), parent })
-            .pipe(
-                mergeAll(),
-                mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
-                mergeMap(({ file, parentId }) =>
-                    from(file.arrayBuffer()).pipe(
-                        map(buffer => ({
-                            id: uuidv4(),
-                            name: file.name,
-                            fileSize: file.size,
-                            contentType: file.type,
-                            parentId,
-                            data: buffer
-                        }))
+            const worker = this.get('worker');
+            this.#journalService
+                .createPaths({ paths: this.#getUniquePaths(directories), parent })
+                .pipe(
+                    mergeAll(),
+                    mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
+                    mergeMap(({ file, parentId }) =>
+                        from(file.arrayBuffer()).pipe(
+                            map(buffer => ({
+                                id: uuidv4(),
+                                name: file.name,
+                                fileSize: file.size,
+                                contentType: file.type,
+                                parentId,
+                                data: buffer
+                            }))
+                        )
                     )
                 )
-            )
-            .subscribe(item => {
-                this.files.next(item);
-                if (worker) {
-                    const uploadState = this.get('progress', item.id);
-                    worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
-                }
-            });
+                .subscribe(item => {
+                    this.files.next(item);
+                    if (worker) {
+                        const uploadState = this.get('progress', item.id);
+                        worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
+                    }
+                });
+        } catch (err) {
+            this.#notificationService.error((<DOMException>err).message);
+        }
     }
 
     #getUniquePaths(dirs: string[]): string[] {

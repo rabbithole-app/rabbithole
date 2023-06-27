@@ -1,4 +1,4 @@
-import { Injectable, Signal, TemplateRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, Signal, TemplateRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { combineLatestWith, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { merge } from 'rxjs';
@@ -57,7 +57,7 @@ export class FileListService {
     readonly items: Signal<JournalItem[]> = computed(() => orderBy(this.#items(), [{ type: 'folder' }, 'name'], ['desc', 'asc']));
 
     constructor() {
-        effect(() => console.log(this.#tree()));
+        // effect(() => console.log(this.#tree()));
         if (typeof Worker !== 'undefined') {
             const worker = new Worker(new URL('../workers/file-list.worker', import.meta.url), { type: 'module' });
             this.#worker.set(worker);

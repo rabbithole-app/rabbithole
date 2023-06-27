@@ -14,13 +14,12 @@ module {
         createdAt : Time.Time;
         updatedAt : Time.Time;
         parentId : ?ID;
+        path : ?Text;
     };
     public type DirectoryColor = { #blue; #yellow; #orange; #purple; #pink; #gray; #green };
     public type Directory = CommonAttributes and {
         color : ?DirectoryColor;
         children : ?([Directory], [File]);
-        // добавляется для хлебных крошек
-        path : ?Text;
         // размер данных в папке
         size : ?Nat;
     };
@@ -38,11 +37,11 @@ module {
         bucketId : BucketId;
     };
     public type Entry = Directory or File;
-    public type DirectoryCreate = {
+    public type EntryCreate = {
         name : Text;
         parentId : ?ID;
     };
-    type EntryCreateError<T> = { #illegalCharacters; #alreadyExists : T; #parentNotFound };
+    public type EntryCreateError<T> = { #illegalCharacters; #alreadyExists : T; #parentNotFound };
     public type DirectoryCreateError = EntryCreateError<Directory>;
     public type FileCreateError = EntryCreateError<File>;
     public type DirectoryMoveError = { #invalidParams; #notFound; #sourceNotFound; #targetNotFound };

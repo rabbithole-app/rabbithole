@@ -427,7 +427,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     }
 
     handleItemDblClick(event: MouseEvent, item: JournalItem) {
-        if (item.type === 'folder') {
+        if (this.journalService.isDirectory(item)) {
             this.router.navigate([item.name], { relativeTo: this.route });
         }
     }
@@ -464,10 +464,9 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     handleDrop(event: DndDropEvent, item: DirectoryExtended) {
         this.state.set({ activeDirectory: null });
         this.dropExited.next();
-        const parentPath = isNil(item.path) ? item.name : `${item.path}/${item.name}`;
         // JSON.parse(event.event.dataTransfer?.getData('text/plain') ?? '[]');
         const selected = this.#fileListService.selected();
-        this.journalService.move(selected, parentPath);
+        this.journalService.move(selected, item.path);
     }
 
     handleStart(event: DragEvent, id: string) {

@@ -1,5 +1,5 @@
 <ng-container *transloco="let t">
-    <ul class="links" *ngIf="items() as links">
+    <ul class="links">
         <li class="links__item">
             <a
                 routerLink="/drive"
@@ -12,9 +12,9 @@
             >
             <mat-icon svgIcon="far:angle-right"></mat-icon>
         </li>
-        <li class="links__item" *ngFor="let link of links; trackBy: itemTrackBy">
+        <li class="links__item" *rxFor="let link of items(); trackBy: itemTrackBy">
             <a
-                [routerLink]="getUrl((link.path ?? '') + '/' + link.name)"
+                [routerLink]="getUrl(link.path ?? '')"
                 dndDropzone
                 [class.receiving]="entered() === link.id"
                 (drop)="handleDrop($event)"
@@ -25,8 +25,9 @@
             <mat-icon svgIcon="far:angle-right"></mat-icon>
         </li>
     </ul>
-    <ng-container *ngIf="last()">
+    <ng-container *rxIf="last()">
         <button
+            class="back-button"
             #backButton
             mat-button
             [routerLink]="backlink()"
@@ -40,9 +41,9 @@
         </button>
         <div class="active">
             <span>{{ last()?.name }}</span>
-            <mat-spinner [diameter]="16" *ngIf="last()?.loading ?? false; else activeMenuTemplate"></mat-spinner>
+            <mat-spinner [diameter]="20" *rxIf="last()?.loading ?? false; else activeMenuTemplate"></mat-spinner>
             <ng-template #activeMenuTemplate>
-                <button #activeMenu mat-icon-button (click)="handleActiveClick($event)" [attr.aria-label]="t('breadcrumbs.menu')">
+                <button class="context-menu-button" #activeMenu mat-icon-button (click)="handleActiveClick($event)" [attr.aria-label]="t('breadcrumbs.menu')">
                     <mat-icon svgIcon="far:ellipsis-vertical"></mat-icon>
                 </button>
             </ng-template>

@@ -7,7 +7,7 @@ import { EMPTY, catchError, filter, from, iif, map, switchMap, throwError } from
 import { get, has, isNull } from 'lodash';
 
 import { BucketsService, NotificationService } from '@core/services';
-import { Directory, File, DirectoryState, DirectoryStateError } from '@declarations/journal/journal.did';
+import { DirectoryState, DirectoryStateError } from '@declarations/journal/journal.did';
 import { toDirectoryExtended, toFileExtended } from '../utils';
 import { JournalItem } from '../models';
 
@@ -35,14 +35,8 @@ export const fileListResolver = (route: ActivatedRouteSnapshot) => {
 
                         const journal = get(response, 'ok') as unknown as DirectoryState;
 
-                        const dirs = journal.dirs.map((dir: Directory) => ({
-                            ...toDirectoryExtended(dir),
-                            path
-                        }));
-                        const files = journal.files.map((file: File) => ({
-                            ...toFileExtended(file),
-                            path
-                        }));
+                        const dirs = journal.dirs.map(toDirectoryExtended);
+                        const files = journal.files.map(toFileExtended);
                         const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
                         const parentId = fromNullable<string>(journal.id);
 

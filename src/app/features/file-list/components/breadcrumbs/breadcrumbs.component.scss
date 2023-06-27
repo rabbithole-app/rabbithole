@@ -1,3 +1,4 @@
+@use 'mixins';
 @use 'variables';
 
 @mixin dropReceiving() {
@@ -15,13 +16,15 @@
     align-items: center;
     margin-bottom: 1rem;
 
-    > .mat-mdc-button:not(#current-dir-trigger) {
+    // .context-trigger {
+    //     @include mixins.custom-icon-button();
+    // }
+    .back-button {
         grid-area: back;
         height: 100%;
-        padding: 0;
         min-width: 40px;
-        width: 40px;
-
+        padding: 0;
+        
         mat-icon {
             margin-right: 0;
         }
@@ -70,25 +73,14 @@
 .active {
     grid-area: active;
     font-size: 1.25rem;
-    display: flex;
-    align-items: center;
+    display: inline-grid;
+    grid-template-columns: max-content 40px;
+    grid-template-rows: 32px;
+    place-items: center;
     column-gap: .5rem;
 
-    .mat-mdc-icon-button {
-        $size: 40px;
-        width: $size;
-        height: $size;
-        padding: 10px;
-        font-size: 20px;
-        
-        mat-icon {
-            $size: 20px;
-            height: $size;
-            width: $size;
-            font-size: $size;
-            line-height: $size;
-            --mdc-icon-button-icon-size: #{$size};
-        }
+    .context-menu-button {
+        @include mixins.custom-icon-button(40px, 20px);
     }
 }
 
@@ -97,7 +89,7 @@
         background-color: rgba(0, 0, 0, 0.05);
     }
 
-    .mat-mdc-button:not(#current-dir-trigger) {
+    .back-button {
         background-color: rgba(0, 0, 0, 0.05);
     }
 }

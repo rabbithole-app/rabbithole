@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, NavigationStart, Router, RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DndModule } from 'ngx-drag-drop';
-import { RxState } from '@rx-angular/state';
-import { switchMap, windowToggle } from 'rxjs';
-import { filter, map, withLatestFrom } from 'rxjs/operators';
+import { filter, map, withLatestFrom, pairwise } from 'rxjs/operators';
 import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { TranslocoModule } from '@ngneat/transloco';
+import { RxIf } from '@rx-angular/template/if';
+import { RxFor } from '@rx-angular/template/for';
 
 import { addFASvgIcons } from '@core/utils';
 import { DirectoryExtended } from '@features/file-list/models';
@@ -24,8 +24,7 @@ import { FileListService } from '@features/file-list/services/file-list.service'
     styleUrls: ['./breadcrumbs.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     // TODO проверить можно ли импортировать не весь DndModule, а только pipe dndDropzone
-    imports: [CommonModule, RouterModule, MatMenuModule, MatButtonModule, MatIconModule, DndModule, MatProgressSpinnerModule, TranslocoModule],
-    providers: [RxState],
+    imports: [NgTemplateOutlet, RxIf, RxFor, RouterModule, MatMenuModule, MatButtonModule, MatIconModule, DndModule, MatProgressSpinnerModule, TranslocoModule],
     standalone: true
 })
 export class BreadcrumbsComponent {
@@ -45,7 +44,7 @@ export class BreadcrumbsComponent {
         const last = this.last();
         return entered === last?.parentId || (isUndefined(last?.parentId) && entered === 'root');
     });
-    backlink: Signal<string> = computed(() => this.getUrl(this.last()?.path ?? ''));
+    backlink: Signal<string> = computed(() => this.getUrl(last(this.items())?.path ?? ''));
     contextMenuService = inject(ContextMenuService);
     readonly fileListService = inject(FileListService);
     private journalService = inject(JournalService);
@@ -66,11 +65,9 @@ export class BreadcrumbsComponent {
         // сравниваем текущий путь и путь последней крошки, если не совпадает, то перенаправляем до последней крошки
         toObservable(this.last)
             .pipe(
-                windowToggle(this.router.events.pipe(map(event => event instanceof NavigationStart)), () =>
-                    this.router.events.pipe(map(event => event instanceof NavigationEnd))
-                ),
-                switchMap(x => x),
-                map(item => (item ? compact([item.path ?? '', item.name]).join('/') : null)),
+                pairwise(),
+                filter(([a, b]) => (a && b ? a.id === b.id && a.path !== b.path : false)),
+                map(v => (v[1] as DirectoryExtended).path),
                 withLatestFrom(
                     this.route.url.pipe(
                         map(segments => {
@@ -79,7 +76,7 @@ export class BreadcrumbsComponent {
                         })
                     )
                 ),
-                filter(([lastPath, currentPath]) => lastPath !== currentPath),
+                filter(([newPath, currentPath]) => newPath !== currentPath),
                 takeUntilDestroyed()
             )
             .subscribe(([path]) => {
@@ -122,11 +119,11 @@ export class BreadcrumbsComponent {
     handleDrop(event: DragEvent) {
         const selectedIds = JSON.parse(event.dataTransfer?.getData('text/plain') || '[]');
         const entered = this.entered();
-        let parentPath: string | null = null;
+        let parentPath: string | undefined;
         if (entered !== 'root' && isString(entered)) {
             const item = this.items().find(({ id }) => id === entered);
             if (item) {
-                parentPath = isUndefined(item.path) ? item.name : `${item.path}/${item.name}`;
+                parentPath = item.path;
             }
         }
 

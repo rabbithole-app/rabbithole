@@ -36,6 +36,7 @@ export type FileInfo = {
 export type DirectoryExtended = Directory &
     ItemsCommonAttrs & {
         children?: [DirectoryExtended[], FileInfoExtended[]];
+        size?: bigint;
     };
 
 export type FileInfoExtended = FileInfo & ItemsCommonAttrs;

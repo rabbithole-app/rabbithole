@@ -34,22 +34,22 @@ type TransferError =
 type Tokens__1 = record {e8s: nat64;};
 type Tokens = record {e8s: nat64;};
 type Time = int;
-type Result_8 = 
- variant {
-   err: FileCreateError;
-   ok: File__1;
- };
-type Result_7 = 
+type Result_9 = 
  variant {
    err: DirectoryCreateError;
    ok;
  };
-type Result_6 = 
+type Result_8 = 
+ variant {
+   err: FileCreateError;
+   ok;
+ };
+type Result_7 = 
  variant {
    err: DirectoryCreateError;
    ok: Directory;
  };
-type Result_5 = 
+type Result_6 = 
  variant {
    err:
     variant {
@@ -59,25 +59,39 @@ type Result_5 =
     };
    ok;
  };
-type Result_4 = 
+type Result_5 = 
  variant {
    err: NotFoundError;
    ok;
  };
-type Result_3 = 
+type Result_4 = 
  variant {
    err: DirectoryStateError;
    ok: DirectoryState;
  };
-type Result_2 = 
+type Result_3 = 
  variant {
    err: DirectoryMoveError;
    ok;
  };
-type Result_1 = 
+type Result_2 = 
  variant {
    err: FileMoveError;
    ok;
+ };
+type Result_10 = 
+ variant {
+   err: FileCreateError;
+   ok: File__1;
+ };
+type Result_1 = 
+ variant {
+   err: variant {
+          alreadyExists: File__1;
+          illegalCharacters;
+          notFound;
+        };
+   ok: File__1;
  };
 type Result = 
  variant {
@@ -105,31 +119,33 @@ type NotFoundError = variant {notFound;};
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
-   addFile: (FileCreate) -> (Result_8);
+   addFile: (FileCreate) -> (Result_10);
    canisterStatus: (principal) ->
     (record {
        freezingThresholdInCycles: nat;
        id: principal;
        status: canister_status_response;
      });
-   checkDirname: (DirectoryCreate) -> (Result_7) query;
-   createDirectory: (DirectoryCreate) -> (Result_6);
-   createInvite: (Time) -> (Result_5);
+   checkDirname: (EntryCreate) -> (Result_9) query;
+   checkFilename: (EntryCreate) -> (Result_8) query;
+   createDirectory: (EntryCreate) -> (Result_7);
+   createInvite: (Time) -> (Result_6);
    createPaths: (vec text, vec ID__1, opt ID__1) ->
     (vec record {
            text;
            ID__1;
          });
-   deleteDirectory: (text) -> (Result_4);
-   deleteFile: (text) -> (Result_4);
+   deleteDirectory: (text) -> (Result_5);
+   deleteFile: (text) -> (Result_5);
    deleteStorage: (BucketId__1) -> ();
    getCanisters: () -> (vec Canister) query;
    getChildrenDirs: (opt ID__1) -> (vec Directory) query;
-   getJournal: (opt text) -> (Result_3) query;
+   getJournal: (opt text) -> (Result_4) query;
    getStorage: (nat) -> (opt BucketId__1);
    listStorages: () -> (vec BucketId__1) query;
-   moveDirectory: (text, opt text) -> (Result_2);
-   moveFile: (text, opt text) -> (Result_1);
+   moveDirectory: (text, opt text) -> (Result_3);
+   moveFile: (text, opt text) -> (Result_2);
+   renameFile: (text, text) -> (Result_1);
    showDirectoriesTree: (opt ID__1) -> (text) query;
    startBucketMonitor: (BucketId__1) -> ();
    stopBucketMonitor: (BucketId__1) -> ();
@@ -155,6 +171,7 @@ type File__1 =
    id: ID;
    name: text;
    parentId: opt ID;
+   path: opt text;
    thumbnail: opt text;
    updatedAt: Time;
  };
@@ -188,8 +205,14 @@ type File =
    id: ID;
    name: text;
    parentId: opt ID;
+   path: opt text;
    thumbnail: opt text;
    updatedAt: Time;
+ };
+type EntryCreate = 
+ record {
+   name: text;
+   parentId: opt ID;
  };
 type Directory__1 = 
  record {
@@ -232,11 +255,6 @@ type DirectoryCreateError =
    alreadyExists: Directory__1;
    illegalCharacters;
    parentNotFound;
- };
-type DirectoryCreate = 
- record {
-   name: text;
-   parentId: opt ID;
  };
 type DirectoryColor = 
  variant {

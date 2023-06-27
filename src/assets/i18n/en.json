@@ -106,7 +106,8 @@
         },
         "actions": {
             "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",
-            "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}"
+            "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}",
+            "rename": "Rename"
         },
         "directory": {
             "get": {
@@ -115,25 +116,28 @@
                 }
             },
             "create": {
-                "title": "Create directory",
+                "createTitle": "Create directory",
+                "renameTitle": "Rename {type, select, file {file} other {directory}}",
                 "actions": {
                     "cancel": "Cancel",
-                    "create": "Create"
+                    "create": "Create",
+                    "save": "Save"
                 },
                 "name": {
-                    "label": "Directory name",
+                    "label": "{type, select, file {File} other {Directory}} name",
                     "errors": {
                         "required": "This field is mandatory",
-                        "alreadyExists": "Directory with the same name already exists. Try another",
-                        "illegalCharacters": "Directory name contains illegal characters"
+                        "alreadyExists": "{type, select, file {File} other {Directory}} with the same name already exists. Try another",
+                        "illegalCharacters": "{type, select, file {File} other {Directory}} name contains illegal characters"
                     }
                 },
                 "messages": {
                     "err": {
                         "notAuthorized": "Not authorized user",
-                        "alreadyExists": "Directory already exists"
+                        "alreadyExists": "{type, select, file {File} other {Directory}} already exists"
                     },
-                    "ok": "Directory was successfully created"
+                    "createOk": "Directory was successfully created",
+                    "editOk": "{type, select, file {File} other {Directory}} was successfully saved"
                 }
             },
             "remove": {
