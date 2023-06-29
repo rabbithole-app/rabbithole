@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { AnimationEvent, trigger } from '@angular/animations';
 import { Component, OnInit, ChangeDetectionStrategy, HostBinding, ElementRef, Renderer2, OnDestroy, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
@@ -6,7 +7,6 @@ import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule } from '@ngneat/transloco';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxIf } from '@rx-angular/template/if';
 import { AsyncSubject, Observable, shareReplay, timer } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
@@ -23,7 +23,7 @@ import { addFASvgIcons } from '@core/utils';
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PushPipe, RxIf, LogoComponent, RouterModule, MatTooltipModule, TranslocoModule, MatIconModule, MatButtonModule],
+    imports: [RxPush, RxIf, LogoComponent, RouterModule, MatTooltipModule, TranslocoModule, MatIconModule, MatButtonModule],
     standalone: true,
     animations: [trigger('textAnimation', SIDEBAR_TEXT_ANIMATION)]
 })

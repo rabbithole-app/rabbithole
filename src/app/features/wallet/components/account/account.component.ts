@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { Component, inject, ViewChild } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
@@ -6,7 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { PushPipe } from '@rx-angular/template/push';
 import { asyncScheduler, map, merge, Observable, of, startWith, Subject, switchMap, timer } from 'rxjs';
 
 import { addFASvgIcons } from '@core/utils';
@@ -20,7 +20,7 @@ interface State {
 @Component({
     selector: 'app-account',
     standalone: true,
-    imports: [NgIf, PushPipe, ClipboardModule, MatTooltipModule, TranslocoModule, MatButtonModule, MatIconModule],
+    imports: [NgIf, RxPush, ClipboardModule, MatTooltipModule, TranslocoModule, MatButtonModule, MatIconModule],
     templateUrl: './account.component.html',
     styleUrls: ['./account.component.scss']
 })

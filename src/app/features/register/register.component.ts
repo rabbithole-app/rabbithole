@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { formatNumber } from '@angular/common';
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
@@ -8,7 +9,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
 import { asyncScheduler, debounceTime, distinctUntilChanged, map, merge, Observable, observeOn, scan } from 'rxjs';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
 import { isUndefined, pickBy, size } from 'lodash';
@@ -43,7 +43,7 @@ interface State {
     imports: [
         TranslocoModule,
         MatStepperModule,
-        PushPipe,
+        RxPush,
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,

@@ -1,9 +1,9 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { Observable } from 'rxjs';
-import { PushPipe } from '@rx-angular/template/push';
 import { TranslocoModule } from '@ngneat/transloco';
 
 @Component({
@@ -11,7 +11,7 @@ import { TranslocoModule } from '@ngneat/transloco';
     templateUrl: './progress-message-snackbar.component.html',
     styleUrls: ['./progress-message-snackbar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PushPipe, MatProgressSpinnerModule, MatButtonModule, TranslocoModule],
+    imports: [RxPush, MatProgressSpinnerModule, MatButtonModule, TranslocoModule],
     standalone: true
 })
 export class ProgressMessageSnackbarComponent {

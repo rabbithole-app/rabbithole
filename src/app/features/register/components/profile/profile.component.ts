@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgSwitch, NgSwitchCase } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,8 +10,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { EMPTY, map, Observable, shareReplay, startWith } from 'rxjs';
-import { PushPipe } from '@rx-angular/template/push';
-
 import { RegisterService, UserStatus } from '@features/register/services/register.service';
 import { addFASvgIcons } from '@core/utils';
 import { UniqueUsernameValidator } from '@core/validators';
@@ -25,7 +24,7 @@ import { UniqueUsernameValidator } from '@core/validators';
         ReactiveFormsModule,
         MatFormFieldModule,
         RxIf,
-        PushPipe,
+        RxPush,
         MatIconModule,
         MatInputModule,
         MatButtonModule,

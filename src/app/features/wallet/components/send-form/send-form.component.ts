@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { ControlValueAccessor, FormBuilder, FormControl, FormControlStatus, NG_VALUE_ACCESSOR, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,7 +8,6 @@ import { MatInput, MatInputModule } from '@angular/material/input';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { createMask, InputMaskModule, InputmaskOptions } from '@ngneat/input-mask';
-import { PushPipe } from '@rx-angular/template/push';
 import { convertStringToE8s, TokenAmount, Token } from '@dfinity/nns';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
@@ -37,7 +37,7 @@ interface State {
 @Component({
     selector: 'app-send-form',
     standalone: true,
-    imports: [NgIf, ReactiveFormsModule, MatFormFieldModule, MatInputModule, InputMaskModule, MatIconModule, MatButtonModule, PushPipe, TranslocoModule],
+    imports: [NgIf, ReactiveFormsModule, MatFormFieldModule, MatInputModule, InputMaskModule, MatIconModule, MatButtonModule, RxPush, TranslocoModule],
     templateUrl: './send-form.component.html',
     styleUrls: ['./send-form.component.scss'],
     providers: [

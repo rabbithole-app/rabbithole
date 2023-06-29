@@ -1,3 +1,4 @@
+import { RxLet } from '@rx-angular/template/let';
 import {
     Component,
     ChangeDetectionStrategy,
@@ -17,8 +18,6 @@ import { animate, AnimationBuilder, AnimationPlayer, group, keyframes, style } f
 import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
 import { MatIconModule } from '@angular/material/icon';
 import { RxIf } from '@rx-angular/template/if';
-import { LetDirective } from '@rx-angular/template/let';
-
 import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
@@ -39,7 +38,7 @@ type StackMode = { type: Mode.Stack; count: number };
     styleUrls: ['./drag-preview.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     animations: [bounceOutOnLeaveAnimation(), bounceInOnEnterAnimation()],
-    imports: [RxIf, LetDirective, MatIconModule, AnimatedFolderComponent],
+    imports: [RxIf, RxLet, MatIconModule, AnimatedFolderComponent],
     standalone: true
 })
 export class DragPreviewComponent implements OnDestroy {

@@ -1,8 +1,9 @@
+import { RxLet } from '@rx-angular/template/let';
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AccountIdentifier, TokenAmount, Token } from '@dfinity/nns';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxState } from '@rx-angular/state';
 import { TranslocoModule } from '@ngneat/transloco';
 import { combineLatestWith, distinctUntilChanged, filter, map, Observable, startWith } from 'rxjs';
@@ -16,7 +17,6 @@ import { ReviewComponent } from '../review/review.component';
 import { SendFormComponent } from '../send-form/send-form.component';
 import { Tokens } from '@declarations/journal/journal.did';
 import { E8S_PER_TOKEN } from '@core/constants';
-import { LetDirective } from '@rx-angular/template/let';
 
 enum Tabs {
     Start,
@@ -35,7 +35,7 @@ interface State {
 @Component({
     selector: 'app-send',
     standalone: true,
-    imports: [PushPipe, LetDirective, MatTabsModule, WalletItemComponent, TranslocoModule, SendFormComponent, ReviewComponent, ReactiveFormsModule],
+    imports: [RxPush, RxLet, MatTabsModule, WalletItemComponent, TranslocoModule, SendFormComponent, ReviewComponent, ReactiveFormsModule],
     templateUrl: './send.component.html',
     styleUrls: ['./send.component.scss'],
     providers: [AmountAsyncValidator, RxState],

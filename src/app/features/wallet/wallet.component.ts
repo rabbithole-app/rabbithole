@@ -1,5 +1,5 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, HostListener, inject, ViewChild } from '@angular/core';
-import { PushPipe } from '@rx-angular/template/push';
 import { lastValueFrom, Observable } from 'rxjs';
 import { toNullable } from '@dfinity/utils';
 import { AccountIdentifier, TokenAmount, ICPToken, Token } from '@dfinity/nns';
@@ -15,7 +15,7 @@ import { Tokens } from '@declarations/journal/journal.did';
     templateUrl: './wallet.component.html',
     styleUrls: ['./wallet.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PushPipe, SendComponent, AccountComponent]
+    imports: [RxPush, SendComponent, AccountComponent]
 })
 export class WalletComponent {
     @ViewChild(SendComponent, { static: true }) sendComponent!: SendComponent;

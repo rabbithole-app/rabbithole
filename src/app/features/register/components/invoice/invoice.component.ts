@@ -1,5 +1,5 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { PushPipe } from '@rx-angular/template/push';
 import { TranslocoModule } from '@ngneat/transloco';
 import { MatCardModule } from '@angular/material/card';
 import { Observable } from 'rxjs';
@@ -12,7 +12,7 @@ import { RegisterService } from '@features/register/services/register.service';
 @Component({
     selector: 'app-invoice',
     standalone: true,
-    imports: [PushPipe, TranslocoModule, MatCardModule, WalletItemComponent, CopyIDComponent, MatDividerModule],
+    imports: [RxPush, TranslocoModule, MatCardModule, WalletItemComponent, CopyIDComponent, MatDividerModule],
     templateUrl: './invoice.component.html',
     styleUrls: ['./invoice.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

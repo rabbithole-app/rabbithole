@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { Component, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,7 +7,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { map, Observable } from 'rxjs';
-import { PushPipe } from '@rx-angular/template/push';
 import { selectSlice } from '@rx-angular/state/selections';
 
 import { InvitationsService } from './services/invitations.service';
@@ -19,7 +19,7 @@ import { prepareInvite } from './utils';
 @Component({
     selector: 'app-invitations',
     standalone: true,
-    imports: [NgIf, TranslocoModule, InvitesTableComponent, MatButtonModule, MatDialogModule, MatProgressSpinnerModule, MatIconModule, PushPipe],
+    imports: [NgIf, TranslocoModule, InvitesTableComponent, MatButtonModule, MatDialogModule, MatProgressSpinnerModule, MatIconModule, RxPush],
     templateUrl: './invitations.component.html',
     styleUrls: ['./invitations.component.scss']
 })

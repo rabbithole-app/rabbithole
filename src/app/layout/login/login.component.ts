@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { NgSwitch, NgSwitchCase } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -12,12 +13,11 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { LogoComponent } from '../dashboard/components/logo/logo.component';
-import { PushPipe } from '@rx-angular/template/push';
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [NgSwitch, NgSwitchCase, PushPipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule, LogoComponent],
+    imports: [NgSwitch, NgSwitchCase, RxPush, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoModule, LogoComponent],
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import {
     Component,
     ChangeDetectionStrategy,
@@ -47,7 +48,6 @@ import {
 import { filter, map, pluck, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
 
@@ -83,7 +83,7 @@ interface State {
     styleUrls: ['./grid-list.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [RxState, RxEffects, OverlayService],
-    imports: [PushPipe, RxFor, RxIf, GridListItemComponent, DragPreviewComponent, AnimateCssGridDirective, DndModule],
+    imports: [RxPush, RxFor, RxIf, GridListItemComponent, DragPreviewComponent, AnimateCssGridDirective, DndModule],
     standalone: true
 })
 export class GridListComponent implements OnDestroy, AfterViewInit {

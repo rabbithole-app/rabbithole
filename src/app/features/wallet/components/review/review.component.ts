@@ -1,9 +1,9 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxIf } from '@rx-angular/template/if';
 
 import { addFASvgIcons } from '@core/utils';
@@ -12,7 +12,7 @@ import { ReviewTransaction } from '@features/wallet/models';
 @Component({
     selector: 'app-review',
     standalone: true,
-    imports: [RxIf, PushPipe, MatIconModule, TranslocoModule, MatProgressSpinnerModule, MatButtonModule],
+    imports: [RxIf, RxPush, MatIconModule, TranslocoModule, MatProgressSpinnerModule, MatButtonModule],
     templateUrl: './review.component.html',
     styleUrls: ['./review.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

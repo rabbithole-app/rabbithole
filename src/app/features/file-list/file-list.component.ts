@@ -1,3 +1,5 @@
+import { RxLet } from '@rx-angular/template/let';
+import { RxPush } from '@rx-angular/template/push';
 import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
 import {
     Component,
@@ -21,9 +23,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RxState } from '@rx-angular/state';
-import { PushPipe } from '@rx-angular/template/push';
 import { RxIf } from '@rx-angular/template/if';
-import { LetDirective } from '@rx-angular/template/let';
 import { RxFor } from '@rx-angular/template/for';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -59,8 +59,8 @@ interface State {
         MatIconModule,
         MatDialogModule,
         TranslocoModule,
-        PushPipe,
-        LetDirective,
+        RxPush,
+        RxLet,
         NgSwitch,
         NgSwitchCase,
         NgSwitchDefault,

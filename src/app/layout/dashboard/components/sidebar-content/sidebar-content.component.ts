@@ -1,3 +1,4 @@
+import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgForOf } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -5,7 +6,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLinkWithHref, RouterLinkActive } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { PushPipe } from '@rx-angular/template/push';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { trigger } from '@angular/animations';
@@ -37,7 +37,7 @@ type NavigationItem = {
         MatTooltipModule,
         TranslocoModule,
         MatIconModule,
-        PushPipe,
+        RxPush,
         RxIf,
         MatButtonModule,
         MatMenuModule,

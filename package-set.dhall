@@ -1,4 +1,4 @@
-let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.9.0-20230515/package-set.dhall sha256:dc768d11997d7ef13f020fefb0df6ce869d2589490d6f60aadad5f76af074053
+let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.9.3-20230619/package-set.dhall sha256:848fd910726a1ee5b45c9c1c3740007b9e0783e5128d36448336846c1d772104
 let aviate-labs = https://github.com/aviate-labs/package-set/releases/download/v0.1.8/package-set.dhall sha256:9ab42c1f732299dc8c1f631d39ea6a2551414bf6efc8bbde4e11e36ebc6d7edd
 
 let Package =
@@ -8,7 +8,7 @@ let additions =
   [
     { name = "base"
     , repo = "https://github.com/dfinity/motoko-base"
-    , version = "moc-0.9.1"
+    , version = "moc-0.9.3"
     , dependencies = [] : List Text
     },
     { name = "stableBTree"
