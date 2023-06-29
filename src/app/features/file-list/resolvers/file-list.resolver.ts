@@ -3,7 +3,8 @@ import { Router, ActivatedRouteSnapshot } from '@angular/router';
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
-import { EMPTY, catchError, filter, from, iif, map, switchMap, throwError } from 'rxjs';
+import { EMPTY, from, iif, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { get, has, isNull } from 'lodash';
 
 import { BucketsService, NotificationService } from '@core/services';

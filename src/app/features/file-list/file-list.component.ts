@@ -38,6 +38,7 @@ import { EmptyComponent } from '@core/components/empty/empty.component';
 import { UploadService } from '@features/upload/services';
 import { FileListService } from './services/file-list.service';
 import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
+import { MoveDialogComponent } from './components/move-dialog/move-dialog.component';
 
 interface State {
     emptyRef: ElementRef;
@@ -108,7 +109,7 @@ export class FileListComponent {
     }
 
     constructor(private dialog: MatDialog, private location: Location, private contextMenuService: ContextMenuService, private state: RxState<State>) {
-        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square'], 'far');
+        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree'], 'far');
         this.route.data
             .pipe(
                 map(({ fileList }) => fileList),
@@ -185,6 +186,20 @@ export class FileListComponent {
         dialogRef.afterClosed().subscribe((data?: { name: string }) => {
             if (data) {
                 this.journalService.rename(item, data.name);
+            }
+        });
+    }
+
+    async openMoveDialog(event: MouseEvent, items: JournalItem[]) {
+        const dialogRef = this.dialog.open(MoveDialogComponent, {
+            width: '450px',
+            autoFocus: false,
+            data: { items }
+        });
+
+        dialogRef.afterClosed().subscribe((data?: { id: string; path: string }) => {
+            if (data) {
+                this.journalService.move(items, data.path);
             }
         });
     }

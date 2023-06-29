@@ -19,7 +19,7 @@ export interface Directory {
     id: ID;
     name: string;
     createdAt: Time;
-    path: [] | [string];
+    path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
     children: [] | [[Array<Directory__1>, Array<File>]];
@@ -46,7 +46,7 @@ export interface Directory__1 {
     id: ID;
     name: string;
     createdAt: Time;
-    path: [] | [string];
+    path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
     children: [] | [[Array<Directory__1>, Array<File>]];
@@ -62,7 +62,7 @@ export interface File {
     thumbnail: [] | [string];
     name: string;
     createdAt: Time;
-    path: [] | [string];
+    path: string;
     bucketId: BucketId;
     fileSize: bigint;
     updatedAt: Time;
@@ -83,7 +83,7 @@ export interface File__1 {
     thumbnail: [] | [string];
     name: string;
     createdAt: Time;
-    path: [] | [string];
+    path: string;
     bucketId: BucketId;
     fileSize: bigint;
     updatedAt: Time;

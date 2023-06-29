@@ -44,7 +44,6 @@ module {
         listDirs : ?ID -> [Directory];
         listDirsExtend : ?ID -> [Directory];
         listFiles : ?ID -> [File];
-        listFilesExtend : ?ID -> [File];
         checkDirname : EntryCreate -> Result.Result<(), DirectoryCreateError>;
         checkFilename : EntryCreate -> Result.Result<(), FileCreateError>;
         getJournal : (?Text) -> Result.Result<DirectoryState, DirectoryStateError>;
@@ -97,7 +96,7 @@ module {
             let buffer : Buffer.Buffer<Directory> = Buffer.Buffer(Map.size(filtered));
             for ((path, dir) in Map.entries(filtered)) {
                 let children = (listDirs(?dir.id), listFiles(?dir.id));
-                buffer.add({ dir with path = ?path; children = ?children; size = ?getDirSize(path) });
+                buffer.add({ dir with path; children = ?children; size = ?getDirSize(path) });
             };
             Buffer.toArray(buffer);
         };
@@ -116,15 +115,6 @@ module {
         public func listFiles(id : ?ID) : [File] {
             let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.vals(filtered));
-        };
-
-        public func listFilesExtend(id : ?ID) : [File] {
-            let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
-            let buffer : Buffer.Buffer<File> = Buffer.Buffer(Map.size(filtered));
-            for ((path, file) in Map.entries(filtered)) {
-                buffer.add({ file with path = ?path });
-            };
-            Buffer.toArray(buffer);
         };
 
         func findDir(id : ID) : ?Directory {
@@ -197,7 +187,7 @@ module {
                 };
                 switch (Map.get<Text, Directory>(directories, thash, currentPath)) {
                     case null {};
-                    case (?v) buffer.add({ v with path = ?currentPath });
+                    case (?v) buffer.add({ v with path = currentPath });
                 };
                 parentPath := ?currentPath;
             };
@@ -215,7 +205,7 @@ module {
                     (?id, getBreadcrumbs(path));
                 };
             };
-            #ok({ id; dirs = listDirsExtend(id); files = listFilesExtend(id); breadcrumbs });
+            #ok({ id; dirs = listDirsExtend(id); files = listFiles(id); breadcrumbs });
         };
 
         public func createDir({ name; parentId } : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
@@ -240,11 +230,11 @@ module {
                         updatedAt = now;
                         color = ? #blue;
                         children = null;
-                        path = null;
+                        path;
                         size = null;
                     };
                     Map.set(directories, thash, path, directory);
-                    #ok({ directory with path = ?path });
+                    #ok directory;
                 };
             };
         };
@@ -333,8 +323,8 @@ module {
             let targetDirs : [Directory] = listDirs(id);
             switch (Array.find<Directory>(targetDirs, func({ name } : Directory) : Bool { Text.equal(name, sourceDir.name) })) {
                 case null {
-                    let directory : Directory = { sourceDir with updatedAt = Time.now(); parentId = id };
-                    let path : Text = Option.getMapped<Text, Text>(targetPath, func v = v # "/" # directory.name, directory.name);
+                    let path : Text = Option.getMapped<Text, Text>(targetPath, func v = v # "/" # sourceDir.name, sourceDir.name);
+                    let directory : Directory = { sourceDir with updatedAt = Time.now(); parentId = id; path };
                     ignore Map.put(directories, thash, path, directory);
                     let sourceDirs : [Directory] = listDirs(?sourceDir.id);
                     let sourceFiles : [File] = listFiles(?sourceDir.id);
@@ -407,8 +397,8 @@ module {
             // список файлов в папке-получателе
             let targetFiles : [File] = listFiles(id);
             let found : ?File = Array.find<File>(targetFiles, func({ name } : File) = Text.equal(name, sourceFile.name));
-            let file : File = { sourceFile with updatedAt = Time.now(); parentId = id };
-            let path : Text = Option.getMapped<Text, Text>(targetPath, func v = v # "/" # file.name, file.name);
+            let path : Text = Option.getMapped<Text, Text>(targetPath, func v = v # "/" # sourceFile.name, sourceFile.name);
+            let file : File = { sourceFile with updatedAt = Time.now(); parentId = id; path };
 
             if (Option.isSome(found)) {
                 ignore await deleteFile(path);
@@ -447,13 +437,14 @@ module {
 
             for ((key, value) in Iter.fromArray(fileEntries)) {
                 Map.delete(files, thash, key);
-                Map.set(files, thash, path # "/" # value.name, value);
+                let newPath : Text = path # "/" # value.name;
+                Map.set(files, thash, newPath, { value with path = newPath });
             };
 
             for ((key, value) in Iter.fromArray<(Text, Directory)>(dirEntries)) {
                 Map.delete(directories, thash, key);
                 let newPath : Text = path # "/" # value.name;
-                Map.set(directories, thash, newPath, value);
+                Map.set(directories, thash, newPath, { value with path = newPath });
                 await* updateSubPaths(value.id, newPath);
             };
         };
@@ -468,7 +459,7 @@ module {
                 case (?v) #err(#alreadyExists v);
                 case null {
                     Map.delete(files, thash, path);
-                    let value : File = { file with updatedAt = Time.now(); name };
+                    let value : File = { file with updatedAt = Time.now(); name; path = newPath };
                     Map.set(files, thash, newPath, value);
                     #ok(value);
                 };
@@ -489,10 +480,10 @@ module {
                         case null {
                             let _files : [(Text, File)] = listFileEntries(?dir.id);
                             Map.delete(directories, thash, path);
-                            let directory : Directory = { dir with updatedAt = Time.now(); name = newName };
+                            let directory : Directory = { dir with updatedAt = Time.now(); name = newName; path = newPath };
                             Map.set(directories, thash, newPath, directory);
                             await* updateSubPaths(directory.id, newPath);
-                            #ok({ directory with path = ?newPath });
+                            #ok directory;
                         };
                     };
                 };
@@ -501,7 +492,7 @@ module {
                     let color : ?DirectoryColor = ?Option.get(fields.color, Option.get(dir.color, #blue));
                     let directory : Directory = { dir with updatedAt = Time.now(); color };
                     ignore Map.put(directories, thash, path, directory);
-                    #ok({ directory with path = ?path });
+                    #ok directory;
                 };
                 // case _ throw Error.reject("Wrong action");
             };
@@ -608,6 +599,7 @@ module {
                                         if (Text.equal(name, "")) continue newPathLoop;
                                         let id = ids.get(idIndex);
                                         let now = Time.now();
+                                        currentPath := joinPath(parentPath, name);
                                         let directory : Directory = {
                                             id;
                                             name;
@@ -616,10 +608,9 @@ module {
                                             updatedAt = now;
                                             color = ? #blue;
                                             children = null;
-                                            path = null;
+                                            path = currentPath;
                                             size = null;
                                         };
-                                        currentPath := joinPath(parentPath, name);
                                         Map.set(directories, thash, currentPath, directory);
                                         buffer.add((currentPath, id));
 
@@ -647,7 +638,7 @@ module {
                 };
             };
             let now = Time.now();
-            let value : File = { file and { createdAt = now; updatedAt = now; path = null } };
+            let value : File = { file and { createdAt = now; updatedAt = now; path } };
             let ?replaced = Map.put(files, thash, path, value) else return #ok(value);
             let storageBucket : actor { delete : shared (id : ID) -> async () } = actor (Principal.toText(replaced.bucketId));
             ignore storageBucket.delete(replaced.id);

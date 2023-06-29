@@ -48,7 +48,7 @@ export class JournalService {
                         const [key, value] = Object.entries(get(result, 'err') as unknown as DirectoryCreateError)[0];
                         throw Error(this.translocoService.translate(`fileList.directory.create.messages.err.${key}`, { value }));
                     }
-                    const directory = { ...toDirectoryExtended(get(result, 'ok') as unknown as Directory), path: parent?.path };
+                    const directory = toDirectoryExtended(get(result, 'ok') as unknown as Directory);
                     return directory;
                 }),
                 finalize(() => this.#fileListService.removeItem(id))
@@ -296,7 +296,7 @@ export class JournalService {
             .subscribe(() => this.#fileListService.update());
     }
 
-    get(id?: string): Observable<Partial<DirectoryFlatNode>[]> {
+    get(id?: string): Observable<Pick<DirectoryFlatNode, 'expandable' | 'directory'>[]> {
         return this.bucketsService.select(selectSlice(['journal', 'loaded'])).pipe(
             filter(({ loaded }) => loaded),
             first(),
@@ -305,10 +305,13 @@ export class JournalService {
 
                 return from(journal.getChildrenDirs(toNullable(id))).pipe(
                     map(dirs =>
-                        dirs.map(toDirectoryExtended).map(dir => ({
-                            expandable: dir.children && dir.children[0].length > 0,
-                            directory: pick(dir, ['id', 'name', 'parentId', 'path'])
-                        }))
+                        dirs.map(toDirectoryExtended).map(
+                            dir =>
+                                ({
+                                    expandable: dir.children && dir.children[0].length > 0,
+                                    directory: pick(dir, ['id', 'name', 'parentId', 'path'])
+                                } as Pick<DirectoryFlatNode, 'expandable' | 'directory'>)
+                        )
                     ),
                     catchError(() => of([]))
                 );

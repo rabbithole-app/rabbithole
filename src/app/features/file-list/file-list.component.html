@@ -85,6 +85,10 @@
             <mat-icon svgIcon="far:pen-to-square"></mat-icon>
             <span>{{ t('actions.rename') }}</span>
         </button>
+        <button mat-menu-item (click)="openMoveDialog($event, items)">
+            <mat-icon svgIcon="far:folder-tree"></mat-icon>
+            <span>{{ t('actions.move', { count: items?.length }) }}</span>
+        </button>
         <button *rxIf="everyFile" mat-menu-item class="warn" (click)="handleItemsAction('download', items)">
             <mat-icon svgIcon="far:download"></mat-icon>
             <span>{{ t('actions.download', { count: items?.length }) }}</span>

@@ -17,7 +17,7 @@ export type Directory = {
     // updatedAt: bigint;
     type: 'folder';
     parentId?: string;
-    path?: string;
+    path: string;
     // children: JournalItem[];
 };
 
@@ -27,7 +27,7 @@ export type FileInfo = {
     type: 'file';
     fileSize: bigint;
     parentId?: string;
-    path?: string;
+    path: string;
     bucketId: string;
     downloadUrl: string;
     thumbnail?: string;

@@ -34,7 +34,6 @@ export function toDirectoryExtended(directory: Directory): DirectoryExtended {
         parentId: fromNullable(directory.parentId),
         color: fromNullableOption<JournalDirectoryColor, DirectoryColor>(directory.color, 'blue'),
         children: children ? [dirs, files] : undefined,
-        path: fromNullable(directory.path),
         size: fromNullable(directory.size)
     };
 }
@@ -49,7 +48,6 @@ export function toFileExtended(file: File): FileInfoExtended {
         downloadUrl,
         type: 'file',
         parentId: fromNullable(file.parentId),
-        thumbnail: fromNullable(file.thumbnail),
-        path: fromNullable(file.path)
+        thumbnail: fromNullable(file.thumbnail)
     } as FileInfoExtended;
 }

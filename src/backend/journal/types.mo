@@ -14,7 +14,7 @@ module {
         createdAt : Time.Time;
         updatedAt : Time.Time;
         parentId : ?ID;
-        path : ?Text;
+        path : Text;
     };
     public type DirectoryColor = { #blue; #yellow; #orange; #purple; #pink; #gray; #green };
     public type Directory = CommonAttributes and {

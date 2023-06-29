@@ -113,7 +113,8 @@ export class FileListService {
             color: 'blue',
             children: undefined,
             loading: true,
-            disabled: true
+            disabled: true,
+            path: parent ? `${parent.path}/${name}` : name
         };
         this.#items.update(items => [...items, tempDirectory]);
     }

@@ -171,7 +171,7 @@ type File__1 =
    id: ID;
    name: text;
    parentId: opt ID;
-   path: opt text;
+   path: text;
    thumbnail: opt text;
    updatedAt: Time;
  };
@@ -205,7 +205,7 @@ type File =
    id: ID;
    name: text;
    parentId: opt ID;
-   path: opt text;
+   path: text;
    thumbnail: opt text;
    updatedAt: Time;
  };
@@ -225,7 +225,7 @@ type Directory__1 =
    id: ID;
    name: text;
    parentId: opt ID;
-   path: opt text;
+   path: text;
    size: opt nat;
    updatedAt: Time;
  };
@@ -282,7 +282,7 @@ type Directory =
    id: ID;
    name: text;
    parentId: opt ID;
-   path: opt text;
+   path: text;
    size: opt nat;
    updatedAt: Time;
  };

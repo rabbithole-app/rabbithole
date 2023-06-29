@@ -1,0 +1,12 @@
+<ng-container *transloco="let t; read: 'fileList.move'">
+    <h1 mat-dialog-title>{{ t('title', { count: data.items.length, type: itemsType() }) }}</h1>
+    <mat-dialog-content class="mat-typography">
+        <app-tree [paths]="paths()" [expandPaths]="expandPaths()" (selectPath)="selected.set($event)" [disableSubtree]="disableSubtree()"></app-tree>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
+        <button mat-raised-button color="primary" [mat-dialog-close]="selected()" [disabled]="selected() === null">
+            {{ t('actions.move') }}
+        </button>
+    </mat-dialog-actions>
+</ng-container>

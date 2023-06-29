@@ -8,6 +8,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { DirectoryFlatNode } from './tree.models';
 import { JournalService } from '@features/file-list/services';
 
+export type TreeDataSourceOptions = { paths?: string[]; expandPaths?: string[]; disableSubtree?: boolean; disableParent?: boolean };
+
 export class TreeDataSource implements DataSource<DirectoryFlatNode> {
     #rootNode = {
         directory: {
@@ -23,11 +25,22 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
     #data$ = toObservable(this.#data);
     #journalService = inject(JournalService);
     #treeSubscription!: Subscription;
+    #options: WritableSignal<Required<TreeDataSourceOptions>> = signal({
+        paths: [],
+        expandPaths: [],
+        disableSubtree: false,
+        disableParent: true
+    });
 
-    constructor(private treeControl: FlatTreeControl<DirectoryFlatNode, string>, private path: string, private disableSubtree: boolean = false) {
+    constructor(private treeControl: FlatTreeControl<DirectoryFlatNode, string>, private options: TreeDataSourceOptions) {
+        this.#options.update(value => ({ ...value, ...options }));
         effect(() => {
             const data = this.#data();
             this.treeControl.dataNodes = data;
+        });
+        effect(() => {
+            const { paths, expandPaths } = this.#options();
+            [...paths, ...expandPaths].forEach(path => this.expandPath(path));
         });
     }
 
@@ -52,24 +65,17 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
         this.#treeSubscription.unsubscribe();
     }
 
-    setOptions(opts: { path?: string; disableSubtree?: boolean }) {
-        if (opts.path) {
-            this.path = opts.path;
-            this.expandPath(this.path);
-        }
-        if (opts.disableSubtree) {
-            this.disableSubtree = opts.disableSubtree;
-        }
+    setOptions(options: TreeDataSourceOptions) {
+        this.#options.update(value => ({ ...value, ...options }));
+        this.#data.update(data => data.map(node => ({ ...node, disabled: this.#isDisabled(node.directory) })));
+    }
 
-        const currentNode = this.#data().find(({ directory }) => directory.path === this.path);
-        if (!currentNode) return;
-        this.#data.update(data =>
-            data.map(node => {
-                if (node.directory.path === this.path || (this.disableSubtree && node.directory.path?.startsWith(`${this.path}/`))) {
-                    return { ...node, disabled: true };
-                }
-                return { ...node, disabled: false };
-            })
+    #isDisabled(directory: DirectoryFlatNode['directory']): boolean {
+        const { paths, disableParent, disableSubtree } = this.#options();
+        return (
+            paths.includes(directory.path) ||
+            (disableParent && paths.some(path => directory.path === (path.split('/').slice(0, -1).join('/') || undefined))) ||
+            (disableSubtree && paths.some(path => directory.path?.startsWith(`${path}/`)))
         );
     }
 
@@ -91,12 +97,11 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
             }
 
             const nodes = children.map(partialNode => {
-                const disabled = this.disableSubtree ? data[index].disabled : false;
                 return {
                     ...partialNode,
                     level: data[index].level + 1,
                     loading: false,
-                    disabled: partialNode.directory?.path === this.path || disabled
+                    disabled: this.#isDisabled(partialNode.directory)
                 } as DirectoryFlatNode;
             });
             data.splice(index + 1, 0, ...nodes);

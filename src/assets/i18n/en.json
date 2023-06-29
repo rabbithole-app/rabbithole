@@ -107,7 +107,15 @@
         "actions": {
             "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",
             "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}",
-            "rename": "Rename"
+            "rename": "Rename",
+            "move": "Move{count, plural, =0 {} =1 {} other { (# items)}}"
+        },
+        "move": {
+            "title": "Where to move{count, plural, =1 { {type, select, 0 {file} other {directory}}} other { # {type, select, 0 {files} 1 {directories} other {items}}}}?",
+            "actions": {
+                "cancel": "Cancel",
+                "move": "Move"
+            }
         },
         "directory": {
             "get": {

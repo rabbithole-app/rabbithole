@@ -8,10 +8,11 @@ import { RxIf } from '@rx-angular/template/if';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatRipple, MatRippleModule } from '@angular/material/core';
+import { isEmpty } from 'lodash';
 
 import { addFASvgIcons } from '@core/utils';
 import { DirectoryFlatNode } from './tree.models';
-import { TreeDataSource } from './tree.datasource';
+import { TreeDataSource, TreeDataSourceOptions } from './tree.datasource';
 
 @Component({
     selector: 'app-tree',
@@ -34,8 +35,10 @@ import { TreeDataSource } from './tree.datasource';
     providers: []
 })
 export class TreeComponent implements OnChanges {
-    @Input({ required: true }) path!: string;
+    @Input({ required: true }) paths: string[] = [];
+    @Input() expandPaths: string[] = [];
     @Input() disableSubtree = false;
+    @Input() disableParent = true;
     @Output() selectPath = new EventEmitter<{ id: string; path: string } | null>();
     selected: SelectionModel<string> = new SelectionModel<string>(false);
     getLevel = (node: DirectoryFlatNode) => node.level;
@@ -43,7 +46,12 @@ export class TreeComponent implements OnChanges {
     treeControl: FlatTreeControl<DirectoryFlatNode, string> = new FlatTreeControl<DirectoryFlatNode, string>(this.getLevel, this.isExpandable, {
         trackBy: node => node.directory.id
     });
-    dataSource = new TreeDataSource(this.treeControl, this.path, this.disableSubtree);
+    dataSource = new TreeDataSource(this.treeControl, {
+        paths: this.paths,
+        expandPaths: this.expandPaths,
+        disableSubtree: this.disableSubtree,
+        disableParent: this.disableParent
+    });
     hasChild = (_: number, node: DirectoryFlatNode) => node.expandable;
     trackById: TrackByFunction<DirectoryFlatNode> = (index: number, node: DirectoryFlatNode) => JSON.stringify(node);
 
@@ -52,18 +60,25 @@ export class TreeComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['path']) {
-            const path = changes['path'].currentValue;
-            this.dataSource.setOptions({ path });
+        const opts: TreeDataSourceOptions = {};
+        if (changes['paths']) {
+            opts.paths = changes['paths'].currentValue;
+        }
+
+        if (changes['expandPaths']) {
+            opts.expandPaths = changes['expandPaths'].currentValue;
         }
 
         if (changes['disableSubtree']) {
-            const disableSubtree = changes['disableSubtree'].currentValue;
-            this.dataSource.setOptions({ disableSubtree });
+            opts.disableSubtree = changes['disableSubtree'].currentValue;
         }
 
-        if (typeof this.path !== 'string') {
-            throw new TypeError('The input `path` is required');
+        if (changes['disableParent']) {
+            opts.disableParent = changes['disableParent'].currentValue;
+        }
+
+        if (!isEmpty(opts)) {
+            this.dataSource.setOptions(opts);
         }
     }
 
@@ -80,8 +95,8 @@ export class TreeComponent implements OnChanges {
             rippleRef.fadeOut();
         }
         const { id, path } = node.directory;
-        if (this.path === path) return;
-        this.selected.select(id);
-        this.selectPath.emit(id && path ? { id, path } : null);
+        if (node.disabled) this.selected.clear();
+        else this.selected.select(id);
+        this.selectPath.emit(this.selected.hasValue() ? { id, path } : null);
     }
 }
