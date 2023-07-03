@@ -1,27 +1,48 @@
 /// <reference lib="webworker" />
 
-import { RxState } from '@rx-angular/state';
 import { ActorSubclass, Identity } from '@dfinity/agent';
-import { arrayBufferToUint8Array, fromNullable } from '@dfinity/utils';
 import { Principal } from '@dfinity/principal';
-import { Observable, Subject, connect, forkJoin, from, merge, of, timer, defer } from 'rxjs';
-import { catchError, concatWith, exhaustMap, filter, first, map, mergeMap, skip, switchMap, takeUntil, tap, toArray, withLatestFrom } from 'rxjs/operators';
-import { isNull, isUndefined } from 'lodash';
-import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
+import { arrayBufferToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
+import { RxState } from '@rx-angular/state';
+import { selectSlice } from '@rx-angular/state/selections';
 import { PhotonImage, resize } from '@silvia-odwyer/photon';
+import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
+import { saveAs } from 'file-saver';
+import { get, has, isNull, isUndefined } from 'lodash';
+import { EMPTY, Observable, Subject, connect, defer, forkJoin, from, merge, of, throwError, timer } from 'rxjs';
+import { fromFetch } from 'rxjs/fetch';
+import {
+    catchError,
+    combineLatestWith,
+    concatWith,
+    delayWhen,
+    exhaustMap,
+    filter,
+    finalize,
+    first,
+    map,
+    mergeMap,
+    skip,
+    switchMap,
+    takeUntil,
+    tap,
+    toArray,
+    withLatestFrom
+} from 'rxjs/operators';
 
-import { createActor, loadIdentity } from '@core/utils';
-import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
+import { createActor, decryptArrayBuffer, encryptArrayBuffer, initVetAesGcmKey, loadIdentity } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
+import { FileInfoExtended } from '@features/file-list/models';
+import { toDirectoryExtended, toFileExtended, uint8ToBase64 } from '@features/file-list/utils';
+import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '@features/upload/constants';
+import { Bucket, FileUpload, FileUploadState, UPLOAD_STATUS } from '@features/upload/models';
+import { getStorageBySize, uploadFile } from '@features/upload/operators';
+import { MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
-import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
+import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
+import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
-import { Bucket, FileUpload, FileUploadState, UPLOAD_STATUS } from '../models';
-import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '../constants';
-import { getStorageBySize, uploadFile } from '../operators';
-import { uint8ToBase64 } from '@features/file-list/utils';
-import { MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
 
 interface State {
     identity: Identity;
@@ -30,9 +51,11 @@ interface State {
     storages: Bucket<StorageActor>[];
     files: Record<string, FileUpload>;
     progress: Record<string, FileUploadState>;
+    vetAesGcmKey: CryptoKey | null;
 }
 
 const state = new RxState<State>();
+const updateJournal: Subject<string | undefined> = new Subject();
 state.set({ progress: {}, files: {} });
 const files: Subject<{ item: FileUpload; uploadState: FileUploadState }> = new Subject();
 const keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
@@ -40,12 +63,16 @@ const keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
 addEventListener('message', ({ data }) => {
     const { action, item, id, uploadState } = data;
     switch (action) {
-        case 'add': {
+        case 'getJournal': {
+            updateJournal.next(data.path);
+            break;
+        }
+        case 'addUpload': {
             state.set('files', state => ({ ...state.files, [item.id]: item }));
             files.next({ item, uploadState });
             break;
         }
-        case 'pause': {
+        case 'pauseUpload': {
             updateProgress(id, { status: UPLOAD_STATUS.Paused });
             const canisterId = state.get('progress', id, 'canisterId');
             if (canisterId) {
@@ -53,8 +80,8 @@ addEventListener('message', ({ data }) => {
             }
             break;
         }
-        case 'resume':
-        case 'retry': {
+        case 'resumeUpload':
+        case 'retryUpload': {
             const item = state.get('files', id);
             const previousState = state.get('progress', id);
             if (item) {
@@ -63,8 +90,33 @@ addEventListener('message', ({ data }) => {
             }
             break;
         }
-        case 'cancel': {
+        case 'cancelUpload': {
             updateProgress(id, { status: UPLOAD_STATUS.Cancelled });
+            break;
+        }
+        case 'download': {
+            const vetAesGcmKey$ = state.select('vetAesGcmKey').pipe(first(ek => ek !== null));
+            from(data.items as FileInfoExtended[])
+                .pipe(
+                    delayWhen(() => vetAesGcmKey$),
+                    withLatestFrom(vetAesGcmKey$),
+                    tap(console.log),
+                    mergeMap(([{ downloadUrl, name }, ek]) =>
+                        fromFetch(downloadUrl).pipe(
+                            switchMap(response =>
+                                from(response.arrayBuffer()).pipe(
+                                    map(encryptedBuffer => ({ encryptedBuffer, type: response.headers.get('content-type') ?? undefined }))
+                                )
+                            ),
+                            switchMap(({ encryptedBuffer, type }) =>
+                                from(decryptArrayBuffer(ek, encryptedBuffer)).pipe(map(decodedBuffer => ({ blob: new Blob([decodedBuffer], { type }), name })))
+                            )
+                        )
+                    )
+                )
+                .subscribe(payload => {
+                    postMessage({ action: 'download', payload });
+                });
             break;
         }
         default:
@@ -164,7 +216,7 @@ function updateProgress(id: string, value: Partial<FileUploadState> & { chunkSiz
         ...state.progress,
         [id]: { ...state.progress[id], ...value }
     }));
-    postMessage({ action: 'progress', id, progress: value });
+    postMessage({ action: 'progressUpload', id, progress: value });
 }
 
 const identity$ = from(loadIdentity()).pipe(
@@ -172,6 +224,10 @@ const identity$ = from(loadIdentity()).pipe(
     map(identity => identity as NonNullable<typeof identity>)
 );
 state.connect('identity', identity$);
+state.connect(
+    'vetAesGcmKey',
+    state.select(selectSlice(['journal', 'identity'])).pipe(switchMap(({ journal, identity }) => initVetAesGcmKey(identity.getPrincipal(), journal)))
+);
 
 state.connect(
     createRabbitholeActor().pipe(
@@ -195,6 +251,42 @@ state.connect(
         )
     )
 );
+
+updateJournal
+    .asObservable()
+    .pipe(
+        combineLatestWith(state.select('journal')),
+        switchMap(([path, actor]) =>
+            from(actor.getJournal(toNullable(path || undefined))).pipe(
+                map(response => {
+                    if (has(response, 'err')) {
+                        const err = Object.keys(get(response, 'err') as unknown as DirectoryStateError)[0];
+                        const message = `fileList.directory.get.errors.${err}`;
+                        throw new Error(message);
+                    }
+
+                    const journal = get(response, 'ok') as unknown as DirectoryState;
+                    const dirs = journal.dirs.map(toDirectoryExtended);
+                    const files = journal.files.map(toFileExtended);
+                    const breadcrumbs = journal.breadcrumbs.map(toDirectoryExtended);
+                    const parentId = fromNullable<string>(journal.id);
+
+                    return {
+                        items: [...dirs, ...files],
+                        breadcrumbs,
+                        parent: parentId && path ? { id: parentId, path } : undefined
+                    };
+                })
+            )
+        ),
+        catchError(err => {
+            postMessage({ action: 'getJournalFailed', errorCode: err.message });
+            return EMPTY;
+        })
+    )
+    .subscribe(data => {
+        postMessage({ action: 'getJournalSuccess', payload: data });
+    });
 
 const keepAlive$ = keepAlive.asObservable().pipe(
     mergeMap(({ id, canisterId }) => {
@@ -250,12 +342,18 @@ const fileUpload$ = files.asObservable().pipe(
                             ? photonImage.get_base64()
                             : `data:image/jpeg;base64,${uint8ToBase64(photonImage.get_bytes_jpeg(90))}`;
                         return of(thumbnail);
-                    }).pipe(catchError(() => of(undefined)))
+                    }).pipe(catchError(() => of(undefined))),
+                    state.select('vetAesGcmKey').pipe(
+                        first(v => v !== null),
+                        switchMap(ek => encryptArrayBuffer(ek, item.data)),
+                        tap(console.log),
+                        finalize(() => console.log('encryption finalize'))
+                    )
                 ]).pipe(
-                    switchMap(([sha256, storage, thumbnail]) =>
+                    switchMap(([sha256, storage, thumbnail, encryptedData]) =>
                         uploadFile({
                             storage,
-                            item: { ...item, sha256, thumbnail },
+                            item: { ...item, data: encryptedData, fileSize: encryptedData.byteLength, sha256, thumbnail },
                             options: {
                                 concurrentChunksCount: CONCURRENT_CHUNKS_COUNT,
                                 chunkSize: CHUNK_SIZE
@@ -273,6 +371,10 @@ const fileUpload$ = files.asObservable().pipe(
                                 }
 
                                 return value;
+                            }),
+                            catchError(err => {
+                                console.error(err);
+                                return throwError(() => err);
                             })
                         )
                     )

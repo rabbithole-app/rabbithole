@@ -1,8 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { ActorSubclass, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
+import { fromNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
+import { isNull, isUndefined } from 'lodash';
 import {
     catchError,
     combineLatest,
@@ -26,16 +28,14 @@ import {
     throwError,
     toArray
 } from 'rxjs';
-import { fromNullable } from '@dfinity/utils';
-import { isNull, isUndefined } from 'lodash';
 
+import { getStorageBySize } from '@features/upload/operators';
+import { AUTH_RX_STATE } from 'app/core/stores/auth';
+import { createActor } from 'app/core/utils/create-actor';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
-import { AUTH_RX_STATE } from 'app/core/stores/auth';
-import { createActor } from 'app/core/utils/create-actor';
-import { getStorageBySize } from '@features/upload/operators';
 
 type Bucket<T> = {
     actor: ActorSubclass<T>;
@@ -50,7 +50,7 @@ interface State {
     loaded: boolean;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class BucketsService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
     private updateJournal: Subject<void> = new Subject<void>();

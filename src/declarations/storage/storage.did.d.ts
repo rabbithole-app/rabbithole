@@ -1,5 +1,5 @@
-import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { Principal } from '@dfinity/principal';
 
 export interface AssetKey {
     sha256: [] | [Uint8Array | number[]];
@@ -30,6 +30,7 @@ export interface File {
     thumbnail: [] | [string];
     name: string;
     createdAt: Time;
+    path: string;
     bucketId: BucketId;
     fileSize: bigint;
     updatedAt: Time;

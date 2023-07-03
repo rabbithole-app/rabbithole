@@ -8,7 +8,7 @@ let additions =
   [
     { name = "base"
     , repo = "https://github.com/dfinity/motoko-base"
-    , version = "moc-0.9.3"
+    , version = "moc-0.9.4"
     , dependencies = [] : List Text
     },
     { name = "stableBTree"

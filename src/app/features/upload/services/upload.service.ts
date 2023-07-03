@@ -1,44 +1,43 @@
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { arrayBufferToUint8Array } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
-import { from, mergeMap, Observable, of, onErrorResumeNext, Subject, merge, timer, forkJoin } from 'rxjs';
+import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
+import { defaults, entries, isEqual, isPlainObject, isUndefined, orderBy, remove, uniqBy, values } from 'lodash';
+import { showDirectoryPicker, showOpenFilePicker } from 'native-file-system-adapter';
+import { type FileSystemDirectoryHandle } from 'native-file-system-adapter/types/src/FileSystemDirectoryHandle';
+import { type FileSystemFileHandle } from 'native-file-system-adapter/types/src/FileSystemFileHandle';
+import { forkJoin, from, merge, mergeMap, Observable, of, onErrorResumeNext, Subject, timer } from 'rxjs';
 import {
-    filter,
-    first,
     concatWith,
     connect,
     debounceTime,
     distinctUntilChanged,
-    switchMap,
     exhaustMap,
+    filter,
+    first,
     map,
+    mergeAll,
     shareReplay,
     skip,
+    switchMap,
     takeUntil,
     tap,
-    withLatestFrom,
-    mergeAll
+    withLatestFrom
 } from 'rxjs/operators';
-import { defaults, entries, isEqual, isPlainObject, isUndefined, orderBy, uniqBy, values, remove } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { arrayBufferToUint8Array } from '@dfinity/utils';
-import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
-import { showDirectoryPicker, showOpenFilePicker } from 'native-file-system-adapter';
-import { type FileSystemDirectoryHandle } from 'native-file-system-adapter/types/src/FileSystemDirectoryHandle';
-import { type FileSystemFileHandle } from 'native-file-system-adapter/types/src/FileSystemFileHandle';
-import { toObservable } from '@angular/core/rxjs-interop';
 
-import { FileUpload, FileUploadState, UPLOAD_STATUS, Summary } from '../models';
-import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
-import { uploadFile } from '../operators';
-import { BucketsService, NotificationService } from '@core/services';
-import { FileListService } from '@features/file-list/services/file-list.service';
+import { BucketsService, CoreService, CryptoService, NotificationService } from '@core/services';
 import { JournalService } from '@features/file-list/services';
+import { FileListService } from '@features/file-list/services/file-list.service';
+import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
+import { FileUpload, FileUploadState, Summary, UPLOAD_STATUS } from '../models';
+import { uploadFile } from '../operators';
 
 interface State {
     items: FileUpload[];
     progress: Record<string, FileUploadState>;
     summary: Summary;
-    worker: Worker | null;
 }
 
 @Injectable()
@@ -47,9 +46,9 @@ export class UploadService extends RxState<State> {
     #journalService = inject(JournalService);
     #bucketService = inject(BucketsService);
     #notificationService = inject(NotificationService);
+    readonly #coreService = inject(CoreService);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
-    // #cryptoService = inject(CryptoService);
 
     readonly concurrentFilesCount = CONCURRENT_FILES_COUNT;
     readonly concurrentChunksCount = CONCURRENT_CHUNKS_COUNT;
@@ -78,7 +77,6 @@ export class UploadService extends RxState<State> {
         distinctUntilChanged(isEqual)
     );
     summary$: Observable<Summary> = this.select('summary');
-    readonly workerEnabled = true;
 
     constructor() {
         super();
@@ -171,19 +169,18 @@ export class UploadService extends RxState<State> {
             )
         );
 
-        if (typeof Worker !== 'undefined' && this.workerEnabled) {
-            const worker = new Worker(new URL('../workers/upload.worker', import.meta.url), { type: 'module' });
-            this.set({ worker });
-
-            worker.onmessage = async ({ data }) => {
+        const worker = this.#coreService.worker();
+        if (worker) {
+            this.#coreService.workerMessage$.pipe(takeUntilDestroyed()).subscribe(({ data }) => {
                 switch (data.action) {
-                    case 'progress':
+                    case 'progressUpload': {
                         this.updateProgress(data.id, data.progress);
                         break;
+                    }
                     default:
                         break;
                 }
-            };
+            });
         } else {
             const chunks$ = this.files.asObservable().pipe(
                 mergeMap((item: FileUpload) => {
@@ -305,21 +302,15 @@ export class UploadService extends RxState<State> {
     // }
 
     terminate() {
-        const worker = this.get('worker');
-        if (worker) {
-            worker.terminate();
-        }
-
         this.set({
             items: [],
             summary: this.summaryInitValue,
-            progress: {},
-            worker: null
+            progress: {}
         });
     }
 
     async add(files: FileSystemFileHandle[]) {
-        const worker = this.get('worker');
+        const worker = this.#coreService.worker();
         for (let i = 0; i < files.length; i++) {
             const file = await files[i].getFile();
             const buffer = await file.arrayBuffer();
@@ -335,7 +326,7 @@ export class UploadService extends RxState<State> {
             this.files.next(item);
             if (worker) {
                 const uploadState = this.get('progress', item.id);
-                worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
+                worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data]);
             }
         }
     }
@@ -352,21 +343,23 @@ export class UploadService extends RxState<State> {
     }
 
     retry(id: string) {
-        const { worker, items } = this.get();
+        const worker = this.#coreService.worker();
+        const items = this.get('items');
         const item = items.find(item => item.id === id);
         if (worker) {
-            worker.postMessage({ action: 'retry', id });
+            worker.postMessage({ action: 'retryUpload', id });
         } else if (item) {
             this.files.next(item);
         }
     }
 
     pause(id: string) {
-        const { worker, items, progress } = this.get();
+        const worker = this.#coreService.worker();
+        const { items, progress } = this.get();
         const item = items.find(item => item.id === id);
         const canisterId = progress[id]?.canisterId;
         if (worker) {
-            worker.postMessage({ action: 'pause', id });
+            worker.postMessage({ action: 'pauseUpload', id });
         } else if (item && canisterId) {
             this.updateProgress(id, { status: UPLOAD_STATUS.Paused });
             this.keepAlive.next({ id: item.id, canisterId });
@@ -374,19 +367,20 @@ export class UploadService extends RxState<State> {
     }
 
     resume(id: string) {
-        const { worker, items } = this.get();
+        const worker = this.#coreService.worker();
+        const items = this.get('items');
         const item = items.find(item => item.id === id);
         if (worker) {
-            worker.postMessage({ action: 'resume', id });
+            worker.postMessage({ action: 'resumeUpload', id });
         } else if (item) {
             this.files.next(item);
         }
     }
 
     cancel(id: string) {
-        const worker = this.get('worker');
+        const worker = this.#coreService.worker();
         if (worker) {
-            worker.postMessage({ action: 'cancel', id });
+            worker.postMessage({ action: 'cancelUpload', id });
         } else {
             this.updateProgress(id, { status: UPLOAD_STATUS.Cancelled });
         }
@@ -451,7 +445,7 @@ export class UploadService extends RxState<State> {
             const parent = this.#fileListService.parent();
             const [files, directories] = await this.#listFilesAndDirsRecursively(dirHandle);
 
-            const worker = this.get('worker');
+            const worker = this.#coreService.worker();
             this.#journalService
                 .createPaths({ paths: this.#getUniquePaths(directories), parent })
                 .pipe(
@@ -474,7 +468,7 @@ export class UploadService extends RxState<State> {
                     this.files.next(item);
                     if (worker) {
                         const uploadState = this.get('progress', item.id);
-                        worker.postMessage({ action: 'add', item, uploadState }, [item.data]);
+                        worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data]);
                     }
                 });
         } catch (err) {

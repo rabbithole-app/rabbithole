@@ -26,6 +26,9 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import TrieSet "mo:base/TrieSet";
 import { recurringTimer; cancelTimer } "mo:base/Timer";
+import VETKD_SYSTEM_API "canister:vetkd_system_api";
+import VetKDTypes "../types/vetkd_types";
+import Hex "mo:encoding/Hex";
 
 import BiHashMap "mo:bimap/BiHashMap";
 import BiMap "mo:bimap/BiMap";
@@ -71,6 +74,12 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type CreatePath = JournalTypes.CreatePath;
     type NotFoundError = JournalTypes.NotFoundError;
     type AlreadyExistsError<T> = JournalTypes.AlreadyExistsError<T>;
+
+    type VetKDKeyId = VetKDTypes.VetKDKeyId;
+    type VetKDPublicKeyRequest = VetKDTypes.VetKDPublicKeyRequest;
+    type VetKDPublicKeyReply = VetKDTypes.VetKDPublicKeyReply;
+    type VetKDEncryptedKeyRequest = VetKDTypes.VetKDEncryptedKeyRequest;
+    type VetKDEncryptedKeyReply = VetKDTypes.VetKDEncryptedKeyReply;
 
     let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
     let CYCLE_SHARE = 500_000_000_000;
@@ -772,5 +781,35 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     func validateCaller(caller : Principal) : Bool {
         not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+    };
+
+    public shared ({ caller }) func app_vetkd_public_key(derivationPath : [Blob]) : async Text {
+        let request : VetKDPublicKeyRequest = {
+            canister_id = null;
+            derivation_path = derivationPath;
+            key_id = bls12_381_test_key_1();
+        };
+
+        let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else throw Error.reject("call to vetkd_public_key failed");
+        Hex.encode(Blob.toArray(response.public_key));
+    };
+
+    public shared ({ caller }) func encrypted_symmetric_key_for_caller(encryptionPublicKey : Blob) : async Text {
+        let request : VetKDEncryptedKeyRequest = {
+            encryption_public_key = encryptionPublicKey;
+            key_id = bls12_381_test_key_1();
+            derivation_id = Principal.toBlob(caller);
+            public_key_derivation_path = [Text.encodeUtf8("symmetric_key")];
+        };
+
+        let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else throw Error.reject("call to vetkd_encrypted_key failed");
+        Hex.encode(Blob.toArray(response.encrypted_key));
+    };
+
+    func bls12_381_test_key_1() : VetKDKeyId {
+        {
+            curve = #bls12_381;
+            name = "test_key_1";
+        };
     };
 };

@@ -14,6 +14,7 @@ export const idlFactory = ({ IDL }) => {
         thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         createdAt: Time,
+        path: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
         updatedAt: Time,

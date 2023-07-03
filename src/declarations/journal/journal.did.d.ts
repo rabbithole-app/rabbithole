@@ -1,5 +1,5 @@
-import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { Principal } from '@dfinity/principal';
 
 export type AccountIdentifier = Uint8Array | number[];
 export type BlockIndex = bigint;
@@ -94,6 +94,7 @@ export type ID__1 = string;
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
     addFile: ActorMethod<[FileCreate], Result_10>;
+    app_vetkd_public_key: ActorMethod<[Array<Uint8Array | number[]>], string>;
     canisterStatus: ActorMethod<
         [Principal],
         {
@@ -110,6 +111,7 @@ export interface JournalBucket {
     deleteDirectory: ActorMethod<[string], Result_5>;
     deleteFile: ActorMethod<[string], Result_5>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
+    encrypted_symmetric_key_for_caller: ActorMethod<[Uint8Array | number[]], string>;
     getCanisters: ActorMethod<[], Array<Canister>>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getJournal: ActorMethod<[[] | [string]], Result_4>;

@@ -1,20 +1,19 @@
-import { Route } from '@angular/router';
 import { importProvidersFrom } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
+import { Route } from '@angular/router';
 
-import { authGuard, journalGuard, loginGuard, registerGuard, createProfileGuard, dashboardGuard, invitationsGuard } from '@core/guards';
-import { InvitationsService } from '@features/invitations/services/invitations.service';
-import { RegisterService } from '@features/register/services/register.service';
+import { authGuard, createProfileGuard, dashboardGuard, invitationsGuard, journalGuard, loginGuard, registerGuard } from '@core/guards';
 import { CanistersService } from '@features/canisters/services';
-import { WalletService } from '@features/wallet/services';
-import { SidebarService } from './layout/dashboard/services/sidebar.service';
-import { BucketsService } from '@core/services';
-import { fileListResolver } from '@features/file-list/resolvers/file-list.resolver';
-import { JournalService, SnackbarProgressService } from '@features/file-list/services';
-import { UploadService } from '@features/upload/services';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
+import { fileListResolver } from '@features/file-list/resolvers/file-list.resolver';
+import { JournalService, SnackbarProgressService } from '@features/file-list/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
+import { InvitationsService } from '@features/invitations/services/invitations.service';
+import { RegisterService } from '@features/register/services/register.service';
+import { UploadService } from '@features/upload/services';
+import { WalletService } from '@features/wallet/services';
+import { SidebarService } from './layout/dashboard/services/sidebar.service';
 
 export const appRoutes: Route[] = [
     {
@@ -71,7 +70,6 @@ export const appRoutes: Route[] = [
             { path: '', redirectTo: 'drive', pathMatch: 'full' }
         ],
         providers: [
-            BucketsService,
             FileListService,
             SidebarService,
             WalletService,
@@ -88,7 +86,7 @@ export const appRoutes: Route[] = [
     {
         path: 'register',
         loadComponent: () => import('./layout/dashboard/dashboard.component').then(m => m.DashboardComponent),
-        providers: [SidebarService, RegisterService, BucketsService],
+        providers: [SidebarService, RegisterService],
         canActivate: [authGuard],
         children: [
             {

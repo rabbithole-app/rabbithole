@@ -1,19 +1,19 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { APP_INITIALIZER, enableProdMode, importProvidersFrom } from '@angular/core';
-import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { TranslocoService, TRANSLOCO_LOADING_TEMPLATE } from '@ngneat/transloco';
+import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { TRANSLOCO_LOADING_TEMPLATE, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { firstValueFrom } from 'rxjs';
 
-import { SettingsState, SETTINGS_RX_STATE } from '@core/stores';
 import { LocalStorageService, NotificationService, ProfileService } from '@core/services';
-import { TranslocoRootModule } from './app/transloco-root.module';
+import { SETTINGS_RX_STATE, SettingsState } from '@core/stores';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
+import { TranslocoRootModule } from './app/transloco-root.module';
 import { environment } from './environments/environment';
 
 if (environment.production) {

@@ -1,37 +1,41 @@
 {
-  "canisters": {
-    "rabbithole": {
-      "main": "src/backend/main.mo",
-      "type": "motoko"
+    "canisters": {
+        "rabbithole": {
+            "dependencies": ["vetkd_system_api"],
+            "main": "src/backend/main.mo",
+            "type": "motoko"
+        },
+        "rabbithole_frontend": {
+            "dependencies": ["rabbithole"],
+            "frontend": {
+                "entrypoint": "dist/index.html"
+            },
+            "source": ["dist"],
+            "type": "assets"
+        },
+        "journal": {
+            "dependencies": ["vetkd_system_api"],
+            "main": "src/backend/journal/main.mo",
+            "type": "motoko",
+            "args": "--incremental-gc"
+        },
+        "storage": {
+            "main": "src/backend/storage/main.mo",
+            "type": "motoko",
+            "args": "--incremental-gc"
+        },
+        "vetkd_system_api": {
+            "type": "custom",
+            "candid": "src/backend/vetkd_system_api/vetkd_system_api.did",
+            "wasm": "src/backend/vetkd_system_api/vetkd_system_api.wasm.gz",
+            "shrink": false
+        }
     },
-    "rabbithole_frontend": {
-      "dependencies": [
-        "rabbithole"
-      ],
-      "frontend": {
-        "entrypoint": "dist/index.html"
-      },
-      "source": [
-        "dist"
-      ],
-      "type": "assets"
+    "defaults": {
+        "build": {
+            "args": "",
+            "packtool": "vessel sources"
+        }
     },
-    "journal": {
-      "main": "src/backend/journal/main.mo",
-      "type": "motoko",
-      "args": "--incremental-gc"
-    },
-    "storage": {
-      "main": "src/backend/storage/main.mo",
-      "type": "motoko",
-      "args": "--incremental-gc"
-    }
-  },
-  "defaults": {
-    "build": {
-      "args": "",
-      "packtool": "vessel sources"
-    }
-  },
-  "version": 1
+    "version": 1
 }

@@ -204,6 +204,7 @@ export const idlFactory = ({ IDL }) => {
     const JournalBucket = IDL.Service({
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
         addFile: IDL.Func([FileCreate], [Result_10], []),
+        app_vetkd_public_key: IDL.Func([IDL.Vec(IDL.Vec(IDL.Nat8))], [IDL.Text], []),
         canisterStatus: IDL.Func(
             [IDL.Principal],
             [
@@ -223,6 +224,7 @@ export const idlFactory = ({ IDL }) => {
         deleteDirectory: IDL.Func([IDL.Text], [Result_5], []),
         deleteFile: IDL.Func([IDL.Text], [Result_5], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
+        encrypted_symmetric_key_for_caller: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
         getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_4], ['query']),

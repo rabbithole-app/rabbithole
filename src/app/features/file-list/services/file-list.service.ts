@@ -1,13 +1,13 @@
 import { Injectable, Signal, TemplateRef, WritableSignal, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
-import { combineLatestWith, filter, map, startWith, switchMap } from 'rxjs/operators';
-import { merge } from 'rxjs';
-import { BucketsService, NotificationService } from '@core/services';
-import { isNil, orderBy } from 'lodash';
+import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { toNullable } from '@dfinity/utils';
-import { TranslocoService } from '@ngneat/transloco';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { isNil, orderBy } from 'lodash';
+import { merge } from 'rxjs';
+import { combineLatestWith, filter, map, startWith, switchMap } from 'rxjs/operators';
 
+import { TranslocoService } from '@ngneat/transloco';
 import { DirectoryCreate, DirectoryExtended, JournalItem } from '../models';
 
 @Injectable()
@@ -16,6 +16,7 @@ export class FileListService {
     readonly #bucketsService = inject(BucketsService);
     readonly #translocoService = inject(TranslocoService);
     readonly #notificationService = inject(NotificationService);
+    readonly #coreService = inject(CoreService);
 
     #items: WritableSignal<JournalItem[]> = signal([]);
     breadcrumbs: WritableSignal<DirectoryExtended[]> = signal([]);
@@ -53,35 +54,28 @@ export class FileListService {
     );
     // readonly #version = toSignal(this.journalActor$.pipe(switchMap(actor => actor.getVersion())));
 
-    #worker: WritableSignal<Worker | null> = signal(null);
     readonly items: Signal<JournalItem[]> = computed(() => orderBy(this.#items(), [{ type: 'folder' }, 'name'], ['desc', 'asc']));
 
     constructor() {
-        // effect(() => console.log(this.#tree()));
-        if (typeof Worker !== 'undefined') {
-            const worker = new Worker(new URL('../workers/file-list.worker', import.meta.url), { type: 'module' });
-            this.#worker.set(worker);
-
-            worker.onmessage = async ({ data }) => {
-                switch (data.action) {
-                    case 'getJournalSuccess': {
-                        this.setData(data.payload);
-                        break;
-                    }
-                    case 'getJournalFailed': {
-                        this.#notificationService.error(this.#translocoService.translate(data.errorCode));
-                        this.#router.navigate(['/drive']);
-                        break;
-                    }
-                    default:
-                        break;
+        this.#coreService.workerMessage$.pipe(takeUntilDestroyed()).subscribe(({ data }) => {
+            switch (data.action) {
+                case 'getJournalSuccess': {
+                    this.setData(data.payload);
+                    break;
                 }
-            };
-        }
+                case 'getJournalFailed': {
+                    this.#notificationService.error(this.#translocoService.translate(data.errorCode));
+                    this.#router.navigate(['/drive']);
+                    break;
+                }
+                default:
+                    break;
+            }
+        });
     }
 
     getJournal(path?: string) {
-        this.#worker()?.postMessage({ action: 'getJournal', path });
+        this.#coreService.worker()?.postMessage({ action: 'getJournal', path });
     }
 
     setData(data: { items: JournalItem[]; breadcrumbs: DirectoryExtended[]; parent?: { id: string; path: string } }) {
@@ -93,7 +87,7 @@ export class FileListService {
 
     update() {
         const path = this.parent()?.path;
-        this.#worker()?.postMessage({ action: 'getJournal', path });
+        this.#coreService.worker()?.postMessage({ action: 'getJournal', path });
     }
 
     setItems(items: JournalItem[]) {

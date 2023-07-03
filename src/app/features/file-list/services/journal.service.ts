@@ -2,41 +2,56 @@ import { inject, Injectable } from '@angular/core';
 import { ActorSubclass } from '@dfinity/agent';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
-import { defer, EMPTY, from, iif, Observable, of, throwError } from 'rxjs';
-import { first, catchError, switchMap, tap, map, finalize, filter } from 'rxjs/operators';
-import { get, has, head, isEqual, isNil, isNull, pick } from 'lodash';
-import { saveAs } from 'file-saver';
-import { nanoid } from 'nanoid';
-import { v4 as uuidv4 } from 'uuid';
 import { selectSlice } from '@rx-angular/state/selections';
+import { saveAs } from 'file-saver';
+import { get, has, head, isEqual, isNil, isNull, pick } from 'lodash';
+import { nanoid } from 'nanoid';
+import { defer, EMPTY, from, iif, Observable, of, throwError } from 'rxjs';
+import { catchError, delayWhen, filter, finalize, first, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
 
-import { BucketsService, NotificationService } from '@core/services';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { OptKeys } from '@core/models';
+import { BucketsService, CoreService, NotificationService } from '@core/services';
 import {
     Directory,
+    DirectoryAction,
     DirectoryCreateError,
     DirectoryMoveError,
     DirectoryState,
     DirectoryUpdatableFields,
-    DirectoryColor as OptDirectoryColor,
+    File,
     _SERVICE as JournalBucketActor,
     NotFoundError,
-    DirectoryAction,
-    File
+    DirectoryColor as OptDirectoryColor
 } from '@declarations/journal/journal.did';
 import { DirectoryColor, DirectoryCreate, DirectoryExtended, FileInfoExtended, JournalItem } from '@features/file-list/models';
-import { toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SnackbarProgressService, Task } from '@features/file-list/services/snackbar-progress.service';
-import { FileListService } from './file-list.service';
+import { toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { DirectoryFlatNode } from '../components/tree/tree.models';
-import { OptKeys } from '@core/models';
+import { FileListService } from './file-list.service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class JournalService {
     private bucketsService = inject(BucketsService);
     private notificationService = inject(NotificationService);
     private snackbarProgressService = inject(SnackbarProgressService);
     readonly #fileListService = inject(FileListService);
     private translocoService = inject(TranslocoService);
+    readonly #coreService = inject(CoreService);
+
+    constructor() {
+        this.#coreService.workerMessage$.pipe(takeUntilDestroyed()).subscribe(({ data }) => {
+            switch (data.action) {
+                case 'download': {
+                    saveAs(data.payload.blob, data.payload.name);
+                    break;
+                }
+                default:
+                    break;
+            }
+        });
+    }
 
     createDirectory({ name, parent }: DirectoryCreate) {
         const id = `temp_${nanoid(4)}`;
@@ -151,12 +166,11 @@ export class JournalService {
     }
 
     download(selected: JournalItem[]) {
-        selected
-            .filter(({ type }) => type === 'file')
-            .map(v => v as FileInfoExtended)
-            .forEach(({ downloadUrl, name }) => {
-                saveAs(downloadUrl, name);
-            });
+        const worker = this.#coreService.worker();
+        if (worker) {
+            worker.postMessage({ action: 'download', items: selected });
+        }
+        // TODO: добавить скачивание не в воркере
     }
 
     remove(selected: JournalItem[]) {

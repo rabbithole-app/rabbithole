@@ -2,7 +2,7 @@ import type { ActorConfig, ActorSubclass, Agent, HttpAgentOptions } from '@dfini
 import type { IDL } from '@dfinity/candid';
 import type { Principal } from '@dfinity/principal';
 
-import { _SERVICE } from './rabbithole_frontend.did';
+import { _SERVICE } from './vetkd_system_api.did';
 
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const canisterId: string;
@@ -39,4 +39,4 @@ export declare const createActor: (canisterId: string | Principal, options?: Cre
  * Intialized Actor using default settings, ready to talk to a canister using its candid interface
  * @constructs {@link ActorSubClass}
  */
-export declare const rabbithole_frontend: ActorSubclass<_SERVICE>;
+export declare const vetkd_system_api: ActorSubclass<_SERVICE>;
