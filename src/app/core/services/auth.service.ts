@@ -1,17 +1,17 @@
 import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { filter, firstValueFrom, from, repeat, switchMap, takeUntil, throwError } from 'rxjs';
-import { catchError, delayWhen, map, skip, tap, withLatestFrom } from 'rxjs/operators';
 import { isNull } from 'lodash';
 import { WINDOW } from 'ngx-window-token';
+import { filter, firstValueFrom, from, repeat, switchMap, takeUntil, throwError } from 'rxjs';
+import { catchError, delayWhen, map, skip, tap, withLatestFrom } from 'rxjs/operators';
 
-import { AUTH_RX_STATE, AuthStatus } from '../stores';
-import { environment } from 'environments/environment';
-import { AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
+import { AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
+import { environment } from 'environments/environment';
+import { AUTH_RX_STATE, AuthStatus } from '../stores';
 
 interface State {
     signedOutSnackBarRef: MatSnackBarRef<ClosableSnackbarComponent>;

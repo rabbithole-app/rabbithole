@@ -1,12 +1,12 @@
-import { inject, Injectable, Injector } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { AnimationBuilder } from '@angular/animations';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayOutsideClickDispatcher, OverlayPositionBuilder, PositionStrategy } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { AnimationBuilder } from '@angular/animations';
+import { DOCUMENT } from '@angular/common';
+import { Injectable, Injector, inject } from '@angular/core';
 import { take } from 'rxjs/operators';
 
-import { OverlayParams } from '@core/models/overlay';
 import { CustomOverlayRef, OverlayComponent } from '@core/components/overlay';
+import { OverlayParams } from '@core/models/overlay';
 
 @Injectable()
 export class OverlayService {

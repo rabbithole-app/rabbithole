@@ -1,4 +1,4 @@
-import { animate, query, style, transition, trigger, stagger, sequence, AnimationMetadata } from '@angular/animations';
+import { AnimationMetadata, animate, query, sequence, stagger, style, transition, trigger } from '@angular/animations';
 import { AnimationsService } from '../services';
 
 export const ROUTE_ANIMATIONS_ELEMENTS = 'route-animations-elements';

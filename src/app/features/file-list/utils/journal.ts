@@ -1,8 +1,8 @@
+import { Directory, File, DirectoryColor as JournalDirectoryColor } from '@declarations/journal/journal.did.js';
 import { fromNullable } from '@dfinity/utils';
-import { isUndefined } from 'lodash';
-import { Directory, DirectoryColor as JournalDirectoryColor, File } from '@declarations/journal/journal.did.js';
 import { DirectoryColor, DirectoryExtended, FileInfoExtended } from '@features/file-list/models';
 import { environment } from 'environments/environment';
+import { isUndefined } from 'lodash';
 
 export const uint8ToBase64 = (arr: Uint8Array): string =>
     btoa(

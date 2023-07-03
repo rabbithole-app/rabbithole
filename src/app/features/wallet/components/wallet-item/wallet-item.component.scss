@@ -39,12 +39,13 @@ mat-icon.icon {
     transition: width 100ms ease-in-out;
 }
 
-.refresh-button, mat-spinner {
+.refresh-button,
+mat-spinner {
     grid-area: refresh;
 }
 
 mat-spinner {
-    margin-left: .5rem;
+    margin-left: 0.5rem;
 }
 
 .refresh-button {

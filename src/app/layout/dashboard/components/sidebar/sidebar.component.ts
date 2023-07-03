@@ -1,22 +1,22 @@
-import { RxPush } from '@rx-angular/template/push';
 import { AnimationEvent, trigger } from '@angular/animations';
-import { Component, OnInit, ChangeDetectionStrategy, HostBinding, ElementRef, Renderer2, OnDestroy, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatButtonModule } from '@angular/material/button';
+import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
 import { AsyncSubject, Observable, shareReplay, timer } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
 
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
-import { SETTINGS_RX_STATE } from '@core/stores';
 import { AuthService } from '@core/services';
-import { LogoComponent } from '../logo/logo.component';
-import { SidebarService } from '../../services/sidebar.service';
+import { SETTINGS_RX_STATE } from '@core/stores';
 import { addFASvgIcons } from '@core/utils';
+import { SidebarService } from '../../services/sidebar.service';
+import { LogoComponent } from '../logo/logo.component';
 
 @Component({
     selector: 'app-sidebar',

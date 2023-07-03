@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
-import { map } from 'rxjs';
 import { pick } from 'lodash';
+import { map } from 'rxjs';
 
 import { AUTH_RX_STATE } from '../stores/auth';
 

@@ -14,7 +14,7 @@
         </li>
         <li class="links__item" *rxFor="let link of items(); trackBy: itemTrackBy">
             <a
-                [routerLink]="getUrl(link.path ?? '')"
+                [routerLink]="getUrl(link.path)"
                 dndDropzone
                 [class.receiving]="entered() === link.id"
                 (drop)="handleDrop($event)"

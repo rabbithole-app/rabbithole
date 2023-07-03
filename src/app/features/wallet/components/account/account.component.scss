@@ -31,7 +31,7 @@
         font-size: 0.8125rem;
         grid-area: code;
     }
-    
+
     .copy-button {
         @include mixins.custom-icon-button();
         grid-area: button;

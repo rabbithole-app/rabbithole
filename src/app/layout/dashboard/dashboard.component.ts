@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, ViewChild, inject } from '@angular/core';
-import { ResolveEnd, ResolveStart, Router, RouterModule, RouterOutlet } from '@angular/router';
-import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { filter, map, merge } from 'rxjs';
+import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
+import { ResolveEnd, ResolveStart, Router, RouterModule, RouterOutlet } from '@angular/router';
 import { RxIf } from '@rx-angular/template/if';
 import { has } from 'lodash';
+import { filter, map, merge } from 'rxjs';
 
 import { routeAnimations } from '@core/animations';
-import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
+import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SidebarService } from './services/sidebar.service';
 
 @Component({

@@ -1,18 +1,18 @@
 import { InjectionToken, Provider } from '@angular/core';
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
+import { fromNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { catchError, defer, EMPTY, from, iif, map, mergeMap, of, switchMap, throwError, toArray } from 'rxjs';
-import { fromNullable } from '@dfinity/utils';
 import { isUndefined } from 'lodash';
+import { EMPTY, catchError, defer, from, iif, map, mergeMap, of, switchMap, throwError, toArray } from 'rxjs';
 
+import { AUTH_RX_STATE, AuthState } from 'app/core/stores/auth';
+import { createActor } from 'app/core/utils/create-actor';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
-import { AuthState, AUTH_RX_STATE } from 'app/core/stores/auth';
-import { createActor } from 'app/core/utils/create-actor';
 
 export type Bucket<T> = {
     actor: ActorSubclass<T>;

@@ -1,17 +1,17 @@
+import { AnimationBuilder, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, HostBinding, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostBinding, Input, Output, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RxState } from '@rx-angular/state';
-import { AnimationBuilder, trigger } from '@angular/animations';
 import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
 
-import { FileUploadState, UPLOAD_STATUS } from '../../models';
+import { addFASvgIcons } from '@core/utils';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { addSvgIcons, formatBytes, getIconByFilename } from '@features/file-list/utils';
-import { addFASvgIcons } from '@core/utils';
+import { FileUploadState, UPLOAD_STATUS } from '../../models';
 
 interface State {
     data: FileUploadState;

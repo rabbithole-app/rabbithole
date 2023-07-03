@@ -10,10 +10,12 @@
 table {
     width: 100%;
     grid-area: table;
-    .mat-mdc-header-cell, .mdc-data-table__cell {
+    .mat-mdc-header-cell,
+    .mdc-data-table__cell {
         vertical-align: middle;
     }
-    .copy-button, .delete-button {
+    .copy-button,
+    .delete-button {
         @include mixins.custom-icon-button();
     }
     .info-icon {

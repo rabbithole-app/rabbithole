@@ -12,7 +12,7 @@ export async function journalActorIC(canisterId) {
         agent,
         canisterId
     });
-};
+}
 
 export async function journalActorLocal(canisterId) {
     const agent = await getLocalHttpAgent();
@@ -21,4 +21,4 @@ export async function journalActorLocal(canisterId) {
         agent,
         canisterId
     });
-};
+}

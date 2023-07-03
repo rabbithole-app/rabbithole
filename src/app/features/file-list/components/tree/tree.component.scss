@@ -1,7 +1,7 @@
 @use 'mixins';
 
 .mat-tree-node {
-    column-gap: .5rem;
+    column-gap: 0.5rem;
     min-height: auto;
     &.selected:not(.disabled) {
         background-color: var(--sidebar-bg-color);
@@ -10,7 +10,7 @@
         }
     }
     &.disabled .node {
-        opacity: .5;
+        opacity: 0.5;
     }
 }
 
@@ -25,7 +25,7 @@ mat-spinner {
 
 .node {
     display: flex;
-    column-gap: .5rem;
+    column-gap: 0.5rem;
     align-items: center;
     min-height: 32px;
     flex-grow: 1;

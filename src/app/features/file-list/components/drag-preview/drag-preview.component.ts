@@ -1,27 +1,27 @@
-import { RxLet } from '@rx-angular/template/let';
-import {
-    Component,
-    ChangeDetectionStrategy,
-    Input,
-    ElementRef,
-    Renderer2,
-    HostBinding,
-    OnDestroy,
-    inject,
-    WritableSignal,
-    signal,
-    Signal,
-    computed
-} from '@angular/core';
+import { AnimationBuilder, AnimationPlayer, animate, group, keyframes, style } from '@angular/animations';
 import { Point } from '@angular/cdk/drag-drop';
-import { animate, AnimationBuilder, AnimationPlayer, group, keyframes, style } from '@angular/animations';
-import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    HostBinding,
+    Input,
+    OnDestroy,
+    Renderer2,
+    Signal,
+    WritableSignal,
+    computed,
+    inject,
+    signal
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { RxIf } from '@rx-angular/template/if';
+import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
+import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { JournalItem } from '@features/file-list/models';
 import { getIconByFilename } from '@features/file-list/utils';
-import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
+import { RxIf } from '@rx-angular/template/if';
+import { RxLet } from '@rx-angular/template/let';
+import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
 
 enum Mode {
     File,

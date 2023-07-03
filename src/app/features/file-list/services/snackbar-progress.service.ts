@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { MatSnackBar, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
-import { asyncScheduler, filter, finalize, merge, mergeMap, Observable, observeOn, onErrorResumeNext, repeat, share, skip, Subject, switchMap } from 'rxjs';
-import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
+import { MatSnackBar, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
+import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { isEqual, isNull, isUndefined, uniq } from 'lodash';
-import { TranslocoService } from '@ngneat/transloco';
+import { asyncScheduler, filter, finalize, merge, mergeMap, Observable, observeOn, onErrorResumeNext, repeat, share, skip, Subject, switchMap } from 'rxjs';
+import { distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
 
 import { ProgressMessageSnackbarComponent } from '@features/file-list/components/progress-message-snackbar/progress-message-snackbar.component';
 import { ShowErrorsDialogComponent } from '@features/file-list/components/show-errors-dialog/show-errors-dialog.component';

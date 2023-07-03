@@ -1,18 +1,18 @@
-import { FlatTreeControl } from '@angular/cdk/tree';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TrackByFunction } from '@angular/core';
-import { MatTreeModule } from '@angular/material/tree';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RxIf } from '@rx-angular/template/if';
-import { NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
+import { FlatTreeControl } from '@angular/cdk/tree';
+import { NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TrackByFunction } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatRipple, MatRippleModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTreeModule } from '@angular/material/tree';
+import { RxIf } from '@rx-angular/template/if';
 import { isEmpty } from 'lodash';
 
 import { addFASvgIcons } from '@core/utils';
-import { DirectoryFlatNode } from './tree.models';
 import { TreeDataSource, TreeDataSourceOptions } from './tree.datasource';
+import { DirectoryFlatNode } from './tree.models';
 
 @Component({
     selector: 'app-tree',

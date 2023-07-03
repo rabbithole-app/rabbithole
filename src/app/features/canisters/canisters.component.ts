@@ -1,16 +1,16 @@
-import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { MatButtonModule } from '@angular/material/button';
+import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { from, map, Observable, switchMap, toArray } from 'rxjs';
+import { RxPush } from '@rx-angular/template/push';
+import { Observable, from, map, switchMap, toArray } from 'rxjs';
 
-import { CanistersService } from './services';
+import { JournalService, SnackbarProgressService } from '@features/file-list/services';
 import { CanistersTableComponent } from './components/canisters-table/canisters-table.component';
 import { formatCanisterDetails } from './operators';
-import { JournalService, SnackbarProgressService } from '@features/file-list/services';
+import { CanistersService } from './services';
 
 @Component({
     selector: 'app-canisters',

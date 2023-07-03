@@ -11,13 +11,13 @@ function rabbitholePrincipalIC() {
     const buffer = readFileSync('./canister_ids.json');
     const { rabbithole } = JSON.parse(buffer.toString('utf-8'));
     return Principal.fromText(rabbithole.ic);
-};
+}
 
 function rabbitholePrincipalLocal() {
     const buffer = readFileSync('./.dfx/local/canister_ids.json');
     const { rabbithole } = JSON.parse(buffer.toString('utf-8'));
     return Principal.fromText(rabbithole.local);
-};
+}
 
 export async function rabbitholeActorIC() {
     const canisterId = rabbitholePrincipalIC();
@@ -27,7 +27,7 @@ export async function rabbitholeActorIC() {
         agent,
         canisterId
     });
-};
+}
 
 export async function rabbitholeActorLocal() {
     const canisterId = rabbitholePrincipalLocal();
@@ -37,4 +37,4 @@ export async function rabbitholeActorLocal() {
         agent,
         canisterId
     });
-};
+}

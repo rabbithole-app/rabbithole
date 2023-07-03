@@ -1,20 +1,20 @@
-import { NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, Input, ElementRef, HostBinding, Output, EventEmitter, inject, booleanAttribute } from '@angular/core';
 import { Highlightable } from '@angular/cdk/a11y';
 import { Point } from '@angular/cdk/drag-drop';
-import { MatMenuTrigger } from '@angular/material/menu';
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostBinding, Input, Output, booleanAttribute, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuTrigger } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
 import { RxIf } from '@rx-angular/template/if';
+import { fadeInOnEnterAnimation, fadeOutDownOnLeaveAnimation, fadeOutOnLeaveAnimation } from 'angular-animations';
 
-import { JournalItem } from '@features/file-list/models';
-import { getIconByFilename } from '@features/file-list/utils';
-import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
-import { addFASvgIcons } from '@core/utils';
 import { MiddleEllipsisComponent } from '@core/components/middle-ellipsis/middle-ellipsis.component';
+import { addFASvgIcons } from '@core/utils';
+import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
+import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
+import { JournalItem } from '@features/file-list/models';
 import { JournalService } from '@features/file-list/services';
+import { getIconByFilename } from '@features/file-list/utils';
 
 @Component({
     selector: 'app-grid-list-item',

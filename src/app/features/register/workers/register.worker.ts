@@ -1,12 +1,12 @@
 /// <reference lib="webworker" />
 
-import { ActorSubclass } from '@dfinity/agent';
 import { createActor, loadIdentity } from '@core/utils';
-import { defer, EMPTY, from, iif, switchMap } from 'rxjs';
-import { isUndefined } from 'lodash';
-import { canisterId, idlFactory } from 'declarations/rabbithole';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
+import { ActorSubclass } from '@dfinity/agent';
 import { RxState } from '@rx-angular/state';
+import { canisterId, idlFactory } from 'declarations/rabbithole';
+import { isUndefined } from 'lodash';
+import { EMPTY, defer, from, iif, switchMap } from 'rxjs';
 
 interface State {
     actor: ActorSubclass<RabbitholeActor>;

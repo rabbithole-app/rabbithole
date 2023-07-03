@@ -2,17 +2,16 @@
 
 import { Command, Option } from 'commander';
 import { Listr } from 'listr2';
-import { from, concatMap, tap, map, range } from 'rxjs';
+import { concatMap, from, map, range, tap } from 'rxjs';
 import { rabbitholeActorIC, rabbitholeActorLocal } from './actors/rabbithole.actors.mjs';
 import { loadWasm } from './utils/code.utils.mjs';
 
 const program = new Command();
-program
-    .addOption(
-        new Option('-n, --network <network>', 'Overrides the environment to connect to. By default, the local canister execution environment is used.')
-            .default('local')
-            .choices(['local', 'ic'])
-    );
+program.addOption(
+    new Option('-n, --network <network>', 'Overrides the environment to connect to. By default, the local canister execution environment is used.')
+        .default('local')
+        .choices(['local', 'ic'])
+);
 
 program.parse(process.argv);
 
@@ -45,14 +44,12 @@ program.parse(process.argv);
                         const start = index * chunkSize;
                         const end = Math.min(start + chunkSize, ctx.wasmModule.length);
                         const chunks = ctx.wasmModule.slice(start, end);
-                        return from(ctx.actor.walletLoadWasm(chunks)).pipe(
-                            map(result => `Chunks: ${result.total}/${ctx.wasmModule.length}`)
-                        );
+                        return from(ctx.actor.walletLoadWasm(chunks)).pipe(map(result => `Chunks: ${result.total}/${ctx.wasmModule.length}`));
                     }),
                     tap({
                         complete: () => (task.title = 'Installation cycles-wallet done')
                     })
-                )
+                );
             }
         }
     ]);

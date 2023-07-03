@@ -1,17 +1,17 @@
-import { RxPush } from '@rx-angular/template/push';
 import { NgSwitch, NgSwitchCase } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
-import { AsyncSubject, filter, Observable, switchMap, takeUntil } from 'rxjs';
+import { RxPush } from '@rx-angular/template/push';
 import { entries, get, has, pick } from 'lodash';
+import { AsyncSubject, Observable, filter, switchMap, takeUntil } from 'rxjs';
 
-import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
-import { AuthService } from '@core/services';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AuthService } from '@core/services';
+import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
+import { TranslocoModule } from '@ngneat/transloco';
 import { LogoComponent } from '../dashboard/components/logo/logo.component';
 
 @Component({

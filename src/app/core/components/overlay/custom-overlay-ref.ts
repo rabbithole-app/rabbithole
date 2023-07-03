@@ -1,8 +1,8 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-import { TemplateRef, Type } from '@angular/core';
-import { OverlayRef } from '@angular/cdk/overlay';
 import { AnimationBuilder, AnimationFactory, AnimationPlayer, useAnimation } from '@angular/animations';
-import { AsyncSubject, fromEvent, Subject } from 'rxjs';
+import { OverlayRef } from '@angular/cdk/overlay';
+import { TemplateRef, Type } from '@angular/core';
+import { AsyncSubject, Subject, fromEvent } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 
 import { overlayCloseAnimation, overlayOpenAnimation } from '@core/animations';

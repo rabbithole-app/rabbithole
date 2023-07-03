@@ -1,13 +1,13 @@
-import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, HostListener, inject, ViewChild } from '@angular/core';
-import { lastValueFrom, Observable } from 'rxjs';
+import { AccountIdentifier, ICPToken, Token, TokenAmount } from '@dfinity/nns';
 import { toNullable } from '@dfinity/utils';
-import { AccountIdentifier, TokenAmount, ICPToken, Token } from '@dfinity/nns';
+import { RxPush } from '@rx-angular/template/push';
+import { lastValueFrom, Observable } from 'rxjs';
 
-import { SendComponent } from './components/send/send.component';
-import { AccountComponent } from './components/account/account.component';
-import { WalletService } from './services';
 import { Tokens } from '@declarations/journal/journal.did';
+import { AccountComponent } from './components/account/account.component';
+import { SendComponent } from './components/send/send.component';
+import { WalletService } from './services';
 
 @Component({
     standalone: true,

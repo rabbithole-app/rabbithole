@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
 import { AUTH_RX_STATE } from '@core/stores';
-import { Observable, first, switchMap, map, catchError, of } from 'rxjs';
 import { has } from 'lodash';
+import { catchError, first, map, Observable, of, switchMap } from 'rxjs';
 
 @Injectable()
 export class InviteValidator implements AsyncValidator {

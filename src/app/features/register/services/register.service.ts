@@ -1,7 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { CMCCanister } from '@dfinity/cmc';
+import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
+import { Principal } from '@dfinity/principal';
+import { createAgent, fromNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
+import { selectSlice } from '@rx-angular/state/selections';
+import { get, has, isNull, isUndefined } from 'lodash';
 import {
     catchError,
     combineLatestWith,
@@ -24,20 +30,14 @@ import {
     timer,
     withLatestFrom
 } from 'rxjs';
-import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
-import { CMCCanister } from '@dfinity/cmc';
-import { createAgent, fromNullable } from '@dfinity/utils';
-import { Principal } from '@dfinity/principal';
-import { get, has, isNull, isUndefined } from 'lodash';
-import { selectSlice } from '@rx-angular/state/selections';
 
+import { LEDGER_CANISTER_ID } from '@core/constants';
+import { mapLedgerError } from '@core/operators';
 import { BucketsService, NotificationService, ProfileService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
 import { InviteError, ProfileCreate, UsernameError } from '@declarations/rabbithole/rabbithole.did';
-import { mapLedgerError } from '@core/operators';
-import { Invoice, InvoiceStage } from '../models';
-import { LEDGER_CANISTER_ID } from '@core/constants';
 import { environment } from 'environments/environment';
+import { Invoice, InvoiceStage } from '../models';
 import { prepareInvoice } from '../utils';
 
 export enum UserStatus {

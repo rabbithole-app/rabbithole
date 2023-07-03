@@ -1,15 +1,15 @@
-import { Component, ChangeDetectionStrategy, inject, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { ChangeDetectionStrategy, Component, Inject, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { MatFormFieldModule } from '@angular/material/form-field';
 
-import { DirectoryNameValidator, FileNameValidator } from '@features/file-list/validators';
 import { JournalItem } from '@features/file-list/models';
 import { JournalService } from '@features/file-list/services';
+import { DirectoryNameValidator, FileNameValidator } from '@features/file-list/validators';
 
 @Component({
     selector: 'app-rename-dialog',

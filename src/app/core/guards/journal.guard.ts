@@ -2,8 +2,8 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BucketsService } from '@core/services';
 import { selectSlice } from '@rx-angular/state/selections';
-import { filter, map } from 'rxjs';
 import { isNil } from 'lodash';
+import { filter, map } from 'rxjs';
 
 export const journalGuard = () => {
     const router = inject(Router);

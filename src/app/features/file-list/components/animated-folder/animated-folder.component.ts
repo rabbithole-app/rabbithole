@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Renderer2, Input, HostBinding, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, Input, OnChanges, Renderer2, SimpleChanges, inject } from '@angular/core';
 
 @Component({
     selector: 'app-animated-folder',

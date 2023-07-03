@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, ViewChild, inject } from '@angular/core';
-import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { CustomOverlayRef } from '@core/components/overlay';
 import { Overlay, OverlayOutsideClickDispatcher, OverlayPositionBuilder } from '@angular/cdk/overlay';
-import { RxState } from '@rx-angular/state';
-import { filter, switchMap, map } from 'rxjs';
+import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, ViewChild, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { CustomOverlayRef } from '@core/components/overlay';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
+import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
-import { MatButtonModule } from '@angular/material/button';
 import { isUndefined } from 'lodash';
+import { filter, map, switchMap } from 'rxjs';
 
 import { OverlayService } from '@core/services';
 import { addFASvgIcons } from '@core/utils';

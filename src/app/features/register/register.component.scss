@@ -4,7 +4,8 @@
     justify-items: flex-start;
 }
 
-::ng-deep .mat-horizontal-stepper-header, ::ng-deep .mat-vertical-stepper-header {
+::ng-deep .mat-horizontal-stepper-header,
+::ng-deep .mat-vertical-stepper-header {
     .mat-step-label-selected {
         // font-size: .875rem;
         font-weight: 500;
@@ -22,5 +23,5 @@
                 --mdc-circular-progress-active-indicator-color: #fff;
             }
         }
-    }   
+    }
 }

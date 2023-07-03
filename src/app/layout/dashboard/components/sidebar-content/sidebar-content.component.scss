@@ -20,7 +20,7 @@ nav.navigation {
         display: grid;
         align-items: center;
         text-decoration: none;
-        
+
         color: var(--navlink-color);
         white-space: nowrap; // remove multilines on text animations
         grid-template-columns: 48px 1fr;
@@ -67,7 +67,7 @@ nav.navigation {
 
         &.disabled {
             cursor: default;
-            opacity: .5;
+            opacity: 0.5;
         }
     }
 }
@@ -91,7 +91,7 @@ nav.navigation {
             }
         }
     }
-    
+
     nav.navigation {
         padding-left: calc(var(--sidebar-padding-size) / 2);
         padding-right: calc(var(--sidebar-padding-size) / 2);

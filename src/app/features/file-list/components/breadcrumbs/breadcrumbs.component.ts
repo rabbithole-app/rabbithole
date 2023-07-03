@@ -1,17 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
-import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DndModule } from 'ngx-drag-drop';
-import { filter, map, withLatestFrom, pairwise } from 'rxjs/operators';
-import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import { RxIf } from '@rx-angular/template/if';
 import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
+import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
+import { DndModule } from 'ngx-drag-drop';
+import { filter, map, pairwise, withLatestFrom } from 'rxjs/operators';
 
 import { addFASvgIcons } from '@core/utils';
 import { DirectoryExtended } from '@features/file-list/models';

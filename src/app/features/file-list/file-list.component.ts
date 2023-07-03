@@ -1,44 +1,44 @@
-import { RxLet } from '@rx-angular/template/let';
-import { RxPush } from '@rx-angular/template/push';
 import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
 import {
-    Component,
     ChangeDetectionStrategy,
-    HostListener,
-    ViewChild,
-    inject,
+    Component,
     ElementRef,
-    TemplateRef,
+    HostListener,
     Signal,
-    computed,
+    TemplateRef,
+    ViewChild,
     WritableSignal,
+    computed,
+    inject,
     signal
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { RxState } from '@rx-angular/state';
+import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
+import { RxLet } from '@rx-angular/template/let';
+import { RxPush } from '@rx-angular/template/push';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RxState } from '@rx-angular/state';
-import { RxIf } from '@rx-angular/template/if';
-import { RxFor } from '@rx-angular/template/for';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { EmptyComponent } from '@core/components/empty/empty.component';
+import { addFASvgIcons } from '@core/utils';
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
+import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
+import { PageHeaderComponent } from '@features/file-list/components/page-header/page-header.component';
 import { DirectoryColor, DirectoryExtended, JournalItem, MenuItemAction } from '@features/file-list/models';
 import { ContextMenuService, JournalService } from '@features/file-list/services';
-import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
-import { addFASvgIcons } from '@core/utils';
-import { PageHeaderComponent } from '@features/file-list/components/page-header/page-header.component';
-import { EmptyComponent } from '@core/components/empty/empty.component';
 import { UploadService } from '@features/upload/services';
-import { FileListService } from './services/file-list.service';
-import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
 import { MoveDialogComponent } from './components/move-dialog/move-dialog.component';
+import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
+import { FileListService } from './services/file-list.service';
 
 interface State {
     emptyRef: ElementRef;
@@ -70,7 +70,7 @@ interface State {
         RxIf,
         RenameDialogComponent
     ],
-    providers: [RxState, SnackbarProgressService, ContextMenuService, JournalService],
+    providers: [RxState, SnackbarProgressService, ContextMenuService],
     standalone: true
 })
 export class FileListComponent {

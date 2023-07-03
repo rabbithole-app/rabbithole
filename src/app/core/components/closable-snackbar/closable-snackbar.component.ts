@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject, inject } from '@angular/core';
-import { MatSnackBarModule, MatSnackBarRef, MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MAT_SNACK_BAR_DATA, MatSnackBarModule, MatSnackBarRef } from '@angular/material/snack-bar';
 import { addFASvgIcons } from '@core/utils';
 
 @Component({

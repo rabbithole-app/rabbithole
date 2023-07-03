@@ -2,7 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { InjectionToken, Provider } from '@angular/core';
 import { RxState } from '@rx-angular/state';
 import { combineLatest, distinctUntilChanged, first, map } from 'rxjs';
-import { SettingsState, SETTINGS_RX_STATE } from './settings';
+import { SETTINGS_RX_STATE, SettingsState } from './settings';
 
 export interface SidebarState {
     isFull: boolean;

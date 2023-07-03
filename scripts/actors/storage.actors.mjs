@@ -11,4 +11,4 @@ export async function storageActorLocal(canisterId) {
         agent,
         canisterId
     });
-};
+}

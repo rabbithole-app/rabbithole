@@ -1,17 +1,11 @@
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./out-tsc/worker",
-    "lib": [
-      "es2018",
-      "ES2020.BigInt",
-      "webworker"
-    ],
-    "skipLibCheck": true,
-    "types": []
-  },
-  "include": [
-    "src/**/*.worker.ts"
-  ]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./out-tsc/worker",
+        "lib": ["es2018", "ES2020.BigInt", "webworker"],
+        "skipLibCheck": true,
+        "types": []
+    },
+    "include": ["src/**/*.worker.ts"]
 }

@@ -1,20 +1,20 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
+import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxFor } from '@rx-angular/template/for';
 
-import { CanisterDetails } from '@features/canisters/models';
+import { CopyIDComponent } from '@core/components/copy-id/copy-id.component';
 import { EmptyComponent } from '@core/components/empty/empty.component';
 import { addFASvgIcons } from '@core/utils';
-import { CopyIDComponent } from '@core/components/copy-id/copy-id.component';
+import { CanisterDetails } from '@features/canisters/models';
 
 @Component({
     selector: 'app-canisters-table',

@@ -1,22 +1,22 @@
-import { RxLet } from '@rx-angular/template/let';
-import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
-import { AccountIdentifier, TokenAmount, Token } from '@dfinity/nns';
-import { RxState } from '@rx-angular/state';
+import { AccountIdentifier, Token, TokenAmount } from '@dfinity/nns';
 import { TranslocoModule } from '@ngneat/transloco';
-import { combineLatestWith, distinctUntilChanged, filter, map, Observable, startWith } from 'rxjs';
+import { RxState } from '@rx-angular/state';
+import { RxLet } from '@rx-angular/template/let';
+import { RxPush } from '@rx-angular/template/push';
 import { isEqual, isNull } from 'lodash';
+import { combineLatestWith, distinctUntilChanged, filter, map, Observable, startWith } from 'rxjs';
 
-import { WalletItemComponent } from '../wallet-item/wallet-item.component';
-import { AmountAsyncValidator } from '@features/wallet/validators/amount.validator';
+import { E8S_PER_TOKEN } from '@core/constants';
 import { NotificationService } from '@core/services';
+import { Tokens } from '@declarations/journal/journal.did';
 import { ReviewTransaction, Send } from '@features/wallet/models';
+import { AmountAsyncValidator } from '@features/wallet/validators/amount.validator';
 import { ReviewComponent } from '../review/review.component';
 import { SendFormComponent } from '../send-form/send-form.component';
-import { Tokens } from '@declarations/journal/journal.did';
-import { E8S_PER_TOKEN } from '@core/constants';
+import { WalletItemComponent } from '../wallet-item/wallet-item.component';
 
 enum Tabs {
     Start,

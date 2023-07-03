@@ -1,13 +1,13 @@
-import { RxPush } from '@rx-angular/template/push';
-import { Component, inject, ViewChild } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
-import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
-import { MatIconModule } from '@angular/material/icon';
+import { NgIf } from '@angular/common';
+import { Component, ViewChild, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { asyncScheduler, map, merge, Observable, of, startWith, Subject, switchMap, timer } from 'rxjs';
+import { RxPush } from '@rx-angular/template/push';
+import { Observable, Subject, asyncScheduler, map, merge, of, startWith, switchMap, timer } from 'rxjs';
 
 import { addFASvgIcons } from '@core/utils';
 import { WalletService } from '@features/wallet/services';

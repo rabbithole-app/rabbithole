@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { first, switchMap, map, catchError } from 'rxjs/operators';
 import { toNullable } from '@dfinity/utils';
 import { get, has, isNil } from 'lodash';
+import { Observable, of } from 'rxjs';
+import { catchError, first, map, switchMap } from 'rxjs/operators';
 
 import { BucketsService } from '@core/services';
 import { FileCreateError } from '@declarations/journal/journal.did';

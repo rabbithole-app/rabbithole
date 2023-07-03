@@ -2,8 +2,8 @@ import { Actor, ActorSubclass, Identity } from '@dfinity/agent';
 import { IDL } from '@dfinity/candid';
 import { Principal } from '@dfinity/principal';
 import { createAgent } from '@dfinity/utils';
-import { from, map, Observable } from 'rxjs';
 import { environment } from 'environments/environment';
+import { Observable, from, map } from 'rxjs';
 
 export function createActor<T>({
     identity,

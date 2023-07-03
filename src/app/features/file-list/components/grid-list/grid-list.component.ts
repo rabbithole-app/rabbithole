@@ -1,65 +1,65 @@
-import { RxPush } from '@rx-angular/template/push';
+import { ActiveDescendantKeyManager } from '@angular/cdk/a11y';
+import { SelectionModel } from '@angular/cdk/collections';
+import { Point } from '@angular/cdk/drag-drop';
+import { DOCUMENT } from '@angular/common';
 import {
-    Component,
-    ChangeDetectionStrategy,
-    QueryList,
-    HostListener,
     AfterViewInit,
-    ViewChildren,
-    ElementRef,
-    OnDestroy,
-    Input,
-    HostBinding,
-    ViewChild,
-    Output,
-    EventEmitter,
-    Inject,
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
-    inject,
-    signal,
+    Component,
+    ElementRef,
+    EventEmitter,
+    HostBinding,
+    HostListener,
+    Inject,
+    Input,
+    OnDestroy,
+    Output,
+    QueryList,
+    Signal,
+    ViewChild,
+    ViewChildren,
     WritableSignal,
     computed,
-    Signal
+    inject,
+    signal
 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
-import { ActiveDescendantKeyManager } from '@angular/cdk/a11y';
-import { Point } from '@angular/cdk/drag-drop';
-import { SelectionModel } from '@angular/cdk/collections';
-import { DndDropEvent, DndModule } from 'ngx-drag-drop';
 import { RxState } from '@rx-angular/state';
-import { selectSlice } from '@rx-angular/state/selections';
 import { RxEffects } from '@rx-angular/state/effects';
+import { selectSlice } from '@rx-angular/state/selections';
+import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
+import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
+import { DndDropEvent, DndModule } from 'ngx-drag-drop';
 import {
-    animationFrameScheduler,
     BehaviorSubject,
     EMPTY,
+    Observable,
+    Subject,
+    animationFrameScheduler,
     fromEvent,
     iif,
     merge,
-    Observable,
     observeOn,
     of,
     shareReplay,
-    Subject,
     switchMap,
     timer
 } from 'rxjs';
 import { filter, map, pluck, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
-import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RxFor } from '@rx-angular/template/for';
-import { RxIf } from '@rx-angular/template/if';
 
-import { GridListItemComponent } from '@features/file-list/components/grid-list-item/grid-list-item.component';
-import { DirectoryExtended, JournalItem } from '@features/file-list/models';
-import { DragPreviewComponent } from '@features/file-list/components/drag-preview/drag-preview.component';
-import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { AnimateCssGridDirective } from '@core/directives';
-import { addSvgIcons } from '@features/file-list/utils';
 import { OverlayService } from '@core/services';
+import { DragPreviewComponent } from '@features/file-list/components/drag-preview/drag-preview.component';
+import { GridListItemComponent } from '@features/file-list/components/grid-list-item/grid-list-item.component';
+import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
+import { DirectoryExtended, JournalItem } from '@features/file-list/models';
 import { JournalService } from '@features/file-list/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
+import { addSvgIcons } from '@features/file-list/utils';
 
 const GRID_CELL_WIDTH = 102;
 const GRID_CELL_COLUMN_GAP = 16;

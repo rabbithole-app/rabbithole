@@ -1,6 +1,6 @@
-import { upperCase } from 'lodash';
 import { formatICP, fromTimestamp } from '@core/utils';
 import { Invoice as InvoiceRaw } from '@declarations/rabbithole/rabbithole.did';
+import { upperCase } from 'lodash';
 import { Invoice, InvoiceStage } from '../models';
 
 export function prepareInvoice(invoice: InvoiceRaw): Invoice {

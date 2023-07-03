@@ -1,4 +1,4 @@
-import { transition, style, animate } from '@angular/animations';
+import { animate, style, transition } from '@angular/animations';
 
 const TRANSITION_TIMING_FUNCTION = 'cubic-bezier(0.16, 1, 0.3, 1)';
 const TRANSITION_DURATION = 1000;

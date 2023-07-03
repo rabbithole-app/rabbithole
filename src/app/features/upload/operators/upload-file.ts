@@ -1,11 +1,11 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
-import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, tap, throwError } from 'rxjs';
 import { addSeconds, differenceInSeconds } from 'date-fns';
 import { defaults, get, has, includes, isNull, pick } from 'lodash';
+import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, tap, throwError } from 'rxjs';
 
 import { AssetKey, CommitUploadError, _SERVICE as StorageActor } from '@declarations/storage/storage.did';
-import { BatchInfo, Bucket, FileUpload, FileUploadState, UPLOAD_STATUS, UploadFileOptions, WithRequiredProperty } from '../models';
 import { BATCH_EXPIRY_SECONDS } from '../constants';
+import { BatchInfo, Bucket, FileUpload, FileUploadState, UPLOAD_STATUS, UploadFileOptions, WithRequiredProperty } from '../models';
 
 type UploadParams = {
     storage: Bucket<StorageActor>;

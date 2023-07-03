@@ -24,7 +24,7 @@
         height: 100%;
         min-width: 40px;
         padding: 0;
-        
+
         mat-icon {
             margin-right: 0;
         }
@@ -77,7 +77,7 @@
     grid-template-columns: max-content 40px;
     grid-template-rows: 32px;
     place-items: center;
-    column-gap: .5rem;
+    column-gap: 0.5rem;
 
     .context-menu-button {
         @include mixins.custom-icon-button(40px, 20px);

@@ -1,24 +1,24 @@
-import { AfterViewInit, Component, ContentChild, EventEmitter, inject, Input, Output, ViewChild } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { MatNoDataRow, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { AfterViewInit, Component, ContentChild, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatNoDataRow, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoLocaleModule, TranslocoLocaleService } from '@ngneat/transloco-locale';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-import { addFASvgIcons } from '@core/utils';
-import { EmptyComponent } from '@core/components/empty/empty.component';
-import { Invite } from '@features/invitations/models';
 import { CopyIDComponent } from '@core/components/copy-id/copy-id.component';
+import { EmptyComponent } from '@core/components/empty/empty.component';
 import { RabbitholePaginatorIntl } from '@core/i18n/paginator';
+import { addFASvgIcons } from '@core/utils';
+import { Invite } from '@features/invitations/models';
 
 @Component({
     selector: 'app-invites-table',

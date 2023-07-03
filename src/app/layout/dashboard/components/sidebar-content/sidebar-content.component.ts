@@ -1,22 +1,22 @@
-import { RxPush } from '@rx-angular/template/push';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { NgForOf } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLinkWithHref, RouterLinkActive } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
-import { RxIf } from '@rx-angular/template/if';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
 import { trigger } from '@angular/animations';
-import { Observable, map, shareReplay } from 'rxjs';
+import { NgForOf } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLinkActive, RouterLinkWithHref } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
+import { Observable, map, shareReplay } from 'rxjs';
 
+import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { SETTINGS_RX_STATE } from '@core/stores';
 import { addFASvgIcons } from '@core/utils';
-import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
-import { SidebarService } from '../../services/sidebar.service';
 import { UploadService } from '@features/upload/services';
+import { SidebarService } from '../../services/sidebar.service';
 
 type NavigationItem = {
     path: string;

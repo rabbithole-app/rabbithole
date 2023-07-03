@@ -1,17 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
-import { first, Observable, filter, defer, iif, of, Subject, EMPTY, merge } from 'rxjs';
-import { catchError, combineLatestWith, map, startWith, switchMap } from 'rxjs/operators';
+import { fromNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { fromNullable } from '@dfinity/utils';
 import { has } from 'lodash';
+import { defer, EMPTY, filter, first, iif, merge, Observable, of, Subject } from 'rxjs';
+import { catchError, combineLatestWith, map, startWith, switchMap } from 'rxjs/operators';
 
-import { AuthStatus, AUTH_RX_STATE } from '@core/stores';
-import { Profile } from '@core/models/profile';
-import { NotificationService } from './notification.service';
-import { UsernameError } from '@declarations/rabbithole/rabbithole.did';
 import { CanisterResult } from '@core/models';
+import { Profile } from '@core/models/profile';
+import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
+import { UsernameError } from '@declarations/rabbithole/rabbithole.did';
+import { NotificationService } from './notification.service';
 
 export interface State {
     profile: Profile | null;

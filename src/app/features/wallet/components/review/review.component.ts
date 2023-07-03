@@ -1,10 +1,10 @@
-import { RxPush } from '@rx-angular/template/push';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
 
 import { addFASvgIcons } from '@core/utils';
 import { ReviewTransaction } from '@features/wallet/models';

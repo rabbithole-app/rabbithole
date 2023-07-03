@@ -1,15 +1,15 @@
-import { Component, ChangeDetectionStrategy, inject, Signal } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
-import { RxIf } from '@rx-angular/template/if';
 import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
 import { EMPTY, Observable, filter } from 'rxjs';
 import { delayWhen, map } from 'rxjs/operators';
-import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { DirectoryNameValidator } from '@features/file-list/validators';
 

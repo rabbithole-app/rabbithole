@@ -1,10 +1,10 @@
 import { AnimationBuilder, AnimationEvent } from '@angular/animations';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { RxState } from '@rx-angular/state';
-import { combineLatest, distinctUntilChanged, first, map } from 'rxjs';
 import { get } from 'lodash';
+import { combineLatest, distinctUntilChanged, first, map } from 'rxjs';
 
 import { SETTINGS_RX_STATE } from '@core/stores';
 

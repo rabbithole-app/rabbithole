@@ -1,18 +1,18 @@
-import { RxPush } from '@rx-angular/template/push';
-import { RxState } from '@rx-angular/state';
-import { ChangeDetectionStrategy, Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
-import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
-import { AsyncSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { FileUploadState, UPLOAD_STATUS } from './models';
-import { UploadService } from './services';
-import { UploadItemComponent } from './components/upload-item/upload-item.component';
 import { EmptyComponent } from '@core/components/empty/empty.component';
 import { addFASvgIcons } from '@core/utils';
+import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
+import { RxState } from '@rx-angular/state';
+import { RxPush } from '@rx-angular/template/push';
+import { AsyncSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { UploadItemComponent } from './components/upload-item/upload-item.component';
+import { FileUploadState, UPLOAD_STATUS } from './models';
+import { UploadService } from './services';
 
 interface State {
     animationDisabled: boolean;

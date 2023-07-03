@@ -1,10 +1,10 @@
-import { ElementRef, inject, Injectable } from '@angular/core';
 import { Point } from '@angular/cdk/drag-drop';
 import { ConnectedPosition, OverlayPositionBuilder, OverlayRef, PositionStrategy } from '@angular/cdk/overlay';
+import { ElementRef, Injectable, inject } from '@angular/core';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { asyncScheduler, firstValueFrom } from 'rxjs';
 import { RxState } from '@rx-angular/state';
 import { has } from 'lodash';
+import { asyncScheduler, firstValueFrom } from 'rxjs';
 
 interface State {
     trigger: MatMenuTrigger | null;

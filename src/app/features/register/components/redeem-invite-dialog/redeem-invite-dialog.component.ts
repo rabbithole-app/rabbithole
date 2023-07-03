@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
+import { TRANSLOCO_SCOPE, TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { AsyncSubject, filter, map, Observable, startWith, takeUntil } from 'rxjs';
 
-import { InviteValidator } from '@core/validators';
 import { addFASvgIcons } from '@core/utils';
+import { InviteValidator } from '@core/validators';
 import { InviteStatus, RegisterService } from '@features/register/services/register.service';
 
 @Component({

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, OnInit, Renderer2, signal, WritableSignal, DestroyRef, AfterContentInit } from '@angular/core';
+import { AfterContentInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, Renderer2, WritableSignal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 

@@ -1,6 +1,6 @@
 import { computed, Directive, effect, ElementRef, EventEmitter, inject, Input, OnDestroy, Output, Signal, signal, WritableSignal } from '@angular/core';
 import { wrapGrid } from 'animate-css-grid';
-import { WrapGridArguments, PopmotionEasing } from 'animate-css-grid/dist/types';
+import { PopmotionEasing, WrapGridArguments } from 'animate-css-grid/dist/types';
 
 export interface WrapGridConfig {
     duration?: number;

@@ -1,18 +1,18 @@
-import { RxPush } from '@rx-angular/template/push';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgSwitch, NgSwitchCase } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslocoModule, TranslocoService, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { RxIf } from '@rx-angular/template/if';
-import { EMPTY, map, Observable, shareReplay, startWith } from 'rxjs';
-import { RegisterService, UserStatus } from '@features/register/services/register.service';
 import { addFASvgIcons } from '@core/utils';
 import { UniqueUsernameValidator } from '@core/validators';
+import { RegisterService, UserStatus } from '@features/register/services/register.service';
+import { TRANSLOCO_SCOPE, TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
+import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
 
 @Component({
     selector: 'app-profile',

@@ -1,7 +1,7 @@
+import { DOCUMENT } from '@angular/common';
 import { inject, InjectionToken, RendererFactory2 } from '@angular/core';
 import { RxState } from '@rx-angular/state';
 import { pairwise, startWith } from 'rxjs';
-import { DOCUMENT } from '@angular/common';
 
 import { LocalStorageService } from '@core/services';
 import { TranslocoService } from '@ngneat/transloco';

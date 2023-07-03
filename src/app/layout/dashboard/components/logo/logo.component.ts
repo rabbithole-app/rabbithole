@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import anime from 'animejs/lib/anime.es.js';
+import { ChangeDetectionStrategy, Component, ElementRef, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { AnimeInstance, DirectionOptions } from 'animejs';
+import anime from 'animejs/lib/anime.es.js';
 import { has } from 'lodash';
 
 @Component({

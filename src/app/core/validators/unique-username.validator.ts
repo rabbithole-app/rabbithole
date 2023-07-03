@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-import { Observable, first, switchMap, map, catchError, of } from 'rxjs';
+import { catchError, first, map, Observable, of, switchMap } from 'rxjs';
 
 import { AUTH_RX_STATE } from '@core/stores';
 

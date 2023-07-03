@@ -1,25 +1,25 @@
-import { RxPush } from '@rx-angular/template/push';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { formatNumber } from '@angular/common';
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { formatNumber } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslocoModule, TRANSLOCO_SCOPE } from '@ngneat/transloco';
-import { asyncScheduler, debounceTime, distinctUntilChanged, map, merge, Observable, observeOn, scan } from 'rxjs';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatStepperModule } from '@angular/material/stepper';
+import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
+import { RxPush } from '@rx-angular/template/push';
 import { isUndefined, pickBy, size } from 'lodash';
+import { Observable, asyncScheduler, debounceTime, distinctUntilChanged, map, merge, observeOn, scan } from 'rxjs';
 
-import { cyclesToICP } from '@features/wallet/utils';
 import { JOURNAL_CYCLES_SHARE } from '@core/constants';
+import { BucketsService, ProfileService } from '@core/services';
 import { addFASvgIcons } from '@core/utils';
 import { InvoiceStage } from '@features/register/models';
 import { JournalStatus, RegisterService } from '@features/register/services/register.service';
+import { cyclesToICP } from '@features/wallet/utils';
 import { InvoiceComponent } from './components/invoice/invoice.component';
-import { BucketsService, ProfileService } from '@core/services';
 import { RedeemInviteDialogComponent } from './components/redeem-invite-dialog/redeem-invite-dialog.component';
 
 enum Step {

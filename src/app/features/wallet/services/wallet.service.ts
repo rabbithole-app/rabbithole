@@ -1,8 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { TranslocoService } from '@ngneat/transloco';
-import { RxState } from '@rx-angular/state';
 import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
+import { createAgent } from '@dfinity/utils';
+import { TranslocoService } from '@ngneat/transloco';
+import { RxState } from '@rx-angular/state';
+import { get, has, isNull } from 'lodash';
 import {
     catchError,
     combineLatestWith,
@@ -21,15 +23,13 @@ import {
     switchMap,
     throwError
 } from 'rxjs';
-import { get, has, isNull } from 'lodash';
-import { createAgent } from '@dfinity/utils';
 
-import { formatICP } from '../utils/icp';
+import { LEDGER_CANISTER_ID } from '@core/constants';
 import { BucketsService, NotificationService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
 import { AccountIdentifier as AccountIdentifierRaw, Tokens, TransferError } from '@declarations/journal/journal.did';
-import { LEDGER_CANISTER_ID } from '@core/constants';
 import { environment } from 'environments/environment';
+import { formatICP } from '../utils/icp';
 
 interface State {
     accountId: string;

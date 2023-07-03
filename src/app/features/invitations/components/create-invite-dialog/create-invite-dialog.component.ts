@@ -1,16 +1,16 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDateFnsModule, DateFnsAdapter } from '@angular/material-date-fns-adapter';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { DateFnsAdapter, MatDateFnsModule } from '@angular/material-date-fns-adapter';
 import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
-import { AsyncSubject, takeUntil } from 'rxjs';
 import { add, startOfTomorrow } from 'date-fns';
 import { enUS, ru } from 'date-fns/locale';
+import { AsyncSubject, takeUntil } from 'rxjs';
 
 import { DATE_FORMATS } from '@core/config';
 

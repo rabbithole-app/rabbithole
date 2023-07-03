@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { BreadcrumbsComponent } from '@features/file-list/components/breadcrumbs/breadcrumbs.component';
 import { FileListService } from '@features/file-list/services/file-list.service';
 

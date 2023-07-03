@@ -1,25 +1,25 @@
-import { RxPush } from '@rx-angular/template/push';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, forwardRef, inject, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, FormControlStatus, NG_VALUE_ACCESSOR, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DomSanitizer } from '@angular/platform-browser';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInput, MatInputModule } from '@angular/material/input';
-import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { MatInput, MatInputModule } from '@angular/material/input';
+import { DomSanitizer } from '@angular/platform-browser';
+import { convertStringToE8s, Token, TokenAmount } from '@dfinity/nns';
 import { createMask, InputMaskModule, InputmaskOptions } from '@ngneat/input-mask';
-import { convertStringToE8s, TokenAmount, Token } from '@dfinity/nns';
+import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { TranslocoModule } from '@ngneat/transloco';
-import { combineLatest, combineLatestWith, defer, distinctUntilChanged, filter, fromEvent, iif, map, of, switchMap, takeUntil, withLatestFrom } from 'rxjs';
+import { RxPush } from '@rx-angular/template/push';
 import { isEqual, trimEnd } from 'lodash';
+import { combineLatest, combineLatestWith, defer, distinctUntilChanged, filter, fromEvent, iif, map, of, switchMap, takeUntil, withLatestFrom } from 'rxjs';
 
-import { AccountValidators, AmountAsyncValidator } from '@features/wallet/validators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { E8S_PER_TOKEN } from '@core/constants';
 import { addFASvgIcons } from '@core/utils';
 import { Send } from '@features/wallet/models';
-import { E8S_PER_TOKEN } from '@core/constants';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AccountValidators, AmountAsyncValidator } from '@features/wallet/validators';
 
 interface State {
     token: Token;

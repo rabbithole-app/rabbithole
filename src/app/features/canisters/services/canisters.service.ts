@@ -2,13 +2,13 @@ import { inject, Injectable } from '@angular/core';
 import { Principal } from '@dfinity/principal';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { catchError, concat, defer, EMPTY, filter, from, map, merge, mergeMap, of, repeat, retry, switchMap, takeUntil, throwError, toArray } from 'rxjs';
 import { isNil } from 'lodash';
+import { catchError, concat, defer, EMPTY, filter, from, map, merge, mergeMap, of, repeat, retry, switchMap, takeUntil, throwError, toArray } from 'rxjs';
 
-import { canisterDetails } from '../operators';
-import { CanisterDetailsRaw } from '../models';
-import { AuthStatus, AUTH_RX_STATE } from '@core/stores';
 import { BucketsService, NotificationService } from '@core/services';
+import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
+import { CanisterDetailsRaw } from '../models';
+import { canisterDetails } from '../operators';
 
 interface State {
     journal: CanisterDetailsRaw;

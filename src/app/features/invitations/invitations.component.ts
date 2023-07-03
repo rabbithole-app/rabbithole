@@ -1,19 +1,19 @@
-import { RxPush } from '@rx-angular/template/push';
-import { Component, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
-import { map, Observable } from 'rxjs';
 import { selectSlice } from '@rx-angular/state/selections';
+import { RxPush } from '@rx-angular/template/push';
+import { Observable, map } from 'rxjs';
 
-import { InvitationsService } from './services/invitations.service';
-import { InvitesTableComponent } from './components/invites-table/invites-table.component';
-import { CreateInviteDialogComponent } from './components/create-invite-dialog/create-invite-dialog.component';
 import { addFASvgIcons } from '@core/utils';
+import { CreateInviteDialogComponent } from './components/create-invite-dialog/create-invite-dialog.component';
+import { InvitesTableComponent } from './components/invites-table/invites-table.component';
 import { Invite } from './models';
+import { InvitationsService } from './services/invitations.service';
 import { prepareInvite } from './utils';
 
 @Component({

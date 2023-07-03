@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, Inject, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
-import { MatButtonModule } from '@angular/material/button';
 import { compact, uniq } from 'lodash';
 
 import { JournalItem } from '@features/file-list/models';
-import { TreeComponent } from '../tree/tree.component';
 import { JournalService } from '@features/file-list/services';
+import { TreeComponent } from '../tree/tree.component';
 
 enum ItemsType {
     File,

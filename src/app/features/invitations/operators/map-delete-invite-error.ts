@@ -1,7 +1,7 @@
-import { translate } from '@ngneat/transloco';
-import { map, MonoTypeOperatorFunction, pipe } from 'rxjs';
-import { get, has } from 'lodash';
 import { InviteDeleteError } from '@declarations/rabbithole/rabbithole.did';
+import { translate } from '@ngneat/transloco';
+import { get, has } from 'lodash';
+import { MonoTypeOperatorFunction, map, pipe } from 'rxjs';
 
 export function mapDeleteInviteError<T>(): MonoTypeOperatorFunction<T> {
     return pipe(

@@ -1,14 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatOptionModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslocoModule } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
 import { map } from 'rxjs/operators';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ROUTE_ANIMATIONS_ELEMENTS } from '@core/animations';
 import { SETTINGS_RX_STATE, SettingsState } from '@core/stores';

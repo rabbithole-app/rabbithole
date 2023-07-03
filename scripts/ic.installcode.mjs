@@ -1,20 +1,26 @@
 #!/usr/bin/env node
 
 import { IDL } from '@dfinity/candid';
+import { Principal } from '@dfinity/principal';
 import { Command, InvalidArgumentError, Option } from 'commander';
 import { Listr } from 'listr2';
-import { Principal } from '@dfinity/principal';
-import { defer, Observable, map, from, switchMap, concat, concatMap, range } from 'rxjs';
-import { loadWasm } from './utils/code.utils.mjs';
-import { rabbitholeActorIC, rabbitholeActorLocal } from './actors/rabbithole.actors.mjs';
+import { Observable, concat, concatMap, defer, from, map, range, switchMap } from 'rxjs';
 import { journalActorIC, journalActorLocal } from './actors/journal.actors.mjs';
+import { rabbitholeActorIC, rabbitholeActorLocal } from './actors/rabbithole.actors.mjs';
+import { loadWasm } from './utils/code.utils.mjs';
 
 const program = new Command();
 program
     .addOption(new Option('-l, --list', 'Show only the list of canisters').default(false).conflicts(['concurrent']))
     .addOption(new Option('--canister-id <canisterId>', 'Install code to specific canister id').conflicts(['concurrent']).argParser(parsePrincipal))
-    .addOption(new Option('-t, --type <type>', 'User canister type. By default, the type of canisters is journal').default('journal').choices(['journal', 'storage']))
-    .addOption(new Option('-m, --mode <mode>', 'Specifies the type of deployment. You can set the canister deployment modes to install, reinstall, or upgrade.').default('upgrade').choices(['upgrade', 'install', 'reinstall']))
+    .addOption(
+        new Option('-t, --type <type>', 'User canister type. By default, the type of canisters is journal').default('journal').choices(['journal', 'storage'])
+    )
+    .addOption(
+        new Option('-m, --mode <mode>', 'Specifies the type of deployment. You can set the canister deployment modes to install, reinstall, or upgrade.')
+            .default('upgrade')
+            .choices(['upgrade', 'install', 'reinstall'])
+    )
     .addOption(
         new Option('-n, --network <network>', 'Overrides the environment to connect to. By default, the local canister execution environment is used.')
             .default('local')
@@ -35,7 +41,7 @@ function parsePrincipal(principal) {
     } catch (_) {
         throw new InvalidArgumentError('Not a principal.');
     }
-};
+}
 
 function myParseInt(value) {
     // parseInt takes a string and a radix
@@ -53,9 +59,7 @@ function myParseInt(value) {
         {
             title: `Create actor: ${opts.network}`,
             task: async ctx => {
-                ctx.actor = opts.network === 'ic'
-                    ? await rabbitholeActorIC()
-                    : await rabbitholeActorLocal();
+                ctx.actor = opts.network === 'ic' ? await rabbitholeActorIC() : await rabbitholeActorLocal();
             }
         },
         {
@@ -90,46 +94,45 @@ function myParseInt(value) {
                 }
             },
             enabled: () => opts.type === 'storage' && !opts.list,
-            task: (ctx, task) => 
+            task: (ctx, task) =>
                 task.newListr(
                     ctx.list.map(([_, bucketId]) => ({
                         title: bucketId.toText(),
-                        task: () => new Observable(subscriber => {
-                            subscriber.next('Create actor');
-                            const subscription = from(
-                                opts.network === 'ic'
-                                    ? journalActorIC(bucketId)
-                                    : journalActorLocal(bucketId)
-                            ).pipe(
-                                switchMap(actor => {
-                                    const chunkSize = 700000;
-                                    const resetWasm$ = defer(() => {
-                                        subscriber.next('Reset wasm module');
-                                        return actor.storageResetWasm();
-                                    });
-                                    const uploadWasm$ = range(0, Math.ceil(ctx.wasmModule.length / chunkSize)).pipe(
-                                        concatMap(index => {
-                                            const start = index * chunkSize;
-                                            const end = Math.min(start + chunkSize, ctx.wasmModule.length);
-                                            const chunks = ctx.wasmModule.slice(start, end);
-                                            if (start === 0) {
-                                                subscriber.next('Uploading wasm module');
-                                            }
+                        task: () =>
+                            new Observable(subscriber => {
+                                subscriber.next('Create actor');
+                                const subscription = from(opts.network === 'ic' ? journalActorIC(bucketId) : journalActorLocal(bucketId))
+                                    .pipe(
+                                        switchMap(actor => {
+                                            const chunkSize = 700000;
+                                            const resetWasm$ = defer(() => {
+                                                subscriber.next('Reset wasm module');
+                                                return actor.storageResetWasm();
+                                            });
+                                            const uploadWasm$ = range(0, Math.ceil(ctx.wasmModule.length / chunkSize)).pipe(
+                                                concatMap(index => {
+                                                    const start = index * chunkSize;
+                                                    const end = Math.min(start + chunkSize, ctx.wasmModule.length);
+                                                    const chunks = ctx.wasmModule.slice(start, end);
+                                                    if (start === 0) {
+                                                        subscriber.next('Uploading wasm module');
+                                                    }
 
-                                            return from(actor.storageLoadWasm(chunks)).pipe(
-                                                map(result => `Uploading wasm module: ${result.total}/${ctx.wasmModule.length}`)
+                                                    return from(actor.storageLoadWasm(chunks)).pipe(
+                                                        map(result => `Uploading wasm module: ${result.total}/${ctx.wasmModule.length}`)
+                                                    );
+                                                })
                                             );
+                                            const upgrade$ = defer(() => {
+                                                subscriber.next('Upgrade storages');
+                                                return actor.upgradeStorages();
+                                            });
+                                            return concat(resetWasm$, uploadWasm$, upgrade$);
                                         })
-                                    );
-                                    const upgrade$ = defer(() => {
-                                        subscriber.next('Upgrade storages');
-                                        return actor.upgradeStorages();
-                                    });
-                                    return concat(resetWasm$, uploadWasm$, upgrade$);
-                                })
-                            ).subscribe(subscriber);
-                            return () => subscription.unsubscribe();
-                        })
+                                    )
+                                    .subscribe(subscriber);
+                                return () => subscription.unsubscribe();
+                            })
                     })),
                     { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapseSubtasks: false } }
                 )
@@ -142,19 +145,22 @@ function myParseInt(value) {
                 }
             },
             enabled: () => opts.type === 'journal' && !opts.list,
-            task: async (ctx, task) => 
+            task: async (ctx, task) =>
                 task.newListr(
                     ctx.list.map(([owner, bucketId]) => ({
                         title: bucketId.toText(),
-                        task: () => defer(() => {
-                            const arg = IDL.encode([IDL.Principal], [owner]);
-                            return from(ctx.actor.installCode({
-                                canister_id: bucketId,
-                                arg: [...arg],
-                                wasm_module: ctx.wasmModule,
-                                mode: { [opts.mode]: null }
-                            }));
-                        })
+                        task: () =>
+                            defer(() => {
+                                const arg = IDL.encode([IDL.Principal], [owner]);
+                                return from(
+                                    ctx.actor.installCode({
+                                        canister_id: bucketId,
+                                        arg: [...arg],
+                                        wasm_module: ctx.wasmModule,
+                                        mode: { [opts.mode]: null }
+                                    })
+                                );
+                            })
                     })),
                     { concurrent: opts.concurrent, exitOnError: false, rendererOptions: { collapseSubtasks: false } }
                 )

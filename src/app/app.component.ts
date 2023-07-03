@@ -6,8 +6,7 @@ import { FETCH_INTERCEPTOR } from '@core/tokens';
 import { concatStringStream } from '@core/utils';
 import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 import { RxIf } from '@rx-angular/template/if';
-import { Observable, startWith } from 'rxjs';
-import { distinctUntilChanged, filter, first, map, merge } from 'rxjs';
+import { distinctUntilChanged, filter, first, map, merge, Observable, startWith } from 'rxjs';
 
 @Component({
     selector: 'app-root',

@@ -1,22 +1,22 @@
 import { ChangeDetectionStrategy, Component, ViewChild, ViewContainerRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { RouterLinkWithHref } from '@angular/router';
-import { RxIf } from '@rx-angular/template/if';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { filter, map, switchMap } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RxIf } from '@rx-angular/template/if';
 import { isUndefined } from 'lodash';
+import { filter, map, switchMap } from 'rxjs';
 
-import { AvatarComponent } from '../avatar/avatar.component';
-import { AuthService, ProfileService } from '@core/services';
-import { WalletComponent } from '@features/wallet/wallet.component';
-import { addFASvgIcons } from '@core/utils';
 import { CustomOverlayRef } from '@core/components/overlay';
-import { UploadTriggerComponent } from '@features/upload/components/upload-trigger/upload-trigger.component';
+import { AuthService, ProfileService } from '@core/services';
 import { SETTINGS_RX_STATE } from '@core/stores';
+import { addFASvgIcons } from '@core/utils';
+import { UploadTriggerComponent } from '@features/upload/components/upload-trigger/upload-trigger.component';
+import { WalletComponent } from '@features/wallet/wallet.component';
+import { AvatarComponent } from '../avatar/avatar.component';
 
 interface State {
     openedMenu?: CustomOverlayRef;

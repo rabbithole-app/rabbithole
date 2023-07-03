@@ -1,12 +1,12 @@
-import { FlatTreeControl } from '@angular/cdk/tree';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { Observable, Subscription, firstValueFrom, from, merge } from 'rxjs';
-import { concatMap, filter, switchMap } from 'rxjs/operators';
+import { FlatTreeControl } from '@angular/cdk/tree';
 import { WritableSignal, effect, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable, Subscription, firstValueFrom, from, merge } from 'rxjs';
+import { concatMap, filter, switchMap } from 'rxjs/operators';
 
-import { DirectoryFlatNode } from './tree.models';
 import { JournalService } from '@features/file-list/services';
+import { DirectoryFlatNode } from './tree.models';
 
 export type TreeDataSourceOptions = { paths?: string[]; expandPaths?: string[]; disableSubtree?: boolean; disableParent?: boolean };
 

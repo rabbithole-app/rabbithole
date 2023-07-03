@@ -1,13 +1,13 @@
 import { InjectionToken } from '@angular/core';
+import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
+import { AuthClient } from '@dfinity/auth-client';
 import { RxState } from '@rx-angular/state';
 import { filter, from, merge, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AuthClient } from '@dfinity/auth-client';
-import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 
 import { createActor, createAuthClient } from '@core/utils';
-import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.did';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
+import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.did';
 
 export enum AuthStatus {
     Anonymous,
