@@ -1,0 +1,42 @@
+:host {
+    display: inline-grid;
+    justify-self: center;
+    position: relative;
+    place-items: center;
+
+    app-avatar {
+        transition: all 250ms ease-in-out;
+        -webkit-filter: grayscale(0);
+        filter: grayscale(0);
+    }
+
+    &:hover {
+        app-avatar {
+            -webkit-filter: grayscale(100%);
+            filter: grayscale(100%);
+        }
+    }
+
+    .edit-button {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        mat-icon {
+            $size: 16px;
+            height: $size;
+            width: $size;
+            font-size: $size;
+            line-height: $size;
+            --mdc-icon-button-icon-size: #{$size};
+        }
+
+        &, ::ng-deep .mat-mdc-button-touch-target {
+            height: 32px;
+            width: 32px;
+        }
+    }
+
+    .delete-button {
+        position: absolute;
+    }
+}

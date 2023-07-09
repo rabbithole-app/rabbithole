@@ -66,7 +66,7 @@ export const appRoutes: Route[] = [
                 loadComponent: () => import('./layout/dashboard/components/user-menu/user-menu.component').then(m => m.UserMenuComponent),
                 outlet: 'header'
             },
-            // { path: 'profile', loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule) },
+            { path: 'profile', loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent) },
             { path: '', redirectTo: 'drive', pathMatch: 'full' }
         ],
         providers: [
@@ -92,7 +92,7 @@ export const appRoutes: Route[] = [
             {
                 path: '',
                 canMatch: [createProfileGuard],
-                loadComponent: () => import('./features/register/components/profile/profile.component').then(m => m.ProfileComponent)
+                loadComponent: () => import('./features/register/components/create-profile/create-profile.component').then(m => m.CreateProfileComponent)
             },
             { path: '', canActivate: [registerGuard], loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) }
             // {

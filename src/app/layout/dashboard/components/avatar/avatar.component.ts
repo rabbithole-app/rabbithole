@@ -1,17 +1,21 @@
-import { ChangeDetectionStrategy, Component, HostBinding, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Input, WritableSignal, numberAttribute, signal } from '@angular/core';
 
 @Component({
     selector: 'app-avatar',
-    template: `<img [src]="url" [alt]="name" />`,
+    template: `<img [src]="avatarUrl()" [alt]="name" />`,
     styleUrls: ['./avatar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true
 })
 export class AvatarComponent {
-    @Input() url = '../../assets/avatar-placeholder.svg';
+    readonly defaultAvatar = '../../assets/avatar-placeholder.svg';
+    avatarUrl: WritableSignal<string> = signal(this.defaultAvatar);
+    @Input() set url(value: string | null) {
+        this.avatarUrl.set(value ?? this.defaultAvatar);
+    }
     @HostBinding('style.width.px')
     @HostBinding('style.height.px')
-    @Input()
+    @Input({ transform: numberAttribute })
     size = 40;
     @HostBinding('title') @Input() name = '';
 }

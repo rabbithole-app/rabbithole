@@ -23,6 +23,7 @@ module {
         name : Text;
         fileSize : Nat;
         parentId : ?ID;
+        encrypted : Bool;
         // A sha256 representation of the raw content calculated on the frontend side.
         // used for duplicate detection and certification
         sha256 : ?[Nat8];

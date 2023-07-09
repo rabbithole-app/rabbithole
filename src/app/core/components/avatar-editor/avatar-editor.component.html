@@ -1,0 +1,14 @@
+<app-avatar [size]="140" [url]="value()"></app-avatar>
+<button *rxIf="showDeleteButton$ | push" mat-icon-button color="warn" class="delete-button" @bounceInOnEnter @bounceOutOnLeave (click)="reset()">
+    <mat-icon svgIcon="far:trash-can"></mat-icon>
+</button>
+<div class="icon-container">
+    <button *rxIf="loading(); else editButton" mat-fab class="edit-button" disabled>
+        <mat-spinner diameter="20"></mat-spinner>
+    </button>
+    <ng-template #editButton>
+        <button mat-fab class="edit-button" color="primary" (click)="handleImageSelect($event)">
+            <mat-icon svgIcon="far:pencil"></mat-icon>
+        </button>
+    </ng-template>
+</div>

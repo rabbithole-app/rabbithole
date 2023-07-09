@@ -81,7 +81,7 @@ actor Rabbithole {
     var profiles = TrieMap.TrieMap<Principal, ProfileInfo>(Principal.equal, Principal.hash);
     let usernameAllowedSymbols : Text = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_";
 
-    public shared ({ caller }) func createProfile({ displayName; username } : ProfileCreate) : async Result.Result<(), ProfileCreateError> {
+    public shared ({ caller }) func createProfile({ displayName; username; avatarUrl } : ProfileCreate) : async Result.Result<(), ProfileCreateError> {
         assert not Principal.isAnonymous(caller);
 
         let hasJournal = Option.isSome(Trie.find<Principal, BucketId>(journals, Utils.keyPrincipal(caller), Principal.equal));
@@ -105,7 +105,7 @@ actor Rabbithole {
             case (#err e) return #err(#username e);
             case (#ok) {
                 let now : Time.Time = Time.now();
-                let userProfile : ProfileInfo = { username; displayName; id = caller; createdAt = now; updatedAt = now; inviter };
+                let userProfile : ProfileInfo = { username; displayName; id = caller; createdAt = now; updatedAt = now; inviter; avatarUrl };
                 switch (profiles.get(caller)) {
                     case (?_) #err(#alreadyExists);
                     case null {
@@ -117,13 +117,13 @@ actor Rabbithole {
         };
     };
 
-    public shared ({ caller }) func putProfile(profile : ProfileUpdate) : async Result.Result<(), { #notFound }> {
+    public shared ({ caller }) func putProfile({ avatarUrl; displayName } : ProfileUpdate) : async Result.Result<(), { #notFound }> {
         assert not Principal.isAnonymous(caller);
 
         switch (profiles.get(caller)) {
             case null #err(#notFound);
             case (?v) {
-                let userProfile : ProfileInfo = { v with displayName = profile.displayName; updatedAt = Time.now() };
+                let userProfile : ProfileInfo = { v with avatarUrl; displayName; updatedAt = Time.now() };
                 profiles.put(caller, userProfile);
                 #ok();
             };
@@ -144,6 +144,15 @@ actor Rabbithole {
                 // await canisterUtils.deleteCanister(bucketId);
             };
         };
+    };
+
+    type Profile = { username : Text; principal : Principal; avatarUrl : ?Text };
+    public query func listProfiles() : async [Profile] {
+        let buffer : Buffer.Buffer<Profile> = Buffer.Buffer(0);
+        for ({ id; username; avatarUrl } in profiles.vals()) {
+            buffer.add({ username; principal = id; avatarUrl });
+        };
+        Buffer.toArray(buffer);
     };
 
     public query ({ caller }) func getProfile() : async ?ProfileInfo {

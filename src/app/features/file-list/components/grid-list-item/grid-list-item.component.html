@@ -5,11 +5,14 @@
                     &lt;!&ndash;<ng-container [ngTemplateOutlet]="progressTemplate"></ng-container>&ndash;&gt;
                 </mat-icon>-->
             <app-animated-folder [color]="loading || disabled ? 'gray' : data.color" [active]="active ?? false">
-                <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:users"></mat-icon> -->
+                <!-- <mat-icon class="folder-cover-icon" icon svgIcon="far:lock"></mat-icon> -->
             </app-animated-folder>
         </ng-container>
         <ng-container *rxIf="journalService.isFile(data)">
             <mat-icon *rxIf="!data.thumbnail; else thumbTemplate" class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
+            <!-- <div class="badge" *rxIf="data.encrypted">
+                <mat-icon svgIcon="far:lock"></mat-icon>
+            </div> -->
             <ng-template #thumbTemplate>
                 <img class="thumbnail" [src]="data.thumbnail" alt="" />
             </ng-template>

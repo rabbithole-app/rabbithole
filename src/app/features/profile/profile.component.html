@@ -1,0 +1,44 @@
+<ng-container *transloco="let t; read: 'profile.edit'">
+    <div class="mat-typography">
+        <h1>{{ t('title') }}</h1>
+    </div>
+    <form class="grid-form" [formGroup]="profileForm">
+        <app-avatar-editor formControlName="avatarUrl"></app-avatar-editor>
+        <mat-form-field>
+            <mat-label>{{ t('username.label') }}</mat-label>
+            <input formControlName="username" matInput />
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>{{ t('displayName.label') }}</mat-label>
+            <input formControlName="displayName" matInput placeholder="Type here" maxlength="50" />
+        </mat-form-field>
+        <div class="buttons-wrapper">
+            <ng-container *rxIf="profileService.updateLoading(); else saveButton">
+                <button mat-raised-button disabled>
+                    <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+                    {{ t('actions.loading') }}
+                </button>
+            </ng-container>
+            <ng-template #saveButton>
+                <button mat-raised-button color="primary" (click)="update()" [disabled]="profileForm.invalid">
+                    <mat-icon svgIcon="far:floppy-disk"></mat-icon>
+                    {{ t('actions.save') }}
+                </button>
+            </ng-template>
+            <ng-container *rxIf="deleteEnabled">
+                <ng-container *rxIf="profileService.deleteLoading(); else deleteButton">
+                    <button mat-raised-button disabled>
+                        <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+                        {{ t('actions.loading') }}
+                    </button>
+                </ng-container>
+                <ng-template #deleteButton>
+                    <button class="action-button" mat-button color="warn" (click)="openDeleteDialog()">
+                        <mat-icon svgIcon="far:user-slash"></mat-icon>
+                        {{ t('actions.delete') }}
+                    </button>
+                </ng-template>
+            </ng-container>
+        </div>
+    </form>
+</ng-container>

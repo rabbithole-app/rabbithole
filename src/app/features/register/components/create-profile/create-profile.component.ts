@@ -6,17 +6,24 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { addFASvgIcons } from '@core/utils';
-import { UniqueUsernameValidator } from '@core/validators';
-import { RegisterService, UserStatus } from '@features/register/services/register.service';
-import { TRANSLOCO_SCOPE, TranslocoModule, TranslocoService } from '@ngneat/transloco';
+import { toNullable } from '@dfinity/utils';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
 
+import { AvatarEditorComponent } from '@core/components/avatar-editor/avatar-editor.component';
+import { addFASvgIcons } from '@core/utils';
+import { UniqueUsernameValidator } from '@core/validators';
+import { RegisterService, UserStatus } from '@features/register/services/register.service';
+
 @Component({
-    selector: 'app-profile',
+    selector: 'app-create-profile',
     standalone: true,
+    templateUrl: './create-profile.component.html',
+    styleUrls: ['./create-profile.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [RegisterService, UniqueUsernameValidator],
     imports: [
         NgSwitch,
         NgSwitchCase,
@@ -28,22 +35,20 @@ import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
         MatIconModule,
         MatInputModule,
         MatButtonModule,
-        MatProgressSpinnerModule
-    ],
-    templateUrl: './profile.component.html',
-    styleUrls: ['./profile.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [RegisterService, { provide: TRANSLOCO_SCOPE, useValue: 'create-profile' }, UniqueUsernameValidator]
+        MatProgressSpinnerModule,
+        AvatarEditorComponent
+    ]
 })
-export class ProfileComponent {
+export class CreateProfileComponent {
     private registerService = inject(RegisterService);
     private translocoService = inject(TranslocoService);
-    uniquerUsernameValidator = inject(UniqueUsernameValidator);
+    #uniqueUsernameValidator = inject(UniqueUsernameValidator);
     private fb = inject(FormBuilder);
     registerForm = this.fb.group({
+        avatarUrl: new FormControl(),
         username: new FormControl('', {
             validators: Validators.compose([Validators.required, Validators.minLength(2), Validators.maxLength(20), Validators.pattern('[a-zA-Z0-9_]+')]),
-            asyncValidators: [this.uniquerUsernameValidator.validate.bind(this.uniquerUsernameValidator)]
+            asyncValidators: [this.#uniqueUsernameValidator.validate.bind(this.#uniqueUsernameValidator)]
         }),
         displayName: new FormControl('')
     });
@@ -79,9 +84,9 @@ export class ProfileComponent {
     }
 
     register() {
-        const { username, displayName } = this.registerForm.getRawValue();
+        const { avatarUrl, username, displayName } = this.registerForm.getRawValue();
         if (username) {
-            this.registerService.createProfile({ username, displayName: displayName ?? '' });
+            this.registerService.createProfile({ username, displayName: displayName ?? '', avatarUrl: toNullable(avatarUrl) });
         }
     }
 

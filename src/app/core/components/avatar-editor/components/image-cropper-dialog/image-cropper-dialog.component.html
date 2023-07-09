@@ -1,0 +1,25 @@
+<ng-container *transloco="let t">
+    <mat-dialog-content class="mat-typography">
+        <image-cropper
+            [imageFile]="image"
+            [aspectRatio]="imageCropperOptions.aspectRatio"
+            [maintainAspectRatio]="imageCropperOptions.maintainAspectRatio"
+            [format]="imageCropperOptions.format"
+            [resizeToWidth]="imageCropperOptions.resizeToWidth"
+            [resizeToHeight]="imageCropperOptions.resizeToHeight"
+            [onlyScaleDown]="imageCropperOptions.onlyScaleDown"
+            [roundCropper]="imageCropperOptions.roundCropper"
+            [autoCrop]="imageCropperOptions.autoCrop"></image-cropper>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>{{ t('common.actions.cancel') }}</button>
+        <button *rxIf="loading(); else saveButton" mat-raised-button disabled>
+            {{ t('common.actions.loading') }}
+        </button>
+        <ng-template #saveButton>
+            <button mat-raised-button color="primary" (click)="crop()">
+                {{ t('common.actions.save') }}
+            </button>
+        </ng-template>
+    </mat-dialog-actions>
+</ng-container>

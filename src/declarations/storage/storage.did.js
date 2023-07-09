@@ -17,6 +17,7 @@ export const idlFactory = ({ IDL }) => {
         path: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
+        encrypted: IDL.Bool,
         updatedAt: Time,
         parentId: IDL.Opt(ID__3)
     });
@@ -87,6 +88,7 @@ export const idlFactory = ({ IDL }) => {
         thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,
         fileSize: IDL.Nat,
+        encrypted: IDL.Bool,
         parentId: IDL.Opt(ID)
     });
     const InitUpload = IDL.Record({ batchId: IDL.Nat });

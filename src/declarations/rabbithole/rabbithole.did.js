@@ -78,7 +78,8 @@ export const idlFactory = ({ IDL }) => {
     });
     const ProfileCreate = IDL.Record({
         username: IDL.Text,
-        displayName: IDL.Text
+        displayName: IDL.Text,
+        avatarUrl: IDL.Opt(IDL.Text)
     });
     const UsernameError = IDL.Variant({
         illegalCharacters: IDL.Null,
@@ -125,13 +126,22 @@ export const idlFactory = ({ IDL }) => {
         displayName: IDL.Text,
         inviter: IDL.Opt(IDL.Principal),
         createdAt: Time,
-        updatedAt: Time
+        updatedAt: Time,
+        avatarUrl: IDL.Opt(IDL.Text)
     });
     const RegistrationMode = IDL.Variant({
         prepaid: IDL.Null,
         invite: IDL.Null
     });
-    const ProfileUpdate = IDL.Record({ displayName: IDL.Text });
+    const Profile = IDL.Record({
+        principal: IDL.Principal,
+        username: IDL.Text,
+        avatarUrl: IDL.Opt(IDL.Text)
+    });
+    const ProfileUpdate = IDL.Record({
+        displayName: IDL.Text,
+        avatarUrl: IDL.Opt(IDL.Text)
+    });
     return IDL.Service({
         accountBalance: IDL.Func([], [Tokens], []),
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
@@ -170,6 +180,7 @@ export const idlFactory = ({ IDL }) => {
             []
         ),
         listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId))], []),
+        listProfiles: IDL.Func([], [IDL.Vec(Profile)], ['query']),
         putProfile: IDL.Func([ProfileUpdate], [Result_1], []),
         redeemInvite: IDL.Func([ID], [Result], []),
         setRegistrationMode: IDL.Func([RegistrationMode], [], []),

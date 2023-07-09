@@ -22,6 +22,7 @@ export interface Directory {
     path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
+    encrypted: boolean;
     children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
@@ -49,6 +50,7 @@ export interface Directory__1 {
     path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
+    encrypted: boolean;
     children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
@@ -65,6 +67,7 @@ export interface File {
     path: string;
     bucketId: BucketId;
     fileSize: bigint;
+    encrypted: boolean;
     updatedAt: Time;
     parentId: [] | [ID];
 }
@@ -74,6 +77,7 @@ export interface FileCreate {
     name: string;
     bucketId: BucketId;
     fileSize: bigint;
+    encrypted: boolean;
     parentId: [] | [ID];
 }
 export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
@@ -86,6 +90,7 @@ export interface File__1 {
     path: string;
     bucketId: BucketId;
     fileSize: bigint;
+    encrypted: boolean;
     updatedAt: Time;
     parentId: [] | [ID];
 }
@@ -111,11 +116,12 @@ export interface JournalBucket {
     deleteDirectory: ActorMethod<[string], Result_5>;
     deleteFile: ActorMethod<[string], Result_5>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
-    encrypted_symmetric_key_for_caller: ActorMethod<[Uint8Array | number[]], string>;
+    encrypted_symmetric_key: ActorMethod<[Uint8Array | number[]], string>;
     getCanisters: ActorMethod<[], Array<Canister>>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getJournal: ActorMethod<[[] | [string]], Result_4>;
     getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
+    listFiles: ActorMethod<[[] | [ID__1]], Array<File__1>>;
     listStorages: ActorMethod<[], Array<BucketId__1>>;
     moveDirectory: ActorMethod<[string, [] | [string]], Result_3>;
     moveFile: ActorMethod<[string, [] | [string]], Result_2>;

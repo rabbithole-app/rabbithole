@@ -71,7 +71,7 @@ export class GridListItemComponent implements Highlightable {
     }*/
 
     constructor() {
-        addFASvgIcons(['users'], 'far');
+        addFASvgIcons(['users', 'lock'], 'far');
     }
 
     getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);

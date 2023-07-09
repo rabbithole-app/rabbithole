@@ -172,6 +172,28 @@ mat-icon.file-icon {
     max-width: 80px;
     position: relative;
 
+    .badge {
+        background-color: rgba(0, 0, 0, .5);
+        color: #fff;
+        display: grid;
+        border-radius: 24px;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+
+        mat-icon {
+            $icon-size: 12px;
+            height: $icon-size;
+            width: $icon-size;
+            font-size: $icon-size;
+            display: inline-flex;
+            --mdc-icon-button-icon-size: #{$icon-size};
+        }
+    }
+
     .spinner-wrapper {
         position: absolute;
 

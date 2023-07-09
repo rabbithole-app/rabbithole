@@ -5,6 +5,7 @@ export type JournalItemType = 'file' | 'folder';
 export type DirectoryColor = OptKeys<OptDirectoryColor>;
 
 type ItemsCommonAttrs = {
+    encrypted: boolean;
     loading?: boolean;
     disabled?: boolean;
 };

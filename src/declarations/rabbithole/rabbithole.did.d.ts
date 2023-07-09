@@ -54,9 +54,15 @@ export type NotifyError =
     | { Other: { error_message: string; error_code: bigint } }
     | { Processing: null }
     | { TransactionTooOld: BlockIndex };
+export interface Profile {
+    principal: Principal;
+    username: string;
+    avatarUrl: [] | [string];
+}
 export interface ProfileCreate {
     username: string;
     displayName: string;
+    avatarUrl: [] | [string];
 }
 export type ProfileCreateError = { username: UsernameError } | { alreadyExists: null } | { journalNotFound: null };
 export interface ProfileInfo {
@@ -66,9 +72,11 @@ export interface ProfileInfo {
     inviter: [] | [Principal];
     createdAt: Time;
     updatedAt: Time;
+    avatarUrl: [] | [string];
 }
 export interface ProfileUpdate {
     displayName: string;
+    avatarUrl: [] | [string];
 }
 export type PublicKey = string;
 export type RegistrationMode = { prepaid: null } | { invite: null };
@@ -129,6 +137,7 @@ export interface _SERVICE {
         undefined
     >;
     listBuckets: ActorMethod<[string], Array<[Principal, BucketId]>>;
+    listProfiles: ActorMethod<[], Array<Profile>>;
     putProfile: ActorMethod<[ProfileUpdate], Result_1>;
     redeemInvite: ActorMethod<[ID], Result>;
     setRegistrationMode: ActorMethod<[RegistrationMode], undefined>;

@@ -232,6 +232,7 @@ module {
                         children = null;
                         path;
                         size = null;
+                        encrypted = false;
                     };
                     Map.set(directories, thash, path, directory);
                     #ok directory;
@@ -610,6 +611,7 @@ module {
                                             children = null;
                                             path = currentPath;
                                             size = null;
+                                            encrypted = false;
                                         };
                                         Map.set(directories, thash, currentPath, directory);
                                         buffer.add((currentPath, id));
@@ -633,8 +635,12 @@ module {
             let path : Text = switch (file.parentId) {
                 case null file.name;
                 case (?v) {
-                    let ?path = findPath(v) else return #err(#parentNotFound);
-                    path # "/" # file.name;
+                    if (Text.equal(v, ".rabbithole")) {
+                        v # "/" # file.name;
+                    } else {
+                        let ?path = findPath(v) else return #err(#parentNotFound);
+                        path # "/" # file.name;
+                    };
                 };
             };
             let now = Time.now();

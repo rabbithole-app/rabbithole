@@ -95,6 +95,11 @@
                 "copied": "Copied!"
             },
             "refresh": "Refresh"
+        },
+        "actions": {
+            "loading": "Loading...",
+            "cancel": "Cancel",
+            "save": "Save"
         }
     },
     "fileList": {
@@ -296,5 +301,55 @@
             "successfullyDeleted": "Invitation successfully deleted",
             "copied": "Invitation code copied to clipboard"
         }
+    },
+    "profile": {
+        "create": {
+            "title": "Create a profile",
+            "username": {
+                "label": "Choose a username",
+                "hint": "Choose your name carefully, it can't be changed.",
+                "errors": {
+                    "minlength": "Username must be at least {{ requiredLength }} characters long",
+                    "maxlength": "Username cannot be more than {{ requiredLength }} characters long",
+                    "required": "Username is required",
+                    "alreadyExists": "That username is taken. Try another",
+                    "pattern": "Username contains illegal characters"
+                }
+            },
+            "displayName": {
+                "label": "Choose a display name",
+                "hint": "Don't worry, you can change this one anytime."
+            },
+            "actions": {
+                "create": "Create",
+                "loading": "Creating...",
+                "redirect": "Redirecting..."
+            },
+            "messages": {
+                "successfullyCreated": "Profile successfully created",
+                "alreadyExists": "Profile already exists"
+            }
+        },
+        "edit": {
+            "title": "Update a profile",
+            "username": {
+                "label": "Username"
+            },
+            "displayName": {
+                "label": "Choose a display name"
+            },
+            "actions": {
+                "save": "Save",
+                "delete": "Delete",
+                "loading": "Saving...",
+                "deleting": "Deleting..."
+            },
+            "messages": {
+                "ok": "Profile successfully updated"
+            },
+            "errors": {
+                "notFound": "Profile not found"
+            }
+        }        
     }
 }

@@ -1,8 +1,9 @@
-<ng-container *transloco="let t; read: 'createProfile'">
+<ng-container *transloco="let t; read: 'profile.create'">
     <div class="mat-typography">
         <h1>{{ t('title') }}</h1>
     </div>
     <form class="grid-form" [formGroup]="registerForm">
+        <app-avatar-editor formControlName="avatarUrl"></app-avatar-editor>
         <mat-form-field>
             <mat-label>{{ t('username.label') }}</mat-label>
             <input #usernameInput formControlName="username" matInput placeholder="Type here" minlength="2" maxlength="20" />
@@ -26,14 +27,14 @@
             (click)="register()"
             [disabled]="disabled$ | push">
             <mat-icon svgIcon="far:user-plus"></mat-icon>
-            <span>{{ t('create') }}</span>
+            <span>{{ t('actions.create') }}</span>
         </button>
         <button class="action-button" *ngSwitchCase="userStatus.Creating" mat-raised-button disabled>
             <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
-            {{ t('loading') }}
+            {{ t('actions.loading') }}
         </button>
         <button class="action-button" *ngSwitchCase="userStatus.Registered" mat-raised-button disabled>
-            {{ t('redirect') }}
+            {{ t('actions.redirect') }}
         </button>
     </ng-container>
 </ng-container>

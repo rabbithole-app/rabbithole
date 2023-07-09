@@ -6,6 +6,7 @@ export interface AssetKey {
     thumbnail: [] | [string];
     name: string;
     fileSize: bigint;
+    encrypted: boolean;
     parentId: [] | [ID];
 }
 export type BucketId = Principal;
@@ -33,6 +34,7 @@ export interface File {
     path: string;
     bucketId: BucketId;
     fileSize: bigint;
+    encrypted: boolean;
     updatedAt: Time;
     parentId: [] | [ID__3];
 }

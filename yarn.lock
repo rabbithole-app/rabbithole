@@ -6906,6 +6906,13 @@ ngx-drag-drop@^16.0.0:
   dependencies:
     tslib "^2.3.0"
 
+ngx-image-cropper@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/ngx-image-cropper/-/ngx-image-cropper-7.0.1.tgz#3cecad24cb9e4a841d3d555ee5b23ea175abe9ca"
+  integrity sha512-Aij3z0bGZ1Em+P1nSOKskEwlTKCS2X4MVTTz9uNFZdyZbT91Xrz2tChgGc9d++w2sUsEhGnM2jP3RKNpZq9lsg==
+  dependencies:
+    tslib "^2.3.0"
+
 ngx-window-token@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/ngx-window-token/-/ngx-window-token-7.0.0.tgz#2e1bc76846411a388188b802154e4841d3e27856"

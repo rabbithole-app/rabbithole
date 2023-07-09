@@ -1,282 +1,315 @@
-type definite_canister_settings = record {
-    compute_allocation : nat;
-    controllers : vec principal;
-    freezing_threshold : nat;
-    memory_allocation : nat;
-};
-type canister_status_response = record {
-    cycles : nat;
-    idle_cycles_burned_per_day : nat;
-    memory_size : nat;
-    module_hash : opt blob;
-    settings : definite_canister_settings;
-    status : variant {
-        running;
-        stopped;
-        stopping;
-    };
-};
-type TransferResult = variant {
-    Err : TransferError;
-    Ok : BlockIndex;
-};
-type TransferError = variant {
-    BadFee : record { expected_fee : Tokens };
-    InsufficientFunds : record { balance : Tokens };
-    TxCreatedInFuture;
-    TxDuplicate : record { duplicate_of : BlockIndex };
-    TxTooOld : record { allowed_window_nanos : nat64 };
-};
-type Tokens__1 = record { e8s : nat64 };
-type Tokens = record { e8s : nat64 };
+type definite_canister_settings = 
+ record {
+   compute_allocation: nat;
+   controllers: vec principal;
+   freezing_threshold: nat;
+   memory_allocation: nat;
+ };
+type canister_status_response = 
+ record {
+   cycles: nat;
+   idle_cycles_burned_per_day: nat;
+   memory_size: nat;
+   module_hash: opt blob;
+   settings: definite_canister_settings;
+   status: variant {
+             running;
+             stopped;
+             stopping;
+           };
+ };
+type TransferResult = 
+ variant {
+   Err: TransferError;
+   Ok: BlockIndex;
+ };
+type TransferError = 
+ variant {
+   BadFee: record {expected_fee: Tokens;};
+   InsufficientFunds: record {balance: Tokens;};
+   TxCreatedInFuture;
+   TxDuplicate: record {duplicate_of: BlockIndex;};
+   TxTooOld: record {allowed_window_nanos: nat64;};
+ };
+type Tokens__1 = record {e8s: nat64;};
+type Tokens = record {e8s: nat64;};
 type Time = int;
-type Result_9 = variant {
-    err : DirectoryCreateError;
-    ok;
-};
-type Result_8 = variant {
-    err : FileCreateError;
-    ok;
-};
-type Result_7 = variant {
-    err : DirectoryCreateError;
-    ok : Directory;
-};
-type Result_6 = variant {
-    err : variant {
-        insufficientFunds : record { balance : Tokens__1 };
-        notify : NotifyError;
-        transfer : TransferError;
+type Result_9 = 
+ variant {
+   err: DirectoryCreateError;
+   ok;
+ };
+type Result_8 = 
+ variant {
+   err: FileCreateError;
+   ok;
+ };
+type Result_7 = 
+ variant {
+   err: DirectoryCreateError;
+   ok: Directory;
+ };
+type Result_6 = 
+ variant {
+   err:
+    variant {
+      insufficientFunds: record {balance: Tokens__1;};
+      notify: NotifyError;
+      transfer: TransferError;
     };
-    ok;
-};
-type Result_5 = variant {
-    err : NotFoundError;
-    ok;
-};
-type Result_4 = variant {
-    err : DirectoryStateError;
-    ok : DirectoryState;
-};
-type Result_3 = variant {
-    err : DirectoryMoveError;
-    ok;
-};
-type Result_2 = variant {
-    err : FileMoveError;
-    ok;
-};
-type Result_10 = variant {
-    err : FileCreateError;
-    ok : File__1;
-};
-type Result_1 = variant {
-    err : variant {
-        alreadyExists : File__1;
-        illegalCharacters;
-        notFound;
-    };
-    ok : File__1;
-};
-type Result = variant {
-    err : variant {
-        alreadyExists : Directory;
-        notFound;
-    };
-    ok : Directory;
-};
-type NotifyError = variant {
-    InvalidTransaction : text;
-    Other : record {
-        error_code : nat64;
-        error_message : text;
-    };
-    Processing;
-    Refunded : record {
-        block_index : opt BlockIndex__1;
-        reason : text;
-    };
-    TransactionTooOld : BlockIndex__1;
-};
-type NotFoundError = variant { notFound };
-type JournalBucket = service {
-    accountIdentifier : () -> (AccountIdentifier) query;
-    addFile : (FileCreate) -> (Result_10);
-    app_vetkd_public_key : (vec blob) -> (text);
-    canisterStatus : (principal) -> (
-        record {
-            freezingThresholdInCycles : nat;
-            id : principal;
-            status : canister_status_response;
-        }
-    );
-    checkDirname : (EntryCreate) -> (Result_9) query;
-    checkFilename : (EntryCreate) -> (Result_8) query;
-    createDirectory : (EntryCreate) -> (Result_7);
-    createInvite : (Time) -> (Result_6);
-    createPaths : (vec text, vec ID__1, opt ID__1) -> (
-        vec record {
-            text;
-            ID__1;
-        }
-    );
-    deleteDirectory : (text) -> (Result_5);
-    deleteFile : (text) -> (Result_5);
-    deleteStorage : (BucketId__1) -> ();
-    encrypted_symmetric_key_for_caller : (blob) -> (text);
-    getCanisters : () -> (vec Canister) query;
-    getChildrenDirs : (opt ID__1) -> (vec Directory) query;
-    getJournal : (opt text) -> (Result_4) query;
-    getStorage : (nat) -> (opt BucketId__1);
-    listStorages : () -> (vec BucketId__1) query;
-    moveDirectory : (text, opt text) -> (Result_3);
-    moveFile : (text, opt text) -> (Result_2);
-    renameFile : (text, text) -> (Result_1);
-    showDirectoriesTree : (opt ID__1) -> (text) query;
-    startBucketMonitor : (BucketId__1) -> ();
-    stopBucketMonitor : (BucketId__1) -> ();
-    storageLoadWasm : (vec nat8) -> (
-        record {
-            chunks : nat;
-            total : nat;
-        }
-    );
-    storageResetWasm : () -> ();
-    updateDirectory : (DirectoryAction, DirectoryUpdatableFields) -> (Result);
-    upgradeStorages : () -> ();
-    withdraw : (
-        record {
-            amount : Tokens;
-            to : opt AccountIdentifier;
-        }
-    ) -> (TransferResult);
-};
+   ok;
+ };
+type Result_5 = 
+ variant {
+   err: NotFoundError;
+   ok;
+ };
+type Result_4 = 
+ variant {
+   err: DirectoryStateError;
+   ok: DirectoryState;
+ };
+type Result_3 = 
+ variant {
+   err: DirectoryMoveError;
+   ok;
+ };
+type Result_2 = 
+ variant {
+   err: FileMoveError;
+   ok;
+ };
+type Result_10 = 
+ variant {
+   err: FileCreateError;
+   ok: File__1;
+ };
+type Result_1 = 
+ variant {
+   err: variant {
+          alreadyExists: File__1;
+          illegalCharacters;
+          notFound;
+        };
+   ok: File__1;
+ };
+type Result = 
+ variant {
+   err: variant {
+          alreadyExists: Directory;
+          notFound;
+        };
+   ok: Directory;
+ };
+type NotifyError = 
+ variant {
+   InvalidTransaction: text;
+   Other: record {
+            error_code: nat64;
+            error_message: text;
+          };
+   Processing;
+   Refunded: record {
+               block_index: opt BlockIndex__1;
+               reason: text;
+             };
+   TransactionTooOld: BlockIndex__1;
+ };
+type NotFoundError = variant {notFound;};
+type JournalBucket = 
+ service {
+   accountIdentifier: () -> (AccountIdentifier) query;
+   addFile: (FileCreate) -> (Result_10);
+   app_vetkd_public_key: (vec blob) -> (text);
+   canisterStatus: (principal) ->
+    (record {
+       freezingThresholdInCycles: nat;
+       id: principal;
+       status: canister_status_response;
+     });
+   checkDirname: (EntryCreate) -> (Result_9) query;
+   checkFilename: (EntryCreate) -> (Result_8) query;
+   createDirectory: (EntryCreate) -> (Result_7);
+   createInvite: (Time) -> (Result_6);
+   createPaths: (vec text, vec ID__1, opt ID__1) ->
+    (vec record {
+           text;
+           ID__1;
+         });
+   deleteDirectory: (text) -> (Result_5);
+   deleteFile: (text) -> (Result_5);
+   deleteStorage: (BucketId__1) -> ();
+   encrypted_symmetric_key: (blob) -> (text);
+   getCanisters: () -> (vec Canister) query;
+   getChildrenDirs: (opt ID__1) -> (vec Directory) query;
+   getJournal: (opt text) -> (Result_4) query;
+   getStorage: (nat) -> (opt BucketId__1);
+   listFiles: (opt ID__1) -> (vec File__1) query;
+   listStorages: () -> (vec BucketId__1) query;
+   moveDirectory: (text, opt text) -> (Result_3);
+   moveFile: (text, opt text) -> (Result_2);
+   renameFile: (text, text) -> (Result_1);
+   showDirectoriesTree: (opt ID__1) -> (text) query;
+   startBucketMonitor: (BucketId__1) -> ();
+   stopBucketMonitor: (BucketId__1) -> ();
+   storageLoadWasm: (vec nat8) -> (record {
+                                     chunks: nat;
+                                     total: nat;
+                                   });
+   storageResetWasm: () -> ();
+   updateDirectory: (DirectoryAction, DirectoryUpdatableFields) -> (Result);
+   upgradeStorages: () -> ();
+   withdraw: (record {
+                amount: Tokens;
+                to: opt AccountIdentifier;
+              }) -> (TransferResult);
+ };
 type ID__1 = text;
 type ID = text;
-type File__1 = record {
-    bucketId : BucketId;
-    createdAt : Time;
-    fileSize : nat;
-    id : ID;
-    name : text;
-    parentId : opt ID;
-    path : text;
-    thumbnail : opt text;
-    updatedAt : Time;
-};
-type FileMoveError = variant {
-    invalidParams;
-    notFound;
-    sourceNotFound;
-    targetNotFound;
-};
-type FileCreateError = variant {
-    alreadyExists : File;
-    illegalCharacters;
-    parentNotFound;
-};
-type FileCreate = record {
-    bucketId : BucketId;
-    fileSize : nat;
-    id : ID;
-    name : text;
-    parentId : opt ID;
-    thumbnail : opt text;
-};
-type File = record {
-    bucketId : BucketId;
-    createdAt : Time;
-    fileSize : nat;
-    id : ID;
-    name : text;
-    parentId : opt ID;
-    path : text;
-    thumbnail : opt text;
-    updatedAt : Time;
-};
-type EntryCreate = record {
-    name : text;
-    parentId : opt ID;
-};
-type Directory__1 = record {
-    children : opt record {
-        vec Directory__1;
-        vec File;
-    };
-    color : opt DirectoryColor;
-    createdAt : Time;
-    id : ID;
-    name : text;
-    parentId : opt ID;
-    path : text;
-    size : opt nat;
-    updatedAt : Time;
-};
-type DirectoryUpdatableFields = record {
-    color : opt DirectoryColor;
-    name : opt text;
-    parentId : opt ID;
-};
-type DirectoryStateError = variant { notFound };
-type DirectoryState = record {
-    breadcrumbs : vec Directory__1;
-    dirs : vec Directory__1;
-    files : vec File;
-    id : opt ID;
-};
-type DirectoryMoveError = variant {
-    invalidParams;
-    notFound;
-    sourceNotFound;
-    targetNotFound;
-};
-type DirectoryCreateError = variant {
-    alreadyExists : Directory__1;
-    illegalCharacters;
-    parentNotFound;
-};
-type DirectoryColor = variant {
-    blue;
-    gray;
-    green;
-    orange;
-    pink;
-    purple;
-    yellow;
-};
-type DirectoryAction = variant {
-    changeColor : ID;
-    rename : ID;
-};
-type Directory = record {
-    children : opt record {
-        vec Directory__1;
-        vec File;
-    };
-    color : opt DirectoryColor;
-    createdAt : Time;
-    id : ID;
-    name : text;
-    parentId : opt ID;
-    path : text;
-    size : opt nat;
-    updatedAt : Time;
-};
-type Canister = record {
-    canisterId : BucketId;
-    error : opt text;
-    lastChecked : Time;
-    monitoring : variant {
-        running;
-        stopped;
-    };
-    owner : principal;
-    status : opt canister_status_response;
-    timerId : opt nat;
-};
+type File__1 = 
+ record {
+   bucketId: BucketId;
+   createdAt: Time;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   thumbnail: opt text;
+   updatedAt: Time;
+ };
+type FileMoveError = 
+ variant {
+   invalidParams;
+   notFound;
+   sourceNotFound;
+   targetNotFound;
+ };
+type FileCreateError = 
+ variant {
+   alreadyExists: File;
+   illegalCharacters;
+   parentNotFound;
+ };
+type FileCreate = 
+ record {
+   bucketId: BucketId;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   thumbnail: opt text;
+ };
+type File = 
+ record {
+   bucketId: BucketId;
+   createdAt: Time;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   thumbnail: opt text;
+   updatedAt: Time;
+ };
+type EntryCreate = 
+ record {
+   name: text;
+   parentId: opt ID;
+ };
+type Directory__1 = 
+ record {
+   children: opt record {
+                   vec Directory__1;
+                   vec File;
+                 };
+   color: opt DirectoryColor;
+   createdAt: Time;
+   encrypted: bool;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   size: opt nat;
+   updatedAt: Time;
+ };
+type DirectoryUpdatableFields = 
+ record {
+   color: opt DirectoryColor;
+   name: opt text;
+   parentId: opt ID;
+ };
+type DirectoryStateError = variant {notFound;};
+type DirectoryState = 
+ record {
+   breadcrumbs: vec Directory__1;
+   dirs: vec Directory__1;
+   files: vec File;
+   id: opt ID;
+ };
+type DirectoryMoveError = 
+ variant {
+   invalidParams;
+   notFound;
+   sourceNotFound;
+   targetNotFound;
+ };
+type DirectoryCreateError = 
+ variant {
+   alreadyExists: Directory__1;
+   illegalCharacters;
+   parentNotFound;
+ };
+type DirectoryColor = 
+ variant {
+   blue;
+   gray;
+   green;
+   orange;
+   pink;
+   purple;
+   yellow;
+ };
+type DirectoryAction = 
+ variant {
+   changeColor: ID;
+   rename: ID;
+ };
+type Directory = 
+ record {
+   children: opt record {
+                   vec Directory__1;
+                   vec File;
+                 };
+   color: opt DirectoryColor;
+   createdAt: Time;
+   encrypted: bool;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   size: opt nat;
+   updatedAt: Time;
+ };
+type Canister = 
+ record {
+   canisterId: BucketId;
+   error: opt text;
+   lastChecked: Time;
+   monitoring: variant {
+                 running;
+                 stopped;
+               };
+   owner: principal;
+   status: opt canister_status_response;
+   timerId: opt nat;
+ };
 type BucketId__1 = principal;
 type BucketId = principal;
 type BlockIndex__1 = nat64;
 type BlockIndex = nat64;
 type AccountIdentifier = blob;
-service : (principal) -> JournalBucket;
+service : (principal) -> JournalBucket

@@ -218,7 +218,7 @@ export class RegisterService extends RxState<State> {
                     complete: () => {
                         this.set({ userStatus: UserStatus.Registered });
                         this.notificationService.success(this.translocoService.translate('createProfile.messages.successfullyCreated'));
-                        this.profileService.update();
+                        this.profileService.refresh();
                     }
                 }),
                 delayWhen(() => this.profileService.select('profile').pipe(filter(v => !isNull(v))))

@@ -5,10 +5,10 @@ import { Principal } from '@dfinity/principal';
 import { arrayBufferToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { PhotonImage, resize } from '@silvia-odwyer/photon';
+import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
-import { saveAs } from 'file-saver';
-import { get, has, isNull, isUndefined } from 'lodash';
+import { get, has, isNull, isUndefined, partition, pick } from 'lodash';
+import { CropperPosition } from 'ngx-image-cropper';
 import { EMPTY, Observable, Subject, connect, defer, forkJoin, from, merge, of, throwError, timer } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
@@ -18,7 +18,6 @@ import {
     delayWhen,
     exhaustMap,
     filter,
-    finalize,
     first,
     map,
     mergeMap,
@@ -37,7 +36,7 @@ import { toDirectoryExtended, toFileExtended, uint8ToBase64 } from '@features/fi
 import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '@features/upload/constants';
 import { Bucket, FileUpload, FileUploadState, UPLOAD_STATUS } from '@features/upload/models';
 import { getStorageBySize, uploadFile } from '@features/upload/operators';
-import { MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
+import { MAX_AVATAR_HEIGHT, MAX_AVATAR_WIDTH, MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
@@ -56,9 +55,26 @@ interface State {
 
 const state = new RxState<State>();
 const updateJournal: Subject<string | undefined> = new Subject();
+const listFiles: Subject<string | undefined> = new Subject();
 state.set({ progress: {}, files: {} });
-const files: Subject<{ item: FileUpload; uploadState: FileUploadState }> = new Subject();
+const files: Subject<{
+    item: FileUpload;
+    uploadState: FileUploadState;
+    options?: {
+        silent?: boolean;
+        encryption?: boolean;
+        thumbnail?: boolean;
+    };
+}> = new Subject();
 const keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
+const cropImage: Subject<{
+    id: string;
+    image: File;
+    cropper: { position: CropperPosition; maxSize: { width: number; height: number } };
+    canvas: OffscreenCanvas;
+    maxWidth?: number;
+    maxHeight?: number;
+}> = new Subject();
 
 addEventListener('message', ({ data }) => {
     const { action, item, id, uploadState } = data;
@@ -67,9 +83,13 @@ addEventListener('message', ({ data }) => {
             updateJournal.next(data.path);
             break;
         }
+        case 'getFilesByParentId': {
+            listFiles.next(data.parentId);
+            break;
+        }
         case 'addUpload': {
             state.set('files', state => ({ ...state.files, [item.id]: item }));
-            files.next({ item, uploadState });
+            files.next({ item, uploadState, options: data.options });
             break;
         }
         case 'pauseUpload': {
@@ -96,27 +116,42 @@ addEventListener('message', ({ data }) => {
         }
         case 'download': {
             const vetAesGcmKey$ = state.select('vetAesGcmKey').pipe(first(ek => ek !== null));
-            from(data.items as FileInfoExtended[])
-                .pipe(
-                    delayWhen(() => vetAesGcmKey$),
-                    withLatestFrom(vetAesGcmKey$),
-                    tap(console.log),
-                    mergeMap(([{ downloadUrl, name }, ek]) =>
-                        fromFetch(downloadUrl).pipe(
-                            switchMap(response =>
-                                from(response.arrayBuffer()).pipe(
-                                    map(encryptedBuffer => ({ encryptedBuffer, type: response.headers.get('content-type') ?? undefined }))
-                                )
-                            ),
-                            switchMap(({ encryptedBuffer, type }) =>
-                                from(decryptArrayBuffer(ek, encryptedBuffer)).pipe(map(decodedBuffer => ({ blob: new Blob([decodedBuffer], { type }), name })))
-                            )
-                        )
-                    )
-                )
-                .subscribe(payload => {
-                    postMessage({ action: 'download', payload });
-                });
+            const [encryptedItems, decryptedItems] = partition<FileInfoExtended>(data.items, 'encrypted');
+            const encrypted$ = encryptedItems.length
+                ? from(encryptedItems).pipe(
+                      delayWhen(() => vetAesGcmKey$),
+                      withLatestFrom(vetAesGcmKey$),
+                      mergeMap(([{ downloadUrl, name }, ek]) =>
+                          fromFetch(downloadUrl).pipe(
+                              switchMap(response =>
+                                  from(response.arrayBuffer()).pipe(
+                                      map(encryptedBuffer => ({ encryptedBuffer, type: response.headers.get('content-type') ?? undefined }))
+                                  )
+                              ),
+                              switchMap(({ encryptedBuffer, type }) =>
+                                  from(decryptArrayBuffer(ek, encryptedBuffer)).pipe(
+                                      map(decodedBuffer => ({ blob: new Blob([decodedBuffer], { type }), name }))
+                                  )
+                              )
+                          )
+                      )
+                  )
+                : EMPTY;
+            const decrypted$ = decryptedItems.length
+                ? from(decryptedItems).pipe(
+                      mergeMap(({ downloadUrl, name }) =>
+                          fromFetch(downloadUrl).pipe(
+                              switchMap(response => from(response.blob())),
+                              map(blob => ({ blob, name }))
+                          )
+                      )
+                  )
+                : EMPTY;
+            merge(encrypted$, decrypted$).subscribe(payload => postMessage({ action: 'download', payload }));
+            break;
+        }
+        case 'cropImage': {
+            cropImage.next({ ...pick(data, ['id', 'image', 'cropper', 'canvas']), maxWidth: MAX_AVATAR_WIDTH, maxHeight: MAX_AVATAR_HEIGHT });
             break;
         }
         default:
@@ -288,6 +323,22 @@ updateJournal
         postMessage({ action: 'getJournalSuccess', payload: data });
     });
 
+listFiles
+    .asObservable()
+    .pipe(
+        combineLatestWith(state.select('journal')),
+        switchMap(([parentId, actor]) =>
+            from(actor.listFiles(toNullable(parentId || undefined))).pipe(map(items => ({ parentId, items: items.map(toFileExtended) })))
+        ),
+        catchError(err => {
+            postMessage({ action: 'getFilesByParentIdFailed', errorCode: err.message });
+            return EMPTY;
+        })
+    )
+    .subscribe(data => {
+        postMessage({ action: 'getFilesByParentIdDone', payload: data });
+    });
+
 const keepAlive$ = keepAlive.asObservable().pipe(
     mergeMap(({ id, canisterId }) => {
         const off$ = state.select('progress', id, 'status').pipe(
@@ -318,7 +369,7 @@ const keepAlive$ = keepAlive.asObservable().pipe(
 );
 
 const fileUpload$ = files.asObservable().pipe(
-    mergeMap(({ item, uploadState }) => {
+    mergeMap(({ item, uploadState, options }) => {
         const cancelled$ = state.select('progress', item.id, 'status').pipe(filter(status => status === UPLOAD_STATUS.Cancelled));
         const paused$ = state.select('progress', item.id, 'status').pipe(filter(status => status === UPLOAD_STATUS.Paused));
 
@@ -328,6 +379,9 @@ const fileUpload$ = files.asObservable().pipe(
                     from(crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data))).pipe(map(arrayBufferToUint8Array)),
                     getStorage(BigInt(item.fileSize)),
                     defer(() => {
+                        if (options && typeof options.thumbnail === 'boolean' && !options.thumbnail) {
+                            return of(undefined);
+                        }
                         let photonImage = PhotonImage.new_from_byteslice(arrayBufferToUint8Array(item.data));
                         let thumbWidth = MAX_THUMBNAIL_WIDTH;
                         let thumbHeight = MAX_THUMBNAIL_HEIGHT;
@@ -343,22 +397,30 @@ const fileUpload$ = files.asObservable().pipe(
                             : `data:image/jpeg;base64,${uint8ToBase64(photonImage.get_bytes_jpeg(90))}`;
                         return of(thumbnail);
                     }).pipe(catchError(() => of(undefined))),
-                    state.select('vetAesGcmKey').pipe(
-                        first(v => v !== null),
-                        switchMap(ek => encryptArrayBuffer(ek, item.data)),
-                        tap(console.log),
-                        finalize(() => console.log('encryption finalize'))
+                    defer(() =>
+                        options && options.encryption
+                            ? state.select('vetAesGcmKey').pipe(
+                                  first(v => v !== null),
+                                  switchMap(ek => encryptArrayBuffer(ek, item.data))
+                              )
+                            : of(undefined)
                     )
                 ]).pipe(
-                    switchMap(([sha256, storage, thumbnail, encryptedData]) =>
-                        uploadFile({
+                    switchMap(([sha256, storage, thumbnail, encryptedData]) => {
+                        const itemData = { ...item, sha256, thumbnail };
+                        if (encryptedData) {
+                            itemData.data = encryptedData;
+                            itemData.fileSize = encryptedData.byteLength;
+                        }
+                        return uploadFile({
                             storage,
-                            item: { ...item, data: encryptedData, fileSize: encryptedData.byteLength, sha256, thumbnail },
+                            item: itemData,
                             options: {
                                 concurrentChunksCount: CONCURRENT_CHUNKS_COUNT,
                                 chunkSize: CHUNK_SIZE
                             },
-                            state: uploadState
+                            state: uploadState,
+                            encrypted: encryptedData !== undefined
                         }).pipe(
                             withLatestFrom(state.select('progress', item.id)),
                             map(([value, fileProgress]) => {
@@ -366,7 +428,7 @@ const fileUpload$ = files.asObservable().pipe(
                                     let loaded = fileProgress.loaded ?? 0;
                                     let progress = fileProgress.progress ?? 0;
                                     loaded += value.loaded;
-                                    progress = Math.ceil((loaded / item.fileSize) * 100);
+                                    progress = Math.ceil((loaded / itemData.fileSize) * 100);
                                     return { ...value, loaded, progress };
                                 }
 
@@ -376,8 +438,8 @@ const fileUpload$ = files.asObservable().pipe(
                                 console.error(err);
                                 return throwError(() => err);
                             })
-                        )
-                    )
+                        );
+                    })
                 )
             ),
             tap(progress => updateProgress(item.id, progress)),
@@ -385,6 +447,57 @@ const fileUpload$ = files.asObservable().pipe(
         );
     }, CONCURRENT_FILES_COUNT)
 );
+
+cropImage
+    .asObservable()
+    .pipe(
+        mergeMap(({ id, image, cropper, canvas, maxWidth, maxHeight }) =>
+            from(image.arrayBuffer()).pipe(
+                switchMap(buffer => {
+                    let photonImage = PhotonImage.new_from_byteslice(arrayBufferToUint8Array(buffer));
+                    const [width, height] = [photonImage.get_width(), photonImage.get_height()];
+                    const ratioW = width / cropper.maxSize.width;
+                    const ratioH = height / cropper.maxSize.height;
+                    photonImage = crop(
+                        photonImage,
+                        cropper.position.x1 * ratioW,
+                        cropper.position.y1 * ratioH,
+                        cropper.position.x2 * ratioW,
+                        cropper.position.y2 * ratioH
+                    );
+                    if (maxWidth || maxHeight) {
+                        const [width, height] = [photonImage.get_width(), photonImage.get_height()];
+                        const ratio = Math.min((maxWidth ?? width) / width, (maxHeight ?? height) / height);
+                        if (ratio < 1) {
+                            const newWidth = width * ratio;
+                            const newHeight = height * ratio;
+                            photonImage = resize(photonImage, newWidth, newHeight, 5);
+                        }
+                    }
+                    if (['image/gif', 'image/png'].includes(image.type)) {
+                        const ctx = canvas.getContext('2d');
+                        const imageData = photonImage.get_image_data();
+                        canvas.width = imageData.width;
+                        canvas.height = imageData.height;
+                        ctx?.putImageData(imageData, 0, 0);
+                        return from(canvas.convertToBlob()).pipe(
+                            switchMap(blob => blob.arrayBuffer()),
+                            map(buffer => ({ id, data: arrayBufferToUint8Array(buffer), type: image.type }))
+                        );
+                    }
+                    const data = photonImage.get_bytes_jpeg(90);
+                    return of({ id, data, type: image.type });
+                }),
+                catchError(err => {
+                    postMessage({ action: 'cropImageFailed', id, errMessage: err.message });
+                    return EMPTY;
+                })
+            )
+        )
+    )
+    .subscribe(({ id, data, type }) => {
+        postMessage({ action: 'cropImageDone', id, data, type });
+    });
 
 state.hold(keepAlive$);
 state.hold(fileUpload$);

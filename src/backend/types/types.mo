@@ -7,6 +7,7 @@ module {
     public type ID = Text;
 
     public type ProfileUpdate = {
+        avatarUrl : ?Text;
         displayName : Text;
     };
 

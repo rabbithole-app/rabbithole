@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, ViewChild, ViewContainerRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, Signal, ViewChild, ViewContainerRef, inject } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -7,8 +7,10 @@ import { RouterLinkWithHref } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
-import { isUndefined } from 'lodash';
+import { isNull, isUndefined } from 'lodash';
 import { filter, map, switchMap } from 'rxjs';
+import { fromNullable } from '@dfinity/utils';
+import { selectSlice } from '@rx-angular/state/selections';
 
 import { CustomOverlayRef } from '@core/components/overlay';
 import { AuthService, ProfileService } from '@core/services';
@@ -56,6 +58,13 @@ export class UserMenuComponent extends RxState<State> {
     expertMode$ = this.settingsState.select('expertMode');
     private profileService = inject(ProfileService);
     canInvite$ = this.profileService.select('canInvite');
+    #profileService = inject(ProfileService);
+    avatarUrl$ = this.#profileService.select(selectSlice(['profile', 'loaded'])).pipe(
+        filter(({ profile, loaded }) => loaded && !isNull(profile)),
+        map(({ profile }) => profile as NonNullable<typeof profile>),
+        map(({ avatarUrl }) => fromNullable(avatarUrl) ?? null)
+    );
+    avatarUrl: Signal<string | null> = toSignal(this.avatarUrl$, { initialValue: null });
 
     constructor() {
         super();

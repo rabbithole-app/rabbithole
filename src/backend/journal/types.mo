@@ -1,8 +1,9 @@
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
+import Result "mo:base/Result";
 import Types "../types/types";
 import IC = "../types/ic";
-import Result "mo:base/Result";
+import HTTPTypes "../types/http";
 
 module {
     type BucketId = Types.BucketId;
@@ -15,6 +16,7 @@ module {
         updatedAt : Time.Time;
         parentId : ?ID;
         path : Text;
+        encrypted : Bool;
     };
     public type DirectoryColor = { #blue; #yellow; #orange; #purple; #pink; #gray; #green };
     public type Directory = CommonAttributes and {
@@ -71,6 +73,7 @@ module {
         parentId : ?ID;
         fileSize : Nat;
         bucketId : BucketId;
+        encrypted : Bool;
     } and Thumbnail;
     public type Canister = {
         canisterId : BucketId;

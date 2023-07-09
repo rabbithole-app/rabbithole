@@ -110,7 +110,8 @@ function uploadFile(actor, item) {
         name: item.name,
         parentId: toNullable(item.parentId),
         fileSize: BigInt(item.fileSize),
-        sha256: toNullable(item.sha256)
+        sha256: toNullable(item.sha256),
+        ecrypted: false
     };
     const chunkCount = Math.ceil(item.fileSize / CHUNK_SIZE);
     return from(actor.initUpload(assetKey)).pipe(

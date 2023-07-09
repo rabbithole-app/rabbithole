@@ -1,13 +1,13 @@
 import { Injectable, Signal, TemplateRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
-import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { toNullable } from '@dfinity/utils';
 import { isNil, orderBy } from 'lodash';
 import { merge } from 'rxjs';
 import { combineLatestWith, filter, map, startWith, switchMap } from 'rxjs/operators';
-
 import { TranslocoService } from '@ngneat/transloco';
+
+import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { DirectoryCreate, DirectoryExtended, JournalItem } from '../models';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class FileListService {
     selected: WritableSignal<JournalItem[]> = signal([]);
     contextMenuTemplate: WritableSignal<TemplateRef<HTMLElement> | null> = signal(null);
     dragging: WritableSignal<boolean> = signal(false);
-    loading: Signal<boolean | undefined> = toSignal(
+    loading: Signal<boolean> = toSignal(
         merge(
             this.#router.events.pipe(
                 filter(event => event instanceof ResolveStart),
@@ -34,7 +34,8 @@ export class FileListService {
                 filter(event => event instanceof ResolveEnd),
                 map(() => false)
             )
-        ).pipe(startWith(false))
+        ).pipe(startWith(false)),
+        { initialValue: false }
     );
     readonly journalActor$ = this.#bucketsService.select('journal').pipe(
         filter(actor => !isNil(actor)),
@@ -108,7 +109,8 @@ export class FileListService {
             children: undefined,
             loading: true,
             disabled: true,
-            path: parent ? `${parent.path}/${name}` : name
+            path: parent ? `${parent.path}/${name}` : name,
+            encrypted: false
         };
         this.#items.update(items => [...items, tempDirectory]);
     }

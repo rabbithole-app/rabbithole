@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
         name: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
+        encrypted: IDL.Bool,
         parentId: IDL.Opt(ID)
     });
     const Time = IDL.Int;
@@ -20,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
         path: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
+        encrypted: IDL.Bool,
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
@@ -31,6 +33,7 @@ export const idlFactory = ({ IDL }) => {
         path: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
+        encrypted: IDL.Bool,
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
@@ -79,6 +82,7 @@ export const idlFactory = ({ IDL }) => {
             path: IDL.Text,
             color: IDL.Opt(DirectoryColor),
             size: IDL.Opt(IDL.Nat),
+            encrypted: IDL.Bool,
             children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
             updatedAt: Time,
             parentId: IDL.Opt(ID)
@@ -101,6 +105,7 @@ export const idlFactory = ({ IDL }) => {
         path: IDL.Text,
         color: IDL.Opt(DirectoryColor),
         size: IDL.Opt(IDL.Nat),
+        encrypted: IDL.Bool,
         children: IDL.Opt(IDL.Tuple(IDL.Vec(Directory__1), IDL.Vec(File))),
         updatedAt: Time,
         parentId: IDL.Opt(ID)
@@ -224,11 +229,12 @@ export const idlFactory = ({ IDL }) => {
         deleteDirectory: IDL.Func([IDL.Text], [Result_5], []),
         deleteFile: IDL.Func([IDL.Text], [Result_5], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
-        encrypted_symmetric_key_for_caller: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Text], []),
+        encrypted_symmetric_key: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
         getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_4], ['query']),
         getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId__1)], []),
+        listFiles: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(File__1)], ['query']),
         listStorages: IDL.Func([], [IDL.Vec(BucketId__1)], ['query']),
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_3], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_2], []),

@@ -16,7 +16,7 @@ export async function initVetAesGcmKey(caller: Principal, actor: ActorSubclass<J
         const seed = crypto.getRandomValues(new Uint8Array(32));
         const tsk = new TransportSecretKey(seed);
         console.log('Successfully used vetKD user library via WASM to create new transport secret key');
-        const ek_bytes_hex = await actor.encrypted_symmetric_key_for_caller(tsk.public_key().to_bytes());
+        const ek_bytes_hex = await actor.encrypted_symmetric_key(tsk.public_key().to_bytes());
         const ek = new EncryptedKey(hexStringToUint8Array(ek_bytes_hex));
         const pk_bytes_hex = await actor.app_vetkd_public_key([new TextEncoder().encode('symmetric_key')]);
         const k = ek.decrypt_and_verify(tsk, hexStringToUint8Array(pk_bytes_hex), caller.toUint8Array());

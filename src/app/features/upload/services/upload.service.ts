@@ -206,7 +206,8 @@ export class UploadService extends RxState<State> {
                                                         concurrentChunksCount: this.concurrentChunksCount,
                                                         chunkSize: this.chunkSize
                                                     },
-                                                    state
+                                                    state,
+                                                    encrypted: false
                                                 }).pipe(
                                                     withLatestFrom(this.select('progress', item.id)),
                                                     map(([value, fileProgress]) => {
@@ -309,6 +310,10 @@ export class UploadService extends RxState<State> {
         });
     }
 
+    addItem(item: FileUpload) {
+        this.files.next(item);
+    }
+
     async add(files: FileSystemFileHandle[]) {
         const worker = this.#coreService.worker();
         for (let i = 0; i < files.length; i++) {
@@ -323,7 +328,7 @@ export class UploadService extends RxState<State> {
                 parentId: parent?.id,
                 data: buffer
             };
-            this.files.next(item);
+            this.addItem(item);
             if (worker) {
                 const uploadState = this.get('progress', item.id);
                 worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data]);

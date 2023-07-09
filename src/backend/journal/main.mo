@@ -96,16 +96,16 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     // var files : HashMap.HashMap<ID, [File]> = HashMap.HashMap<ID, [File]>(10, Text.equal, Text.hash);
     func equal(a : JournalEntry, b : JournalEntry) : Bool { Text.equal(a.id, b.id) };
     func hash({ id } : JournalEntry) : Hash.Hash { Text.hash(id) };
-    var directories : BiMap.BiMap<Directory, Text> = BiMap.New(
-        BiHashMap.empty<Directory, Text>(0, equal, hash),
-        BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
-        Text.equal
-    );
-    var files : BiMap.BiMap<File, Text> = BiMap.New(
-        BiHashMap.empty<File, Text>(0, equal, hash),
-        BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
-        Text.equal
-    );
+    // var directories : BiMap.BiMap<Directory, Text> = BiMap.New(
+    //     BiHashMap.empty<Directory, Text>(0, equal, hash),
+    //     BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
+    //     Text.equal
+    // );
+    // var files : BiMap.BiMap<File, Text> = BiMap.New(
+    //     BiHashMap.empty<File, Text>(0, equal, hash),
+    //     BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
+    //     Text.equal
+    // );
     var journal = Journal.New();
 
     public shared ({ caller }) func createDirectory(directory : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
@@ -187,14 +187,19 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         journal.listDirsExtend(id);
     };
 
-    stable var stableDirectories : [(Directory, Text)] = [];
-    stable var stableFiles : [(File, Text)] = [];
+    public query ({ caller }) func listFiles(id : ?ID) : async [File] {
+        assert validateCaller(caller);
+        journal.listFiles(id);
+    };
+
+    // stable var stableDirectories : [(Directory, Text)] = [];
+    // stable var stableFiles : [(File, Text)] = [];
     stable var stableJournal : ([(Text, Directory)], [(Text, File)]) = ([], []);
     // stable var stableCanisters : [Canister] = [];
 
     system func preupgrade() {
-        stableDirectories := Iter.toArray(directories.entries());
-        stableFiles := Iter.toArray(files.entries());
+        // stableDirectories := Iter.toArray(directories.entries());
+        // stableFiles := Iter.toArray(files.entries());
         stableJournal := journal.preupgrade();
         // stableCanisters := Iter.toArray(topup.preupgrade());
     };
@@ -211,20 +216,20 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         let filesIter = stableJournal.1.vals();
         journal := Journal.fromIter(dirsIter, filesIter);
 
-        directories := BiMap.fromIter<Directory, Text>(
-            stableDirectories.vals(),
-            BiHashMap.empty<Directory, Text>(0, equal, hash),
-            BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
-            Text.equal
-        );
-        stableDirectories := [];
-        files := BiMap.fromIter<File, Text>(
-            stableFiles.vals(),
-            BiHashMap.empty<File, Text>(0, equal, hash),
-            BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
-            Text.equal
-        );
-        stableFiles := [];
+        // directories := BiMap.fromIter<Directory, Text>(
+        //     stableDirectories.vals(),
+        //     BiHashMap.empty<Directory, Text>(0, equal, hash),
+        //     BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
+        //     Text.equal
+        // );
+        // stableDirectories := [];
+        // files := BiMap.fromIter<File, Text>(
+        //     stableFiles.vals(),
+        //     BiHashMap.empty<File, Text>(0, equal, hash),
+        //     BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
+        //     Text.equal
+        // );
+        // stableFiles := [];
 
         restartTimers();
         // topup.postupgrade(stableCanisters);
@@ -783,18 +788,22 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
     };
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Encryption                                 */
+    /* -------------------------------------------------------------------------- */
+
     public shared ({ caller }) func app_vetkd_public_key(derivationPath : [Blob]) : async Text {
         let request : VetKDPublicKeyRequest = {
             canister_id = null;
             derivation_path = derivationPath;
-            key_id = bls12_381_test_key_1();
+            key_id = bls12_381_test_key_1(); // file id
         };
 
         let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else throw Error.reject("call to vetkd_public_key failed");
         Hex.encode(Blob.toArray(response.public_key));
     };
 
-    public shared ({ caller }) func encrypted_symmetric_key_for_caller(encryptionPublicKey : Blob) : async Text {
+    public shared ({ caller }) func encrypted_symmetric_key(encryptionPublicKey : Blob) : async Text {
         let request : VetKDEncryptedKeyRequest = {
             encryption_public_key = encryptionPublicKey;
             key_id = bls12_381_test_key_1();

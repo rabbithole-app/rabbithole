@@ -41,4 +41,5 @@ $rabbithole-light-theme: mat.define-light-theme(
     --footer-border-top: 1px solid #f5f6f7;
     --primary-color: #{mat.get-color-from-palette($rabbithole-light-primary)};
     --warn-color: #{mat.get-color-from-palette($rabbithole-light-warn)};
+    --accent-color: #{mat.get-color-from-palette($rabbithole-light-accent)};
 }
