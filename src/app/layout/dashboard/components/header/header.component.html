@@ -2,7 +2,7 @@
     mat-icon-button
     class="sidebar-toggle"
     (click)="toggleSidebar()"
-    [disabled]="isCompact$ | push"
+    [disabled]="isCompact()"
     [attr.aria-label]="'application.toggle-sidebar' | transloco">
     <mat-icon svgIcon="far:bars"></mat-icon>
 </button>
