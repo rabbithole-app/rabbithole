@@ -19,11 +19,9 @@ import { WalletService } from './services';
 })
 export class WalletComponent {
     @ViewChild(SendComponent, { static: true }) sendComponent!: SendComponent;
-    private walletService = inject(WalletService);
+    walletService = inject(WalletService);
     amount$: Observable<TokenAmount> = this.walletService.select('icpAmount');
     transactionFee$: Observable<bigint> = this.walletService.select('transactionFee');
-    loadingTransfer$: Observable<boolean> = this.walletService.select('loadingTransfer');
-    loadingBalance$: Observable<boolean> = this.walletService.select('loadingBalance');
     accountId$: Observable<string> = this.walletService.select('accountId');
     readonly token: Token = ICPToken;
 

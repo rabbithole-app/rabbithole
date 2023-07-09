@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
 import { createAgent } from '@dfinity/utils';
@@ -38,8 +38,6 @@ interface State {
     icpLedger: LedgerCanister;
     icpAmount: TokenAmount;
     transactionFee: bigint;
-    loadingBalance: boolean;
-    loadingTransfer: boolean;
 }
 
 @Injectable()
@@ -48,14 +46,14 @@ export class WalletService extends RxState<State> {
     private bucketsService = inject(BucketsService);
     private translocoService = inject(TranslocoService);
     private notificationService = inject(NotificationService);
+    loadingBalance: WritableSignal<boolean> = signal(false);
+    loadingTransfer: WritableSignal<boolean> = signal(false);
 
     constructor() {
         super();
         this.set({
             icpToken: ICPToken,
-            icpAmount: TokenAmount.fromE8s({ amount: 0n, token: ICPToken }),
-            loadingBalance: true,
-            loadingTransfer: false
+            icpAmount: TokenAmount.fromE8s({ amount: 0n, token: ICPToken })
         });
         const journalActor$ = this.bucketsService.select('journal').pipe(
             filter(actor => !isNull(actor)),
@@ -83,11 +81,10 @@ export class WalletService extends RxState<State> {
                                 shared.pipe(map(icpLedger => ({ icpLedger }))),
                                 shared.pipe(
                                     switchMap(ledger =>
-                                        forkJoin([ledger.accountBalance({ accountIdentifier }), ledger.transactionFee()]).pipe(
+                                        forkJoin([ledger.accountBalance({ accountIdentifier }), ledger.transactionFee(), this.checkBalance()]).pipe(
                                             map(([amount, transactionFee]) => ({
                                                 icpAmount: TokenAmount.fromE8s({ amount, token: ICPToken }),
-                                                transactionFee,
-                                                loadingBalance: false
+                                                transactionFee
                                             }))
                                         )
                                     )
@@ -101,7 +98,7 @@ export class WalletService extends RxState<State> {
     }
 
     transferICP(params: { to: [] | [AccountIdentifierRaw]; amount: Tokens }) {
-        this.set({ loadingTransfer: true });
+        this.loadingTransfer.set(true);
         const obs$ = this.bucketsService.select('journal').pipe(
             first(),
             switchMap(actor =>
@@ -129,7 +126,7 @@ export class WalletService extends RxState<State> {
                 this.notificationService.error(err.message);
                 return throwError(() => err);
             }),
-            finalize(() => this.set({ loadingTransfer: false })),
+            finalize(() => this.loadingTransfer.set(false)),
             share()
         );
         obs$.subscribe({
@@ -142,10 +139,11 @@ export class WalletService extends RxState<State> {
     }
 
     async checkBalance() {
-        this.set({ loadingBalance: true });
+        this.loadingBalance.set(true);
         const { icpLedger: ledger, accountId } = this.get();
         const accountIdentifier = AccountIdentifier.fromHex(accountId);
         const amount = await ledger.accountBalance({ accountIdentifier });
-        this.set({ icpAmount: TokenAmount.fromE8s({ amount, token: ICPToken }), loadingBalance: false });
+        this.set({ icpAmount: TokenAmount.fromE8s({ amount, token: ICPToken }) });
+        this.loadingBalance.set(false);
     }
 }

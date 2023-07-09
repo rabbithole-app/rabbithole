@@ -28,11 +28,11 @@
 <!-- <app-send [data]="icp$ | push" [accountId]="accountState.select('accountId') | push"></app-send> -->
 <app-account></app-account>
 <app-send
-    [loadingBalance]="loadingBalance$ | push"
+    [loadingBalance]="walletService.loadingBalance()"
     [amount]="amount$ | push"
     [token]="token"
     [transactionFee]="transactionFee$ | push"
     [accountId]="accountId$ | push"
-    [loadingTransfer]="loadingTransfer$ | push"
+    [loadingTransfer]="walletService.loadingTransfer()"
     (transfer)="transferICP($event)"
     (refresh)="refreshBalance()"></app-send>
