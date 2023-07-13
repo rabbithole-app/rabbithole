@@ -7,9 +7,9 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
-import { get, has, isNull, isUndefined, partition, pick } from 'lodash';
+import { defaults, get, has, isNull, isUndefined, partition, pick } from 'lodash';
 import { CropperPosition } from 'ngx-image-cropper';
-import { EMPTY, Observable, Subject, connect, defer, forkJoin, from, merge, of, throwError, timer } from 'rxjs';
+import { EMPTY, Observable, Subject, connect, defer, forkJoin, from, iif, merge, of, throwError, timer } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
     catchError,
@@ -19,6 +19,7 @@ import {
     exhaustMap,
     filter,
     first,
+    ignoreElements,
     map,
     mergeMap,
     skip,
@@ -28,14 +29,15 @@ import {
     toArray,
     withLatestFrom
 } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
 
 import { createActor, decryptArrayBuffer, encryptArrayBuffer, initVetAesGcmKey, loadIdentity } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
 import { FileInfoExtended } from '@features/file-list/models';
-import { toDirectoryExtended, toFileExtended, uint8ToBase64 } from '@features/file-list/utils';
+import { toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '@features/upload/constants';
 import { Bucket, FileUpload, FileUploadState, UPLOAD_STATUS } from '@features/upload/models';
-import { getStorageBySize, uploadFile } from '@features/upload/operators';
+import { getStorageBySize, simpleUploadFile, uploadFile } from '@features/upload/operators';
 import { MAX_AVATAR_HEIGHT, MAX_AVATAR_WIDTH, MAX_THUMBNAIL_HEIGHT, MAX_THUMBNAIL_WIDTH } from 'app/constants';
 import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
@@ -89,7 +91,15 @@ addEventListener('message', ({ data }) => {
         }
         case 'addUpload': {
             state.set('files', state => ({ ...state.files, [item.id]: item }));
-            files.next({ item, uploadState, options: data.options });
+            files.next({
+                item,
+                uploadState,
+                options: defaults(data.options, {
+                    silent: false,
+                    thumbnail: true,
+                    encryption: false
+                })
+            });
             break;
         }
         case 'pauseUpload': {
@@ -378,25 +388,6 @@ const fileUpload$ = files.asObservable().pipe(
                 forkJoin([
                     from(crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data))).pipe(map(arrayBufferToUint8Array)),
                     getStorage(BigInt(item.fileSize)),
-                    defer(() => {
-                        if (options && typeof options.thumbnail === 'boolean' && !options.thumbnail) {
-                            return of(undefined);
-                        }
-                        let photonImage = PhotonImage.new_from_byteslice(arrayBufferToUint8Array(item.data));
-                        let thumbWidth = MAX_THUMBNAIL_WIDTH;
-                        let thumbHeight = MAX_THUMBNAIL_HEIGHT;
-                        const [width, height] = [photonImage.get_width(), photonImage.get_height()];
-                        if (width > height) {
-                            thumbHeight = Math.round(thumbWidth / (width / height));
-                        } else if (height > width) {
-                            thumbWidth = Math.round(thumbHeight / (height / width));
-                        }
-                        photonImage = resize(photonImage, thumbWidth, thumbHeight, 5);
-                        const thumbnail = ['image/gif', 'image/png'].includes(item.contentType)
-                            ? photonImage.get_base64()
-                            : `data:image/jpeg;base64,${uint8ToBase64(photonImage.get_bytes_jpeg(90))}`;
-                        return of(thumbnail);
-                    }).pipe(catchError(() => of(undefined))),
                     defer(() =>
                         options && options.encryption
                             ? state.select('vetAesGcmKey').pipe(
@@ -404,23 +395,61 @@ const fileUpload$ = files.asObservable().pipe(
                                   switchMap(ek => encryptArrayBuffer(ek, item.data))
                               )
                             : of(undefined)
+                    ),
+                    defer(() => {
+                        if (options && typeof options.thumbnail === 'boolean' && !options.thumbnail) {
+                            return of(undefined);
+                        }
+                        const id = uuidv4();
+                        let photonImage = PhotonImage.new_from_byteslice(arrayBufferToUint8Array(item.data));
+                        const [width, height] = [photonImage.get_width(), photonImage.get_height()];
+                        const ratio = Math.min(MAX_THUMBNAIL_WIDTH / width, MAX_THUMBNAIL_HEIGHT / height);
+                        if (ratio < 1) {
+                            const newWidth = width * ratio;
+                            const newHeight = height * ratio;
+                            photonImage = resize(photonImage, newWidth, newHeight, 5);
+                        }
+
+                        if (['image/gif', 'image/png'].includes(item.contentType) && item.canvas) {
+                            const ctx = item.canvas.getContext('2d');
+                            const imageData = photonImage.get_image_data();
+                            item.canvas.width = imageData.width;
+                            item.canvas.height = imageData.height;
+                            ctx?.putImageData(imageData, 0, 0);
+                            return from(item.canvas.convertToBlob()).pipe(
+                                switchMap(blob => blob.arrayBuffer()),
+                                map(buffer => ({ id, data: arrayBufferToUint8Array(buffer), contentType: 'image/png' }))
+                            );
+                        }
+                        const data = photonImage.get_bytes_jpeg(90);
+                        return of({ id, data, contentType: 'image/jpeg' });
+                    }).pipe(
+                        map(value => {
+                            if (value) {
+                                return { ...value, name: `thumbnail_${value.id}`, fileSize: value.data.byteLength, parentId: '.rabbithole' };
+                            }
+                            return value;
+                        }),
+                        catchError(() => of(undefined))
                     )
                 ]).pipe(
-                    switchMap(([sha256, storage, thumbnail, encryptedData]) => {
-                        const itemData = { ...item, sha256, thumbnail };
+                    switchMap(([sha256, storage, encryptedData, thumbnail]) => {
+                        const itemData = { ...item, sha256, thumbnail: thumbnail?.id };
+                        console.log({ encryptedData });
                         if (encryptedData) {
                             itemData.data = encryptedData;
                             itemData.fileSize = encryptedData.byteLength;
                         }
-                        return uploadFile({
+
+                        const uploadFile$ = uploadFile({
                             storage,
                             item: itemData,
                             options: {
                                 concurrentChunksCount: CONCURRENT_CHUNKS_COUNT,
-                                chunkSize: CHUNK_SIZE
+                                chunkSize: CHUNK_SIZE,
+                                encrypted: encryptedData !== undefined
                             },
-                            state: uploadState,
-                            encrypted: encryptedData !== undefined
+                            state: uploadState
                         }).pipe(
                             withLatestFrom(state.select('progress', item.id)),
                             map(([value, fileProgress]) => {
@@ -433,7 +462,13 @@ const fileUpload$ = files.asObservable().pipe(
                                 }
 
                                 return value;
-                            }),
+                            })
+                        );
+                        return iif(
+                            () => isUndefined(thumbnail),
+                            uploadFile$,
+                            merge(uploadFile$, from(simpleUploadFile(thumbnail as NonNullable<typeof thumbnail>, storage)).pipe(ignoreElements()))
+                        ).pipe(
                             catchError(err => {
                                 console.error(err);
                                 return throwError(() => err);

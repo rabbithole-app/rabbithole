@@ -2,6 +2,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
 
 export interface AssetKey {
+    id: [] | [ID];
     sha256: [] | [Uint8Array | number[]];
     thumbnail: [] | [string];
     name: string;
@@ -61,7 +62,7 @@ export interface InitUpload {
 }
 export type Key = Uint8Array | number[];
 export type RawTree = { subtree: Array<[Key, RawTree]> } | { value: Uint8Array | number[] };
-export type Result = { ok: null } | { err: CommitUploadError };
+export type Result = { ok: ID__2 } | { err: CommitUploadError };
 export interface Storage {
     batchAlive: ActorMethod<[bigint], undefined>;
     commitUpload: ActorMethod<[CommitBatch, boolean], Result>;

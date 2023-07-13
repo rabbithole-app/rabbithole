@@ -20,6 +20,7 @@ module {
     };
 
     public type AssetKey = {
+        id : ?ID;
         name : Text;
         fileSize : Nat;
         parentId : ?ID;

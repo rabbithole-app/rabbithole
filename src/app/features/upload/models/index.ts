@@ -30,6 +30,7 @@ export type FileUpload = {
     contentType: string;
     sha256?: Uint8Array;
     thumbnail?: string;
+    canvas?: OffscreenCanvas;
 };
 
 export type BatchInfo = {
@@ -61,6 +62,7 @@ export type FileUploadState = {
 export type UploadFileOptions = {
     concurrentChunksCount: number;
     chunkSize: number;
+    encrypted: boolean;
 };
 
 export type Summary = {

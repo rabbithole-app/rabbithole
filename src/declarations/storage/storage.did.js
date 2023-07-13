@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
         chunkIds: IDL.Vec(IDL.Nat),
         batchId: IDL.Nat
     });
+    const ID__2 = IDL.Text;
     const ID__3 = IDL.Text;
     const Time = IDL.Int;
     const BucketId = IDL.Principal;
@@ -34,8 +35,7 @@ export const idlFactory = ({ IDL }) => {
         chunkNotFound: IDL.Nat,
         batchExpired: IDL.Null
     });
-    const Result = IDL.Variant({ ok: IDL.Null, err: CommitUploadError });
-    const ID__2 = IDL.Text;
+    const Result = IDL.Variant({ ok: ID__2, err: CommitUploadError });
     const Key = IDL.Vec(IDL.Nat8);
     RawTree.fill(
         IDL.Variant({
@@ -84,6 +84,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const ID = IDL.Text;
     const AssetKey = IDL.Record({
+        id: IDL.Opt(ID),
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
         thumbnail: IDL.Opt(IDL.Text),
         name: IDL.Text,

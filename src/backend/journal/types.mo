@@ -32,7 +32,7 @@ module {
         #notAuthorized;
     };
     public type Thumbnail = {
-        thumbnail : ?Text;
+        thumbnail : ?ID;
     };
     public type File = CommonAttributes and Thumbnail and {
         fileSize : Nat;

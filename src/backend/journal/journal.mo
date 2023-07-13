@@ -429,6 +429,10 @@ module {
             let ?file : ?File = Map.remove(files, thash, sourcePath) else return #err(#notFound);
             let storageBucket : actor { delete : shared (id : ID) -> async () } = actor (Principal.toText(file.bucketId));
             ignore storageBucket.delete(file.id);
+            switch (file.thumbnail) {
+                case null {};
+                case (?id) ignore storageBucket.delete(id);
+            };
             #ok();
         };
 

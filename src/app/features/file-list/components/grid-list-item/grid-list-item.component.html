@@ -9,12 +9,12 @@
             </app-animated-folder>
         </ng-container>
         <ng-container *rxIf="journalService.isFile(data)">
-            <mat-icon *rxIf="!data.thumbnail; else thumbTemplate" class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
+            <mat-icon *rxIf="!data.thumbnailUrl; else thumbTemplate" class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
             <!-- <div class="badge" *rxIf="data.encrypted">
                 <mat-icon svgIcon="far:lock"></mat-icon>
             </div> -->
             <ng-template #thumbTemplate>
-                <img class="thumbnail" [src]="data.thumbnail" alt="" />
+                <img class="thumbnail" [src]="data.thumbnailUrl" alt="" />
             </ng-template>
         </ng-container>
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;loading" *ngIf="loading" @zoomOutOnLeave>

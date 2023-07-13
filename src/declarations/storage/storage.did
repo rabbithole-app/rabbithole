@@ -54,7 +54,7 @@ type Storage =
 type Result = 
  variant {
    err: CommitUploadError;
-   ok;
+   ok: ID__2;
  };
 type RawTree = 
  variant {
@@ -133,6 +133,7 @@ type AssetKey =
  record {
    encrypted: bool;
    fileSize: nat;
+   id: opt ID;
    name: text;
    parentId: opt ID;
    sha256: opt vec nat8;

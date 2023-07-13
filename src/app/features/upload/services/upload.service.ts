@@ -27,7 +27,8 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { BucketsService, CoreService, CryptoService, NotificationService } from '@core/services';
+import { DOCUMENT } from '@angular/common';
+import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { JournalService } from '@features/file-list/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
 import { BATCH_EXPIRY_SECONDS, CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT, FILE_MAX_SIZE, SUMMARY_RESET_TIMEOUT } from '../constants';
@@ -46,6 +47,7 @@ export class UploadService extends RxState<State> {
     #journalService = inject(JournalService);
     #bucketService = inject(BucketsService);
     #notificationService = inject(NotificationService);
+    #document = inject(DOCUMENT);
     readonly #coreService = inject(CoreService);
     private files: Subject<FileUpload> = new Subject<FileUpload>();
     private keepAlive: Subject<{ id: string; canisterId: string }> = new Subject();
@@ -204,10 +206,10 @@ export class UploadService extends RxState<State> {
                                                     item: { ...item, sha256 },
                                                     options: {
                                                         concurrentChunksCount: this.concurrentChunksCount,
-                                                        chunkSize: this.chunkSize
+                                                        chunkSize: this.chunkSize,
+                                                        encrypted: false
                                                     },
-                                                    state,
-                                                    encrypted: false
+                                                    state
                                                 }).pipe(
                                                     withLatestFrom(this.select('progress', item.id)),
                                                     map(([value, fileProgress]) => {
@@ -320,18 +322,21 @@ export class UploadService extends RxState<State> {
             const file = await files[i].getFile();
             const buffer = await file.arrayBuffer();
             const parent = this.#fileListService.parent();
+            const canvas = this.#document.createElement('canvas');
+            const offscreen = canvas?.transferControlToOffscreen();
             const item = {
                 id: uuidv4(),
                 name: file.name,
                 fileSize: file.size,
                 contentType: file.type,
                 parentId: parent?.id,
-                data: buffer
+                data: buffer,
+                canvas: offscreen
             };
             this.addItem(item);
             if (worker) {
                 const uploadState = this.get('progress', item.id);
-                worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data]);
+                worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data, item.canvas]);
             }
         }
     }
@@ -458,14 +463,19 @@ export class UploadService extends RxState<State> {
                     mergeMap(({ path, id }) => from(remove(files, ['path', path])).pipe(map(file => ({ ...file, parentId: id })))),
                     mergeMap(({ file, parentId }) =>
                         from(file.arrayBuffer()).pipe(
-                            map(buffer => ({
-                                id: uuidv4(),
-                                name: file.name,
-                                fileSize: file.size,
-                                contentType: file.type,
-                                parentId,
-                                data: buffer
-                            }))
+                            map(buffer => {
+                                const canvas = this.#document.createElement('canvas');
+                                const offscreen = canvas?.transferControlToOffscreen();
+                                return {
+                                    id: uuidv4(),
+                                    name: file.name,
+                                    fileSize: file.size,
+                                    contentType: file.type,
+                                    parentId,
+                                    data: buffer,
+                                    canvas: offscreen
+                                };
+                            })
                         )
                     )
                 )
@@ -473,7 +483,7 @@ export class UploadService extends RxState<State> {
                     this.files.next(item);
                     if (worker) {
                         const uploadState = this.get('progress', item.id);
-                        worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data]);
+                        worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data, item.canvas]);
                     }
                 });
         } catch (err) {

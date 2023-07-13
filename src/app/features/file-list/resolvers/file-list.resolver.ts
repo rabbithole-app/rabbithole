@@ -48,6 +48,7 @@ export const fileListResolver = (route: ActivatedRouteSnapshot) => {
                         };
                     }),
                     catchError(err => {
+                        console.error(err);
                         notificationService.error(err.message);
                         router.navigate(['/drive']);
                         return EMPTY;

@@ -61,7 +61,7 @@ export interface EntryCreate {
 }
 export interface File {
     id: ID;
-    thumbnail: [] | [string];
+    thumbnail: [] | [ID];
     name: string;
     createdAt: Time;
     path: string;
@@ -73,7 +73,7 @@ export interface File {
 }
 export interface FileCreate {
     id: ID;
-    thumbnail: [] | [string];
+    thumbnail: [] | [ID];
     name: string;
     bucketId: BucketId;
     fileSize: bigint;
@@ -84,7 +84,7 @@ export type FileCreateError = { illegalCharacters: null } | { alreadyExists: Fil
 export type FileMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
 export interface File__1 {
     id: ID;
-    thumbnail: [] | [string];
+    thumbnail: [] | [ID];
     name: string;
     createdAt: Time;
     path: string;

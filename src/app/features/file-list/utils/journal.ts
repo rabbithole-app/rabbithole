@@ -42,12 +42,15 @@ export function toFileExtended(file: File): FileInfoExtended {
     const bucketId = file.bucketId.toText();
     const host: string = environment.production ? `https://${bucketId}.raw.ic0.app` : `http://${bucketId}.localhost:8080`;
     const downloadUrl = `${host}/${file.id}`;
+    const thumbnail = fromNullable(file.thumbnail);
+    const thumbnailUrl = thumbnail ? `${host}/${thumbnail}` : undefined;
     return {
         ...file,
         bucketId,
         downloadUrl,
         type: 'file',
         parentId: fromNullable(file.parentId),
-        thumbnail: fromNullable(file.thumbnail)
+        thumbnail,
+        thumbnailUrl
     } as FileInfoExtended;
 }

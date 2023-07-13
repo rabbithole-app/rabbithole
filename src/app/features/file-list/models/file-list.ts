@@ -32,6 +32,7 @@ export type FileInfo = {
     bucketId: string;
     downloadUrl: string;
     thumbnail?: string;
+    thumbnailUrl?: string;
 };
 
 export type DirectoryExtended = Directory &

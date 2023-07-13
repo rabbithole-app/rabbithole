@@ -1,9 +1,9 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
 import { addSeconds, differenceInSeconds } from 'date-fns';
 import { defaults, get, has, includes, isNull, pick } from 'lodash';
-import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, takeLast, tap, throwError } from 'rxjs';
 
-import { AssetKey, CommitUploadError, _SERVICE as StorageActor } from '@declarations/storage/storage.did';
+import { AssetKey, CommitBatch, CommitUploadError, _SERVICE as StorageActor } from '@declarations/storage/storage.did';
 import { BATCH_EXPIRY_SECONDS } from '../constants';
 import { BatchInfo, Bucket, FileUpload, FileUploadState, UPLOAD_STATUS, UploadFileOptions, WithRequiredProperty } from '../models';
 
@@ -12,18 +12,48 @@ type UploadParams = {
     item: FileUpload;
     state: FileUploadState;
     options: UploadFileOptions;
-    encrypted: boolean;
 };
 
-export function uploadFile({ storage, item, options, state, encrypted }: UploadParams): Observable<Partial<FileUploadState>> {
+export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbnail' | 'canvas'>, storage: Bucket<StorageActor>) {
+    try {
+        const hash = await crypto.subtle.digest('SHA-256', item.data);
+        const assetKey: AssetKey = {
+            id: toNullable(item.id),
+            name: item.name,
+            parentId: toNullable<string>(item.parentId),
+            fileSize: BigInt(item.fileSize),
+            sha256: toNullable(arrayBufferToUint8Array(hash)),
+            thumbnail: toNullable(),
+            encrypted: false
+        };
+        const { batchId } = await storage.actor.initUpload(assetKey);
+        const content = arrayBufferToUint8Array(item.data);
+        const { chunkId } = await storage.actor.uploadChunk({ batchId, content });
+        const commitBatch: CommitBatch = {
+            batchId,
+            chunkIds: [chunkId],
+            headers: [['Content-Type', item.contentType]]
+        };
+        const response = await storage.actor.commitUpload(commitBatch, true);
+        if (has(response, 'err')) {
+            const key = Object.keys(get(response, 'err') as unknown as CommitUploadError)[0];
+            throw new Error(`upload.commit.errors.${key}`);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+export function uploadFile({ storage, item, options, state }: UploadParams): Observable<Partial<FileUploadState>> {
     return new Observable(subscriber => {
         const assetKey: AssetKey = {
+            id: toNullable(),
             name: item.name,
             parentId: toNullable<string>(item.parentId),
             fileSize: BigInt(item.fileSize),
             sha256: toNullable(item.sha256),
             thumbnail: toNullable(item.thumbnail),
-            encrypted
+            encrypted: options.encrypted
         };
         const hasSameCanisterId = (canisterId: string) => canisterId === state.canisterId;
         const hasValidBatch = has(state, 'batch.id') && differenceInSeconds((state.batch as BatchInfo).expiredAt, Date.now()) > 0;

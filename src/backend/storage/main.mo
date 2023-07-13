@@ -261,7 +261,10 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             totalLength += chunk.size();
         };
 
-        let id : ID = await Utils.generateId();
+        let id : ID = switch (batch.key.id) {
+            case null await Utils.generateId();
+            case (?v) v;
+        };
         let asset : Asset = {
             id;
             key = batch.key;
@@ -274,7 +277,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         };
         contentChunks.clear();
         if (notifyJournal) {
-            let file = { batch.key and { id; bucketId = Principal.fromActor(this) } };
+            let file = { { batch.key with id } and { bucketId = Principal.fromActor(this) } };
             switch (await journal.addFile(file)) {
                 case (#err err) {
                     return #err(#addFile err);

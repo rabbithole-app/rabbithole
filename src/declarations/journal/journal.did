@@ -176,7 +176,7 @@ type File__1 =
    name: text;
    parentId: opt ID;
    path: text;
-   thumbnail: opt text;
+   thumbnail: opt ID;
    updatedAt: Time;
  };
 type FileMoveError = 
@@ -200,7 +200,7 @@ type FileCreate =
    id: ID;
    name: text;
    parentId: opt ID;
-   thumbnail: opt text;
+   thumbnail: opt ID;
  };
 type File = 
  record {
@@ -212,7 +212,7 @@ type File =
    name: text;
    parentId: opt ID;
    path: text;
-   thumbnail: opt text;
+   thumbnail: opt ID;
    updatedAt: Time;
  };
 type EntryCreate = 

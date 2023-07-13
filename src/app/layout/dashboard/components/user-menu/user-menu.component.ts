@@ -4,13 +4,13 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { RouterLinkWithHref } from '@angular/router';
+import { fromNullable } from '@dfinity/utils';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
+import { selectSlice } from '@rx-angular/state/selections';
 import { RxIf } from '@rx-angular/template/if';
 import { isNull, isUndefined } from 'lodash';
 import { filter, map, switchMap } from 'rxjs';
-import { fromNullable } from '@dfinity/utils';
-import { selectSlice } from '@rx-angular/state/selections';
 
 import { CustomOverlayRef } from '@core/components/overlay';
 import { AuthService, ProfileService } from '@core/services';

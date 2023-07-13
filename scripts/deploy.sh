@@ -3,6 +3,8 @@
 export DFX_MOC_PATH="$(vessel bin)/moc"
 DEV_PRINCIPAL=$(dfx identity get-principal)
 
+# dfx canister create vetkd_system_api --specified-id s55qq-oqaaa-aaaaa-aaakq-canister
+dfx deploy vetkd_system_api
 dfx deploy rabbithole
 dfx deploy journal --argument "principal \"$DEV_PRINCIPAL\""
 dfx deploy storage --argument "principal \"$DEV_PRINCIPAL\""

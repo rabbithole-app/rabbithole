@@ -5,7 +5,7 @@ export const idlFactory = ({ IDL }) => {
     const BucketId = IDL.Principal;
     const FileCreate = IDL.Record({
         id: ID,
-        thumbnail: IDL.Opt(IDL.Text),
+        thumbnail: IDL.Opt(ID),
         name: IDL.Text,
         bucketId: BucketId,
         fileSize: IDL.Nat,
@@ -15,7 +15,7 @@ export const idlFactory = ({ IDL }) => {
     const Time = IDL.Int;
     const File__1 = IDL.Record({
         id: ID,
-        thumbnail: IDL.Opt(IDL.Text),
+        thumbnail: IDL.Opt(ID),
         name: IDL.Text,
         createdAt: Time,
         path: IDL.Text,
@@ -27,7 +27,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const File = IDL.Record({
         id: ID,
-        thumbnail: IDL.Opt(IDL.Text),
+        thumbnail: IDL.Opt(ID),
         name: IDL.Text,
         createdAt: Time,
         path: IDL.Text,
