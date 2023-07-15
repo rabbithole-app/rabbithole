@@ -4,7 +4,7 @@ import type { Principal } from '@dfinity/principal';
 export interface AssetKey {
     id: [] | [ID];
     sha256: [] | [Uint8Array | number[]];
-    thumbnail: [] | [string];
+    thumbnail: [] | [ID__1];
     name: string;
     fileSize: bigint;
     encrypted: boolean;
@@ -28,8 +28,8 @@ export type CommitUploadError =
     | { chunkNotFound: bigint }
     | { batchExpired: null };
 export interface File {
-    id: ID__3;
-    thumbnail: [] | [string];
+    id: ID__1;
+    thumbnail: [] | [ID__1];
     name: string;
     createdAt: Time;
     path: string;
@@ -37,7 +37,7 @@ export interface File {
     fileSize: bigint;
     encrypted: boolean;
     updatedAt: Time;
-    parentId: [] | [ID__3];
+    parentId: [] | [ID__1];
 }
 export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
 export type HeaderField = [string, string];
@@ -62,11 +62,11 @@ export interface InitUpload {
 }
 export type Key = Uint8Array | number[];
 export type RawTree = { subtree: Array<[Key, RawTree]> } | { value: Uint8Array | number[] };
-export type Result = { ok: ID__2 } | { err: CommitUploadError };
+export type Result = { ok: null } | { err: CommitUploadError };
 export interface Storage {
     batchAlive: ActorMethod<[bigint], undefined>;
     commitUpload: ActorMethod<[CommitBatch, boolean], Result>;
-    delete: ActorMethod<[ID__2], undefined>;
+    delete: ActorMethod<[ID__3], undefined>;
     getAssetsTotalSize: ActorMethod<[], bigint>;
     getCertTree: ActorMethod<[], RawTree>;
     getHeapSize: ActorMethod<[], bigint>;
@@ -89,13 +89,13 @@ export interface StreamingCallbackHttpResponse__1 {
     body: Uint8Array | number[];
 }
 export interface StreamingCallbackToken {
-    id: ID__1;
+    id: ID__2;
     sha256: [] | [Uint8Array | number[]];
     headers: Array<HeaderField>;
     index: bigint;
 }
 export interface StreamingCallbackToken__1 {
-    id: ID__1;
+    id: ID__2;
     sha256: [] | [Uint8Array | number[]];
     headers: Array<HeaderField>;
     index: bigint;

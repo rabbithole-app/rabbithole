@@ -2,10 +2,10 @@ import { Injectable, Signal, TemplateRef, WritableSignal, computed, inject, sign
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { toNullable } from '@dfinity/utils';
+import { TranslocoService } from '@ngneat/transloco';
 import { isNil, orderBy } from 'lodash';
 import { merge } from 'rxjs';
 import { combineLatestWith, filter, map, startWith, switchMap } from 'rxjs/operators';
-import { TranslocoService } from '@ngneat/transloco';
 
 import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { DirectoryCreate, DirectoryExtended, JournalItem } from '../models';

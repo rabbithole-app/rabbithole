@@ -6,13 +6,12 @@ export const idlFactory = ({ IDL }) => {
         chunkIds: IDL.Vec(IDL.Nat),
         batchId: IDL.Nat
     });
-    const ID__2 = IDL.Text;
-    const ID__3 = IDL.Text;
+    const ID__1 = IDL.Text;
     const Time = IDL.Int;
     const BucketId = IDL.Principal;
     const File = IDL.Record({
-        id: ID__3,
-        thumbnail: IDL.Opt(IDL.Text),
+        id: ID__1,
+        thumbnail: IDL.Opt(ID__1),
         name: IDL.Text,
         createdAt: Time,
         path: IDL.Text,
@@ -20,7 +19,7 @@ export const idlFactory = ({ IDL }) => {
         fileSize: IDL.Nat,
         encrypted: IDL.Bool,
         updatedAt: Time,
-        parentId: IDL.Opt(ID__3)
+        parentId: IDL.Opt(ID__1)
     });
     const FileCreateError = IDL.Variant({
         illegalCharacters: IDL.Null,
@@ -35,7 +34,8 @@ export const idlFactory = ({ IDL }) => {
         chunkNotFound: IDL.Nat,
         batchExpired: IDL.Null
     });
-    const Result = IDL.Variant({ ok: ID__2, err: CommitUploadError });
+    const Result = IDL.Variant({ ok: IDL.Null, err: CommitUploadError });
+    const ID__3 = IDL.Text;
     const Key = IDL.Vec(IDL.Nat8);
     RawTree.fill(
         IDL.Variant({
@@ -49,9 +49,9 @@ export const idlFactory = ({ IDL }) => {
         body: IDL.Vec(IDL.Nat8),
         headers: IDL.Vec(HeaderField)
     });
-    const ID__1 = IDL.Text;
+    const ID__2 = IDL.Text;
     const StreamingCallbackToken__1 = IDL.Record({
-        id: ID__1,
+        id: ID__2,
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
         headers: IDL.Vec(HeaderField),
         index: IDL.Nat
@@ -73,7 +73,7 @@ export const idlFactory = ({ IDL }) => {
         status_code: IDL.Nat16
     });
     const StreamingCallbackToken = IDL.Record({
-        id: ID__1,
+        id: ID__2,
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
         headers: IDL.Vec(HeaderField),
         index: IDL.Nat
@@ -86,7 +86,7 @@ export const idlFactory = ({ IDL }) => {
     const AssetKey = IDL.Record({
         id: IDL.Opt(ID),
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
-        thumbnail: IDL.Opt(IDL.Text),
+        thumbnail: IDL.Opt(ID__1),
         name: IDL.Text,
         fileSize: IDL.Nat,
         encrypted: IDL.Bool,
@@ -101,7 +101,7 @@ export const idlFactory = ({ IDL }) => {
     const Storage = IDL.Service({
         batchAlive: IDL.Func([IDL.Nat], [], []),
         commitUpload: IDL.Func([CommitBatch, IDL.Bool], [Result], []),
-        delete: IDL.Func([ID__2], [], []),
+        delete: IDL.Func([ID__3], [], []),
         getAssetsTotalSize: IDL.Func([], [IDL.Nat], ['query']),
         getCertTree: IDL.Func([], [RawTree], ['query']),
         getHeapSize: IDL.Func([], [IDL.Nat], ['query']),

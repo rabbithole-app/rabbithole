@@ -1,6 +1,9 @@
 import { Injectable, WritableSignal, inject, signal } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
+import { AuthClient } from '@dfinity/auth-client';
+
 import { CryptoService } from './crypto.service';
+import { createAuthClient } from '@core/utils';
 
 @Injectable({
     providedIn: 'root'
@@ -11,6 +14,8 @@ export class CoreService {
     #workerMessage: Subject<MessageEvent> = new Subject();
     workerMessage$: Observable<MessageEvent> = this.#workerMessage.asObservable();
     readonly workerEnabled = true;
+    client: WritableSignal<AuthClient | null> = signal(null);
+    isAuthenticated: WritableSignal<boolean> = signal(false);
 
     constructor() {
         if (typeof Worker !== 'undefined' && this.workerEnabled) {
@@ -20,5 +25,12 @@ export class CoreService {
         } else {
             this.#cryptoService.init();
         }
+    }
+
+    async createAuthClient() {
+        const client = await createAuthClient();
+        this.client.set(client);
+        const isAuthenticated = await client.isAuthenticated();
+        this.isAuthenticated.set(isAuthenticated);
     }
 }

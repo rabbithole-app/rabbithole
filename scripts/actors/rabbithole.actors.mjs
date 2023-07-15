@@ -1,7 +1,7 @@
 import pkgAgent from '@dfinity/agent';
 import pkgPrincipal from '@dfinity/principal';
 import { readFileSync } from 'fs';
-import { idlFactory } from '../../.dfx/local/canisters/rabbithole/rabbithole.did.mjs';
+import { idlFactory } from '../../.dfx/local/canisters/rabbithole/service.did.mjs';
 import { getICHttpAgent, getLocalHttpAgent } from '../utils/agent.utils.mjs';
 
 const { Actor } = pkgAgent;

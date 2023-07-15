@@ -1,5 +1,5 @@
 import pkgAgent from '@dfinity/agent';
-import { idlFactory } from '../../.dfx/local/canisters/storage/storage.did.mjs';
+import { idlFactory } from '../../.dfx/local/canisters/storage/service.did.mjs';
 import { getLocalHttpAgent } from '../utils/agent.utils.mjs';
 
 const { Actor } = pkgAgent;

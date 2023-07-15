@@ -7,24 +7,26 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
 import { TRANSLOCO_LOADING_TEMPLATE, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
+import { AuthClient } from '@dfinity/auth-client';
 
-import { LocalStorageService, NotificationService, ProfileService } from '@core/services';
+import { CoreService, LocalStorageService, NotificationService, ProfileService } from '@core/services';
 import { SETTINGS_RX_STATE, SettingsState } from '@core/stores';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
 import { TranslocoRootModule } from './app/transloco-root.module';
 import { environment } from './environments/environment';
+import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 
 if (environment.production) {
     enableProdMode();
 }
 
-function preloadLanguage(settingsState: RxState<SettingsState>, transloco: TranslocoService) {
+function initAuthClientAndPreloadLanguage(settingsState: RxState<SettingsState>, transloco: TranslocoService, coreService: CoreService) {
     return () => {
         const lang = settingsState.get('language');
         transloco.setActiveLang(lang);
-        return firstValueFrom(transloco.load(lang));
+        return firstValueFrom(forkJoin([coreService.createAuthClient(), transloco.load(lang)]));
     };
 }
 
@@ -40,12 +42,21 @@ bootstrapApplication(AppComponent, {
         {
             provide: APP_INITIALIZER,
             multi: true,
-            useFactory: preloadLanguage,
-            deps: [SETTINGS_RX_STATE, TranslocoService]
+            useFactory: initAuthClientAndPreloadLanguage,
+            deps: [SETTINGS_RX_STATE, TranslocoService, CoreService]
         },
         {
             provide: TRANSLOCO_LOADING_TEMPLATE,
             useValue: '<p>loading...</p>'
+        },
+        {
+            provide: AUTH_CLIENT_INIT_STATE,
+            useFactory: (coreService: CoreService) => {
+                const client = coreService.client() as AuthClient;
+                const isAuthenticated = coreService.isAuthenticated();
+                return { client, isAuthenticated };
+            },
+            deps: [CoreService]
         }
     ]
 }).catch(err => console.error(err));

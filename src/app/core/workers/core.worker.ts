@@ -97,7 +97,7 @@ addEventListener('message', ({ data }) => {
                 options: defaults(data.options, {
                     silent: false,
                     thumbnail: true,
-                    encryption: false
+                    encryption: true
                 })
             });
             break;
@@ -467,7 +467,7 @@ const fileUpload$ = files.asObservable().pipe(
                         return iif(
                             () => isUndefined(thumbnail),
                             uploadFile$,
-                            merge(uploadFile$, from(simpleUploadFile(thumbnail as NonNullable<typeof thumbnail>, storage)).pipe(ignoreElements()))
+                            defer(() => merge(uploadFile$, from(simpleUploadFile(thumbnail as NonNullable<typeof thumbnail>, storage)).pipe(ignoreElements())))
                         ).pipe(
                             catchError(err => {
                                 console.error(err);
