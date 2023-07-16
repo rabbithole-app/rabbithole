@@ -4,24 +4,30 @@ import { arrayBufferToUint8Array, hexStringToUint8Array, uint8ArrayToArrayOfNumb
 
 // See also https://github.com/rollup/plugins/tree/master/packages/wasm#using-with-wasm-bindgen-and-wasm-pack
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
-import { EncryptedKey, TransportSecretKey, default as vetkd } from 'vetkd_user_lib/ic_vetkd';
+import { TransportSecretKey, default as vetkd } from 'vetkd_user_lib/ic_vetkd_utils';
 
 /**
  * Fetch the authenticated user's vetKD key and derive an AES-GCM key from it
  */
 export async function initVetAesGcmKey(caller: Principal, actor: ActorSubclass<JournalActor>): Promise<CryptoKey | null> {
     try {
-        await vetkd('vetkd_user_lib/ic_vetkd_bg.wasm');
+        await vetkd('vetkd_user_lib/ic_vetkd_utils_bg.wasm');
         // Showcase that the integration of the vetkd user library works
         const seed = crypto.getRandomValues(new Uint8Array(32));
         const tsk = new TransportSecretKey(seed);
-        console.log('Successfully used vetKD user library via WASM to create new transport secret key');
-        const ek_bytes_hex = await actor.encrypted_symmetric_key(tsk.public_key().to_bytes());
-        const ek = new EncryptedKey(hexStringToUint8Array(ek_bytes_hex));
+
+        const ek_bytes_hex = await actor.encrypted_symmetric_key(tsk.public_key());
         const pk_bytes_hex = await actor.app_vetkd_public_key([new TextEncoder().encode('symmetric_key')]);
-        const k = ek.decrypt_and_verify(tsk, hexStringToUint8Array(pk_bytes_hex), caller.toUint8Array());
-        const aes_key = await crypto.subtle.importKey('raw', k.to_aes_256_gcm_key(), 'AES-GCM', false, ['encrypt', 'decrypt']);
-        console.log({ ek_bytes_hex, ek, pk_bytes_hex, k, aes_key });
+        console.log('Successfully used vetKD user library via WASM to create new transport secret key');
+        const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
+            hexStringToUint8Array(ek_bytes_hex),
+            hexStringToUint8Array(pk_bytes_hex),
+            caller.toUint8Array(),
+            32,
+            new TextEncoder().encode('aes-256-gcm')
+        );
+        const aes_key = await crypto.subtle.importKey('raw', aes_256_gcm_key_raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
+        console.log({ ek_bytes_hex, pk_bytes_hex, aes_key });
         return aes_key;
     } catch (err) {
         console.error(err);

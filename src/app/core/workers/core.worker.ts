@@ -442,7 +442,6 @@ const fileUpload$ = files.asObservable().pipe(
                 ]).pipe(
                     switchMap(([sha256, storage, encryptedData, thumbnail]) => {
                         const itemData = { ...item, sha256, thumbnail: thumbnail?.id };
-                        console.log({ encryptedData });
                         if (encryptedData) {
                             itemData.data = encryptedData;
                             itemData.fileSize = encryptedData.byteLength;

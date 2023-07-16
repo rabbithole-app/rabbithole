@@ -34,7 +34,6 @@ export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbn
         headers: [['Content-Type', item.contentType]]
     };
     const response = await storage.actor.commitUpload(commitBatch, true);
-    console.log({response});
     if (has(response, 'err')) {
         const key = Object.keys(get(response, 'err') as unknown as CommitUploadError)[0];
         throw new Error(`upload.commit.errors.${key}`);
