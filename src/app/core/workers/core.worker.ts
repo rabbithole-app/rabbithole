@@ -293,7 +293,14 @@ state.connect(
                     )
                 )
             )
-        )
+        ),
+        catchError(err => {
+            if (err.message.includes('Failed to authenticate request')) {
+                postMessage({ action: 'rabbitholeSignOutAuthTimer' });
+            }
+
+            return EMPTY;
+        })
     )
 );
 

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CMCCanister } from '@dfinity/cmc';
 import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
@@ -7,13 +7,14 @@ import { createAgent, fromNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { get, has, isNull, isUndefined } from 'lodash';
+import { get, has, isNull } from 'lodash';
 import {
     catchError,
     combineLatestWith,
     concat,
     connect,
     delayWhen,
+    EMPTY,
     filter,
     first,
     from,
@@ -27,9 +28,9 @@ import {
     takeUntil,
     tap,
     throwError,
-    timer,
-    withLatestFrom
+    timer
 } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 import { LEDGER_CANISTER_ID } from '@core/constants';
 import { mapLedgerError } from '@core/operators';
@@ -40,7 +41,7 @@ import { environment } from 'environments/environment';
 import { Invoice, InvoiceStage } from '../models';
 import { prepareInvoice } from '../utils';
 
-export enum UserStatus {
+export enum ProfileStatus {
     Unregistered,
     Creating,
     Registered
@@ -64,14 +65,8 @@ interface State {
     ledger: LedgerCanister;
     amount: TokenAmount;
     loadingBalance: boolean;
-    loadingCreateInvoice: boolean;
-    // loadingCreateJournal: boolean;
     cmc: CMCCanister;
     icpToCyclesConversionRate: bigint;
-    invoice: Invoice;
-    userStatus: UserStatus;
-    journalStatus: JournalStatus;
-    inviteStatus: InviteStatus;
     worker: Worker;
 }
 
@@ -85,17 +80,22 @@ export class RegisterService extends RxState<State> {
     private router = inject(Router);
     private readonly invoicePollingInterval = 1000;
 
+    invoice: WritableSignal<Invoice | null> = signal(null);
+    loadingCreateInvoice: WritableSignal<boolean> = signal(false);
+    invoiceActive: Signal<boolean> = computed(() => {
+        const invoice = this.invoice();
+        return invoice?.stage === InvoiceStage.ACTIVE;
+    });
+    profileStatus: WritableSignal<ProfileStatus> = signal(ProfileStatus.Unregistered);
+    journalStatus: WritableSignal<JournalStatus> = signal(JournalStatus.Default);
+    inviteStatus: WritableSignal<InviteStatus> = signal(InviteStatus.Default);
+
     constructor() {
         super();
         this.set({
             token: ICPToken,
             amount: TokenAmount.fromE8s({ amount: 0n, token: ICPToken }),
-            loadingBalance: false,
-            loadingCreateInvoice: false,
-            // loadingCreateJournal: false
-            userStatus: UserStatus.Unregistered,
-            journalStatus: JournalStatus.Default,
-            inviteStatus: InviteStatus.Default
+            loadingBalance: false
         });
 
         if (typeof Worker !== 'undefined') {
@@ -137,8 +137,9 @@ export class RegisterService extends RxState<State> {
                 )
             )
         );
-        const invoice$ = this.select('invoice').pipe(
-            filter(v => !isUndefined(v)),
+        const invoice$ = toObservable(this.invoice).pipe(
+            filter(v => !isNull(v)),
+            map(v => v as NonNullable<typeof v>),
             share()
         );
         const active$ = invoice$.pipe(
@@ -153,17 +154,17 @@ export class RegisterService extends RxState<State> {
             map(({ stage }) => stage === InvoiceStage.COMPLETE),
             filter(v => v)
         );
-        const pollInvoice$ = timer(0, this.invoicePollingInterval).pipe(
+        timer(0, this.invoicePollingInterval).pipe(
             switchMap(() =>
                 this.authState.select('actor').pipe(
                     switchMap(actor => from(actor.getInvoice()).pipe(map(v => fromNullable(v)))),
-                    map(v => (v ? { invoice: prepareInvoice(v) } : { invoice: v }))
+                    map(v => (v ? prepareInvoice(v) : null))
                 )
             ),
             takeUntil(merge(paid$, complete$)),
-            repeat({ delay: () => active$ })
-        );
-        this.connect(pollInvoice$);
+            repeat({ delay: () => active$ }),
+            takeUntilDestroyed()
+        ).subscribe(invoice => this.invoice.set(invoice));
     }
 
     async checkBalance() {
@@ -179,18 +180,18 @@ export class RegisterService extends RxState<State> {
     }
 
     async createInvoice() {
-        this.set({ loadingCreateInvoice: true });
+        this.loadingCreateInvoice.set(true);
         const actor = this.authState.get('actor');
         try {
             const invoice = await actor.createInvoice();
-            this.set({ invoice: prepareInvoice(invoice) });
+            this.invoice.set(prepareInvoice(invoice));
         } finally {
-            this.set({ loadingCreateInvoice: false });
+            this.loadingCreateInvoice.set(false);
         }
     }
 
     createProfile(profile: ProfileCreate) {
-        this.set({ userStatus: UserStatus.Creating });
+        this.profileStatus.set(ProfileStatus.Creating);
         this.authState
             .select('actor')
             .pipe(
@@ -214,9 +215,9 @@ export class RegisterService extends RxState<State> {
                     return throwError(() => err);
                 }),
                 tap({
-                    error: () => this.set({ userStatus: UserStatus.Unregistered }),
+                    error: () => this.profileStatus.set(ProfileStatus.Unregistered),
                     complete: () => {
-                        this.set({ userStatus: UserStatus.Registered });
+                        this.profileStatus.set(ProfileStatus.Registered);
                         this.notificationService.success(this.translocoService.translate('createProfile.messages.successfullyCreated'));
                         this.profileService.refresh();
                     }
@@ -231,7 +232,7 @@ export class RegisterService extends RxState<State> {
     }
 
     redeemInvite(id: string) {
-        this.set({ inviteStatus: InviteStatus.Redeeming });
+        this.inviteStatus.set(InviteStatus.Redeeming);
         this.authState
             .select('actor')
             .pipe(
@@ -250,10 +251,10 @@ export class RegisterService extends RxState<State> {
                     return throwError(() => err);
                 }),
                 tap({
-                    error: () => this.set({ inviteStatus: InviteStatus.Default }),
+                    error: () => this.inviteStatus.set(InviteStatus.Default),
                     complete: () => {
                         this.bucketsService.update();
-                        this.set({ inviteStatus: InviteStatus.Redeemed });
+                        this.inviteStatus.set(InviteStatus.Redeemed);
                     }
                 }),
                 delayWhen(() =>
@@ -269,13 +270,16 @@ export class RegisterService extends RxState<State> {
     }
 
     createJournal() {
-        this.set({ journalStatus: JournalStatus.Creating });
+        this.journalStatus.set(JournalStatus.Creating);
         this.authState
             .select('actor')
             .pipe(
                 first(),
-                withLatestFrom(this.select('invoice', 'id')),
-                switchMap(([actor, invoiceId]) => actor.createJournal(invoiceId)),
+                switchMap(actor => {
+                    const invoice = this.invoice();
+                    if (!invoice) return EMPTY;
+                    return actor.createJournal(invoice.id);
+                }),
                 mapLedgerError(),
                 map(response => {
                     if (has(response, 'err.wrongStage')) {
@@ -289,10 +293,10 @@ export class RegisterService extends RxState<State> {
                     return throwError(() => err);
                 }),
                 tap({
-                    error: () => this.set({ journalStatus: JournalStatus.Default }),
+                    error: () => this.journalStatus.set(JournalStatus.Default),
                     complete: () => {
                         this.bucketsService.update();
-                        this.set({ journalStatus: JournalStatus.Created });
+                        this.journalStatus.set(JournalStatus.Created);
                     }
                 }),
                 delayWhen(() =>

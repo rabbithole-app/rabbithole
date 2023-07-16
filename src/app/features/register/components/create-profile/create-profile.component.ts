@@ -1,5 +1,4 @@
-import { NgSwitch, NgSwitchCase } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +14,7 @@ import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
 import { AvatarEditorComponent } from '@core/components/avatar-editor/avatar-editor.component';
 import { addFASvgIcons } from '@core/utils';
 import { UniqueUsernameValidator } from '@core/validators';
-import { RegisterService, UserStatus } from '@features/register/services/register.service';
+import { RegisterService, ProfileStatus } from '@features/register/services/register.service';
 
 @Component({
     selector: 'app-create-profile',
@@ -25,8 +24,6 @@ import { RegisterService, UserStatus } from '@features/register/services/registe
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [RegisterService, UniqueUsernameValidator],
     imports: [
-        NgSwitch,
-        NgSwitchCase,
         TranslocoModule,
         ReactiveFormsModule,
         MatFormFieldModule,
@@ -40,7 +37,7 @@ import { RegisterService, UserStatus } from '@features/register/services/registe
     ]
 })
 export class CreateProfileComponent {
-    private registerService = inject(RegisterService);
+    #registerService = inject(RegisterService);
     private translocoService = inject(TranslocoService);
     #uniqueUsernameValidator = inject(UniqueUsernameValidator);
     private fb = inject(FormBuilder);
@@ -52,7 +49,8 @@ export class CreateProfileComponent {
         }),
         displayName: new FormControl('')
     });
-    userStatus$: Observable<UserStatus> = this.registerService.select('userStatus');
+    unregistered: Signal<boolean> = computed(() => this.#registerService.profileStatus() === ProfileStatus.Unregistered);
+    loading: Signal<boolean> = computed(() => this.#registerService.profileStatus() === ProfileStatus.Creating);
     disabled$: Observable<boolean> = this.registerForm.statusChanges.pipe(
         map(status => status === 'INVALID'),
         startWith(this.registerForm.invalid),
@@ -64,7 +62,6 @@ export class CreateProfileComponent {
               startWith(this.username.pending)
           )
         : EMPTY;
-    readonly userStatus = UserStatus;
 
     get username() {
         return this.registerForm.get('username');
@@ -86,7 +83,7 @@ export class CreateProfileComponent {
     register() {
         const { avatarUrl, username, displayName } = this.registerForm.getRawValue();
         if (username) {
-            this.registerService.createProfile({ username, displayName: displayName ?? '', avatarUrl: toNullable(avatarUrl) });
+            this.#registerService.createProfile({ username, displayName: displayName ?? '', avatarUrl: toNullable(avatarUrl) });
         }
     }
 

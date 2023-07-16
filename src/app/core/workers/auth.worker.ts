@@ -53,4 +53,4 @@ on$.pipe(
     take(1),
     takeUntil(off$),
     repeat()
-).subscribe(() => postMessage('rabbitholeSignOutAuthTimer'));
+).subscribe(() => postMessage({ action: 'rabbitholeSignOutAuthTimer' }));

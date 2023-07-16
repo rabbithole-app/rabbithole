@@ -11,7 +11,7 @@
     </div>
     <div mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
-        <button mat-button disabled *rxIf="loading$; else redeemButton">
+        <button mat-button disabled *rxIf="loading(); else redeemButton">
             <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
             {{ t('actions.loading') }}
         </button>

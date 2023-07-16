@@ -1,17 +1,17 @@
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
 import { formatNumber } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepperModule } from '@angular/material/stepper';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
-import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { isUndefined, pickBy, size } from 'lodash';
-import { Observable, asyncScheduler, debounceTime, distinctUntilChanged, map, merge, observeOn, scan } from 'rxjs';
+import { isNull } from 'lodash';
+import { Observable, asapScheduler, observeOn } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 import { JOURNAL_CYCLES_SHARE } from '@core/constants';
 import { BucketsService, ProfileService } from '@core/services';
@@ -21,21 +21,6 @@ import { JournalStatus, RegisterService } from '@features/register/services/regi
 import { cyclesToICP } from '@features/wallet/utils';
 import { InvoiceComponent } from './components/invoice/invoice.component';
 import { RedeemInviteDialogComponent } from './components/redeem-invite-dialog/redeem-invite-dialog.component';
-
-enum Step {
-    CREATE_INVOICE,
-    INVOICE,
-    REDEEM_INVITE,
-    CREATE_JOURNAL
-}
-
-interface State {
-    completed: Record<keyof typeof Step, boolean>;
-    selectedIndex: number;
-    createInvoiceStateIcon: 'number' | 'spinner';
-    createJournalStateIcon: 'number' | 'spinner';
-    invite: boolean;
-}
 
 @Component({
     selector: 'app-register',
@@ -64,53 +49,35 @@ interface State {
         }
     ]
 })
-export class RegisterComponent extends RxState<State> {
+export class RegisterComponent {
     readonly invoiceStage = InvoiceStage;
     readonly xdr: number = cyclesToICP(JOURNAL_CYCLES_SHARE);
     readonly usd = formatNumber(this.xdr * 1.3, 'en-US', '0.0-1');
     registerService = inject(RegisterService);
     bucketsService = inject(BucketsService);
     profileService = inject(ProfileService);
-    loadingCreateInvoice$: Observable<boolean> = this.registerService.select('loadingCreateInvoice');
-    loadingCreateJournal$: Observable<boolean> = this.registerService.select('journalStatus').pipe(map(status => status === JournalStatus.Creating));
-    redirect$: Observable<boolean> = this.registerService.select('journalStatus').pipe(map(status => status === JournalStatus.Created));
-    createInvoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_INVOICE] as keyof typeof Step);
-    invoiceCompleted$: Observable<boolean> = this.select('completed', Step[Step.INVOICE] as keyof typeof Step);
-    createJournalCompleted$: Observable<boolean> = this.select('completed', Step[Step.CREATE_JOURNAL] as keyof typeof Step);
-    createInvoiceStateIcon$ = this.select('createInvoiceStateIcon');
-    createJournalStateIcon$ = this.select('createJournalStateIcon');
-    invite$: Observable<boolean> = this.select('invite');
-    selectedIndex$ = this.select('selectedIndex').pipe(debounceTime(500), observeOn(asyncScheduler));
+    loadingCreateJournal: Signal<boolean> = computed(() => this.registerService.journalStatus() === JournalStatus.Creating);
+    redirect: Signal<boolean> = computed(() => this.registerService.journalStatus() === JournalStatus.Created);
+    createInvoiceStep: Signal<boolean> = computed(() => !isNull(this.registerService.invoice()));
+    invoiceStep: Signal<boolean> = computed(() => {
+        const invoice = this.registerService.invoice();
+        return invoice ? invoice.stage >= InvoiceStage.PAID : false;
+    });
+    createJournalStep: Signal<boolean> = computed(() => this.registerService.invoice()?.stage === InvoiceStage.COMPLETE);
+    createInvoiceStateIcon: Signal<'number' | 'spinner'> = computed(() => this.registerService.loadingCreateInvoice() ? 'spinner' : 'number');
+    createJournalStateIcon: Signal<'number' | 'spinner'> = computed(() => this.registerService.journalStatus() === JournalStatus.Creating ? 'spinner' : 'number');
     dialog = inject(MatDialog);
+    selectedIndex: Signal<number> = computed(() => {
+        let index = 0;
+        if (this.createInvoiceStep()) index++;
+        if (this.invoiceStep()) index++;
+        return index;
+    });
+    selectedIndex$: Observable<number> = toObservable(this.selectedIndex).pipe(observeOn(asapScheduler));
+    readonly inviteEnabled = false;
 
     constructor() {
-        super();
         addFASvgIcons(['check', 'envelope', 'database'], 'far');
-        this.set({
-            createInvoiceStateIcon: 'number',
-            createJournalStateIcon: 'number',
-            invite: true
-        });
-        const createInvoiceStep$ = this.registerService.select('invoice').pipe(map(v => ({ [Step[Step.CREATE_INVOICE]]: !isUndefined(v) })));
-        const invoiceStep$ = this.registerService.select('invoice').pipe(map(({ stage }) => ({ [Step[Step.INVOICE]]: stage >= InvoiceStage.PAID })));
-        const createJournalStep$ = this.registerService
-            .select('invoice')
-            .pipe(map(({ stage }) => ({ [Step[Step.CREATE_JOURNAL]]: stage === InvoiceStage.COMPLETE })));
-        const completed$ = merge(createInvoiceStep$, invoiceStep$, createJournalStep$).pipe(
-            scan((state, value) => ({ ...state, ...value }), {} as Record<keyof typeof Step, boolean>),
-            distinctUntilChanged()
-        );
-        this.connect(completed$.pipe(map(completed => ({ completed, selectedIndex: Math.min(size(pickBy(completed, v => v)), 2) }))));
-        this.connect(
-            merge(
-                this.registerService.select('journalStatus').pipe(
-                    map(status => ({
-                        createJournalStateIcon: status === JournalStatus.Creating ? 'spinner' : 'number'
-                    }))
-                ),
-                this.registerService.select('loadingCreateInvoice').pipe(map(loading => ({ createInvoiceStateIcon: loading ? 'spinner' : 'number' })))
-            ).pipe(map(v => v as Partial<State>))
-        );
     }
 
     handleCreateInvoice(): void {

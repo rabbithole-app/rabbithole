@@ -1,17 +1,20 @@
 import { inject, Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { isNull } from 'lodash';
 import { WINDOW } from 'ngx-window-token';
-import { filter, firstValueFrom, from, repeat, switchMap, takeUntil, throwError } from 'rxjs';
+import { filter, firstValueFrom, from, merge, Observable, repeat, Subject, switchMap, takeUntil, throwError } from 'rxjs';
 import { catchError, delayWhen, map, skip, tap, withLatestFrom } from 'rxjs/operators';
 
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
 import { AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
 import { environment } from 'environments/environment';
 import { AUTH_RX_STATE, AuthStatus } from '../stores';
+import { CoreService } from './core.service';
+import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 
 interface State {
     signedOutSnackBarRef: MatSnackBarRef<ClosableSnackbarComponent>;
@@ -22,28 +25,24 @@ interface State {
 })
 export class AuthService extends RxState<State> {
     private authState = inject(AUTH_RX_STATE);
+    #authClientInitState = inject(AUTH_CLIENT_INIT_STATE);
+    #coreService = inject(CoreService);
     private router = inject(Router);
     private window = inject<Window>(WINDOW);
     private translocoService = inject(TranslocoService);
     private snackBar = inject(MatSnackBar);
-
+    #workerMessage: Subject<MessageEvent> = new Subject();
+    workerMessage$: Observable<MessageEvent> = this.#workerMessage.asObservable();
     anonymous$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Anonymous));
     initialized$ = this.authState.select('status').pipe(filter(status => status === AuthStatus.Initialized));
 
     constructor() {
         super();
         const worker = this.authState.get('worker');
+        this.authState.set(this.#authClientInitState);
 
         if (worker) {
-            worker.onmessage = async ({ data }) => {
-                if (data === 'rabbitholeSignOutAuthTimer') {
-                    await this.signOut();
-                    const signedOutSnackBarRef = this.snackBar.openFromComponent(ClosableSnackbarComponent, {
-                        data: this.translocoService.translate('application.signed-out')
-                    });
-                    this.set({ signedOutSnackBarRef });
-                }
-            };
+            worker.onmessage = event => this.#workerMessage.next(event);
             this.authState
                 .select('status')
                 .pipe(
@@ -61,6 +60,16 @@ export class AuthService extends RxState<State> {
                     repeat({ delay: () => this.initialized$ })
                 )
                 .subscribe(snackBarRef => snackBarRef.dismiss());
+            merge(this.#coreService.workerMessage$, this.workerMessage$).pipe(
+                filter(({ data }) => data.action === 'rabbitholeSignOutAuthTimer'),
+                takeUntilDestroyed()
+            ).subscribe(async () => {
+                await this.signOut();
+                const signedOutSnackBarRef = this.snackBar.openFromComponent(ClosableSnackbarComponent, {
+                    data: this.translocoService.translate('application.signed-out')
+                });
+                this.set({ signedOutSnackBarRef });
+            });
         }
     }
 

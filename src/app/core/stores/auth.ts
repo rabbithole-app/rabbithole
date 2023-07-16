@@ -2,10 +2,11 @@ import { InjectionToken } from '@angular/core';
 import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { RxState } from '@rx-angular/state';
-import { filter, from, merge, switchMap } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { filter, merge, switchMap } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
+import { selectSlice } from '@rx-angular/state/selections';
 
-import { createActor, createAuthClient } from '@core/utils';
+import { createActor } from '@core/utils';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
 import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.did';
 
@@ -28,18 +29,14 @@ export const authStateFactory = () => {
     const state = new RxState<AuthState>();
     state
         .select('identity')
-        .pipe(map(identity => identity.getPrincipal().toText()))
+        .pipe(map(identity => identity.getPrincipal().toText()), distinctUntilChanged())
         .subscribe(principalId => console.info(`Principal ID: ${principalId}`));
-    const init$ = from(createAuthClient()).pipe(
-        switchMap(client =>
-            from(client.isAuthenticated()).pipe(
-                map(isAuthenticated => ({
-                    client,
-                    status: isAuthenticated ? AuthStatus.Initialized : AuthStatus.Anonymous,
-                    identity: client.getIdentity()
-                }))
-            )
-        )
+    const init$ = state.select(selectSlice(['client', 'isAuthenticated'])).pipe(
+        map(({ client, isAuthenticated }) => ({
+            client,
+            status: isAuthenticated ? AuthStatus.Initialized : AuthStatus.Anonymous,
+            identity: client.getIdentity()
+        }))
     );
     const anonymous$ = state.select('status').pipe(
         filter(status => status === AuthStatus.Anonymous),

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TRANSLOCO_SCOPE, TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { AsyncSubject, filter, map, Observable, startWith, takeUntil } from 'rxjs';
+import { map, Observable, startWith } from 'rxjs';
 
 import { addFASvgIcons } from '@core/utils';
 import { InviteValidator } from '@core/validators';
@@ -33,7 +33,7 @@ import { InviteStatus, RegisterService } from '@features/register/services/regis
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{ provide: TRANSLOCO_SCOPE, useValue: 'invite' }, InviteValidator]
 })
-export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
+export class RedeemInviteDialogComponent {
     private translocoService = inject(TranslocoService);
     private inviteValidator = inject(InviteValidator);
     private registerService = inject(RegisterService);
@@ -45,12 +45,11 @@ export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
         ]),
         asyncValidators: [this.inviteValidator.validate.bind(this.inviteValidator)]
     });
-    loading$: Observable<boolean> = this.registerService.select('inviteStatus').pipe(map(status => status === InviteStatus.Redeeming));
+    loading: Signal<boolean> = computed(() => this.registerService.inviteStatus() === InviteStatus.Redeeming);
     pending$: Observable<boolean> = this.control.statusChanges.pipe(
         map(status => status === 'PENDING'),
         startWith(this.control.pending)
     );
-    private destroyed: AsyncSubject<void> = new AsyncSubject<void>();
 
     get errorMessage() {
         if (this.control.errors) {
@@ -63,21 +62,11 @@ export class RedeemInviteDialogComponent implements OnInit, OnDestroy {
 
     constructor() {
         addFASvgIcons(['envelope'], 'far');
-    }
-
-    ngOnInit(): void {
-        this.registerService
-            .select('inviteStatus')
-            .pipe(
-                filter(status => status === InviteStatus.Redeemed),
-                takeUntil(this.destroyed)
-            )
-            .subscribe(() => this.dialogRef.close());
-    }
-
-    ngOnDestroy(): void {
-        this.destroyed.next();
-        this.destroyed.complete();
+        effect(() => {
+            if (this.registerService.inviteStatus() === InviteStatus.Redeemed) {
+                this.dialogRef.close();
+            }
+        })
     }
 
     handleRedeem() {

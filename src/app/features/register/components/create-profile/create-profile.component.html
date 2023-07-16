@@ -18,23 +18,25 @@
             <mat-hint align="start">{{ t('displayName.hint') }}</mat-hint>
         </mat-form-field>
     </form>
-    <ng-container [ngSwitch]="userStatus$ | push">
-        <button
-            class="action-button"
-            *ngSwitchCase="userStatus.Unregistered"
-            mat-raised-button
-            color="primary"
-            (click)="register()"
-            [disabled]="disabled$ | push">
-            <mat-icon svgIcon="far:user-plus"></mat-icon>
-            <span>{{ t('actions.create') }}</span>
-        </button>
-        <button class="action-button" *ngSwitchCase="userStatus.Creating" mat-raised-button disabled>
+    <button
+        class="action-button"
+        *rxIf="unregistered(); else loadingButton"
+        mat-raised-button
+        color="primary"
+        (click)="register()"
+        [disabled]="disabled$ | push">
+        <mat-icon svgIcon="far:user-plus"></mat-icon>
+        <span>{{ t('actions.create') }}</span>
+    </button>
+    <ng-template #loadingButton>
+        <button class="action-button" *rxIf="loading(); else redirectButton" mat-raised-button disabled>
             <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
             {{ t('actions.loading') }}
         </button>
-        <button class="action-button" *ngSwitchCase="userStatus.Registered" mat-raised-button disabled>
+    </ng-template>
+    <ng-template #redirectButton>
+        <button class="action-button" mat-raised-button disabled>
             {{ t('actions.redirect') }}
         </button>
-    </ng-container>
+    </ng-template>
 </ng-container>

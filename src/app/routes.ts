@@ -92,9 +92,14 @@ export const appRoutes: Route[] = [
             {
                 path: '',
                 canMatch: [createProfileGuard],
-                loadComponent: () => import('./features/register/components/create-profile/create-profile.component').then(m => m.CreateProfileComponent)
+                loadComponent: () => import('./features/register/components/create-profile/create-profile.component').then(m => m.CreateProfileComponent),
+                providers: [UploadService, FileListService, JournalService, SnackbarProgressService, importProvidersFrom(MatDialogModule)]
             },
-            { path: '', canActivate: [registerGuard], loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent) }
+            {
+                path: '',
+                canActivate: [registerGuard],
+                loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent)
+            }
             // {
             //     path: '',
             //     loadComponent: () => import('./features/register/components/sidebar-content/sidebar-content.component').then(m => m.SidebarContentComponent),
