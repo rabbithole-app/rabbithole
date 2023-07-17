@@ -1,0 +1,27 @@
+<mat-form-field class="chip-list">
+    <mat-label>{{ label }}</mat-label>
+    <mat-chip-grid #chipGrid aria-label="User selection">
+        <mat-chip-row *rxFor="let user of selected()" (removed)="remove(user)">
+            <img matChipAvatar [src]="user.avatarUrl" [attr.alt]="user.username" />
+            {{ user.username }}
+            <button matChipRemove [attr.aria-label]="'remove ' + user.username">
+                <mat-icon svgIcon="far:xmark"></mat-icon>
+            </button>
+        </mat-chip-row>
+    </mat-chip-grid>
+    <input
+        placeholder="Add user..."
+        #input
+        [formControl]="control"
+        [matChipInputFor]="chipGrid"
+        [matAutocomplete]="auto" />
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="select($event)">
+        <mat-option *rxFor="let user of filteredUsers$ | push" [value]="user">
+            <div class="user-option">
+                <app-avatar [size]="32" [url]="user.avatarUrl ?? null"></app-avatar>
+                <span class="username">{{ user.username }}</span>
+                <span class="principal">{{ user.principal.toText() }}</span>
+            </div>
+        </mat-option>
+    </mat-autocomplete>
+</mat-form-field>

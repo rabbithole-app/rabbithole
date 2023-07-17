@@ -5,11 +5,11 @@ import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { get, has } from 'lodash';
-import { defer, EMPTY, filter, first, iif, merge, Observable, of, Subject } from 'rxjs';
-import { catchError, combineLatestWith, map, startWith, switchMap } from 'rxjs/operators';
+import { defer, EMPTY, iif, merge, Observable, of, Subject } from 'rxjs';
+import { catchError, combineLatestWith, filter, finalize, first, map, startWith, switchMap, tap } from 'rxjs/operators';
 
 import { CanisterResult } from '@core/models';
-import { ProfileUpdate } from '@core/models/profile';
+import { Profile, ProfileItem, ProfileUpdate } from '@core/models/profile';
 import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
 import { ProfileInfo, UsernameError } from '@declarations/rabbithole/rabbithole.did';
 import { NotificationService } from './notification.service';
@@ -30,6 +30,8 @@ export class ProfileService extends RxState<State> {
     private refreshProfile: Subject<void> = new Subject<void>();
     updateLoading: WritableSignal<boolean> = signal(false);
     deleteLoading: WritableSignal<boolean> = signal(false);
+    listLoading: WritableSignal<boolean> = signal(false);
+    list: WritableSignal<ProfileItem[]> = signal([]);
 
     constructor() {
         super();
@@ -62,6 +64,16 @@ export class ProfileService extends RxState<State> {
             map(canInvite => ({ canInvite }))
         );
         this.connect(merge(profile$, canInvite$));
+        this.#authState
+            .select('actor')
+            .pipe(
+                first(),
+                tap(() => this.listLoading.set(true)),
+                switchMap(actor => actor.listProfiles()),
+                map(list => list.map(profile => ({ ...profile, avatarUrl: fromNullable(profile.avatarUrl) }))),
+                finalize(() => this.listLoading.set(false))
+            )
+            .subscribe(users => this.list.set(users));
     }
 
     checkUsername(username: string): Observable<CanisterResult<null, UsernameError>> {
