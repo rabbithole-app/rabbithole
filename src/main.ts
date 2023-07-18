@@ -4,19 +4,19 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { PreloadAllModules, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { PreloadAllModules, TitleStrategy, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { AuthClient } from '@dfinity/auth-client';
 import { TRANSLOCO_LOADING_TEMPLATE, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { firstValueFrom, forkJoin } from 'rxjs';
-import { AuthClient } from '@dfinity/auth-client';
 
-import { CoreService, LocalStorageService, NotificationService, ProfileService } from '@core/services';
+import { CoreService, LocalStorageService, NotificationService, PageTitleStrategy, ProfileService } from '@core/services';
 import { SETTINGS_RX_STATE, SettingsState } from '@core/stores';
+import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
 import { TranslocoRootModule } from './app/transloco-root.module';
 import { environment } from './environments/environment';
-import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 
 if (environment.production) {
     enableProdMode();
@@ -57,6 +57,7 @@ bootstrapApplication(AppComponent, {
                 return { client, isAuthenticated };
             },
             deps: [CoreService]
-        }
+        },
+        { provide: TitleStrategy, useClass: PageTitleStrategy }
     ]
 }).catch(err => console.error(err));

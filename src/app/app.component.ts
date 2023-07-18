@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, Inject } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouteConfigLoadEnd, RouteConfigLoadStart, Router, RouterModule } from '@angular/router';
-import { AuthService } from '@core/services';
-import { FETCH_INTERCEPTOR } from '@core/tokens';
-import { concatStringStream } from '@core/utils';
 import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 import { RxIf } from '@rx-angular/template/if';
 import { distinctUntilChanged, filter, first, map, merge, Observable, startWith } from 'rxjs';
+
+import { AuthService } from '@core/services';
+import { FETCH_INTERCEPTOR } from '@core/tokens';
+import { concatStringStream } from '@core/utils';
 
 @Component({
     selector: 'app-root',

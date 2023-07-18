@@ -6,4 +6,5 @@ export * from './crypto.service';
 export * from './local-storage.service';
 export * from './notification.service';
 export * from './overlay.service';
+export * from './page-title.strategy';
 export * from './profile.service';
