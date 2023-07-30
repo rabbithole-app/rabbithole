@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { isNull } from 'lodash';
@@ -11,10 +11,10 @@ import { catchError, delayWhen, map, skip, tap, withLatestFrom } from 'rxjs/oper
 
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
 import { AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
+import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 import { environment } from 'environments/environment';
 import { AUTH_RX_STATE, AuthStatus } from '../stores';
 import { CoreService } from './core.service';
-import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 
 interface State {
     signedOutSnackBarRef: MatSnackBarRef<ClosableSnackbarComponent>;
@@ -60,16 +60,18 @@ export class AuthService extends RxState<State> {
                     repeat({ delay: () => this.initialized$ })
                 )
                 .subscribe(snackBarRef => snackBarRef.dismiss());
-            merge(this.#coreService.workerMessage$, this.workerMessage$).pipe(
-                filter(({ data }) => data.action === 'rabbitholeSignOutAuthTimer'),
-                takeUntilDestroyed()
-            ).subscribe(async () => {
-                await this.signOut();
-                const signedOutSnackBarRef = this.snackBar.openFromComponent(ClosableSnackbarComponent, {
-                    data: this.translocoService.translate('application.signed-out')
+            merge(this.#coreService.workerMessage$, this.workerMessage$)
+                .pipe(
+                    filter(({ data }) => data.action === 'rabbitholeSignOutAuthTimer'),
+                    takeUntilDestroyed()
+                )
+                .subscribe(async () => {
+                    await this.signOut();
+                    const signedOutSnackBarRef = this.snackBar.openFromComponent(ClosableSnackbarComponent, {
+                        data: this.translocoService.translate('application.signed-out')
+                    });
+                    this.set({ signedOutSnackBarRef });
                 });
-                this.set({ signedOutSnackBarRef });
-            });
         }
     }
 

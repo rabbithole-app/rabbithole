@@ -20,20 +20,31 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { Principal } from '@dfinity/principal';
 import { RxFor } from '@rx-angular/template/for';
+import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { Observable, combineLatestWith, fromEvent, map, startWith, take } from 'rxjs';
 
 import { ProfileItem } from '@core/models/profile';
 import { ProfileService } from '@core/services';
 import { addFASvgIcons } from '@core/utils';
-import { AvatarComponent } from 'app/layout/dashboard/components/avatar/avatar.component';
+import { UserCardComponent } from '../user-card/user-card.component';
 
 @Component({
     selector: 'app-select-users',
     standalone: true,
-    imports: [FormsModule, MatFormFieldModule, MatChipsModule, MatAutocompleteModule, ReactiveFormsModule, MatIconModule, RxPush, RxFor, AvatarComponent],
+    imports: [
+        RxIf,
+        FormsModule,
+        MatFormFieldModule,
+        MatChipsModule,
+        MatAutocompleteModule,
+        ReactiveFormsModule,
+        MatIconModule,
+        RxPush,
+        RxFor,
+        UserCardComponent
+    ],
     templateUrl: './select-users.component.html',
     styleUrls: ['./select-users.component.scss'],
     providers: [
@@ -47,26 +58,26 @@ import { AvatarComponent } from 'app/layout/dashboard/components/avatar/avatar.c
 })
 export class SelectUsersComponent implements ControlValueAccessor, AfterViewInit {
     @Input() label = 'Select users';
-    @Input() exceptList: Principal[] = [];
+    @Input() exceptList: string[] = [];
     announcer = inject(LiveAnnouncer);
     control = new FormControl();
     profileService = inject(ProfileService);
     users$: Observable<ProfileItem[]> = toObservable(this.profileService.list).pipe(
-        map(list => list.filter(({ principal }) => !this.exceptList.some(p => p.toText() === principal.toText())))
+        map(list => list.filter(({ principal }) => !this.exceptList.some(p => p === principal)))
     );
     selected: WritableSignal<ProfileItem[]> = signal([]);
     filteredUsers$: Observable<ProfileItem[]> = this.control.valueChanges.pipe(
         startWith(null),
         combineLatestWith(this.users$, toObservable(this.selected)),
         map(([search, users, selected]) => {
-            const filteredUsers = search ? users.filter(({ username, principal }) => username.includes(search) || principal.toText().includes(search)) : users;
+            const filteredUsers = search ? users.filter(({ username, principal }) => username.includes(search) || principal.includes(search)) : users;
             return filteredUsers.filter(item => !selected.some(({ username }) => item.username === username));
         })
     );
     @ViewChild('input') input!: ElementRef<HTMLInputElement>;
     @Input({ transform: booleanAttribute }) disabled = false;
     // eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars
-    onChanged = (value: Principal[] | null) => {};
+    onChanged = (value: string[] | null) => {};
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     onTouched = () => {};
     #destroyed = inject(DestroyRef);
@@ -96,9 +107,9 @@ export class SelectUsersComponent implements ControlValueAccessor, AfterViewInit
         this.control.setValue(null);
     }
 
-    writeValue(value: Principal[] | null): void {
+    writeValue(value: string[] | null): void {
         if (value) {
-            this.selected.set(this.profileService.list().filter(({ principal }) => value.some(p => p.toText() === principal.toText())));
+            this.selected.set(this.profileService.list().filter(({ principal }) => value.some(p => p === principal)));
         } else {
             this.selected.set([]);
         }

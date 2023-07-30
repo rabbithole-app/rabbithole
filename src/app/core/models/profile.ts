@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from '@dfinity/principal';
 
 export type ProfileUpdate = {
     displayName: string;
@@ -9,8 +9,6 @@ export type Profile = ProfileUpdate & {
     username: string;
 };
 
-export type ProfileItem = {
-    principal: Principal;
-    username: string;
-    avatarUrl?: string;
+export type ProfileItem = Profile & {
+    principal: string;
 };

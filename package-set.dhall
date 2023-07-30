@@ -1,4 +1,4 @@
-let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.9.3-20230619/package-set.dhall sha256:848fd910726a1ee5b45c9c1c3740007b9e0783e5128d36448336846c1d772104
+let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.9.7-20230718/package-set.dhall sha256:e53459a66249ed946a86dc8dd26c4988675f4500d7664c0f962ae661e03080dd
 let aviate-labs = https://github.com/aviate-labs/package-set/releases/download/v0.1.8/package-set.dhall sha256:9ab42c1f732299dc8c1f631d39ea6a2551414bf6efc8bbde4e11e36ebc6d7edd
 
 let Package =
@@ -36,8 +36,13 @@ let additions =
     , version = "main"
     , dependencies = ["sha256", "sha224", "cbor"] : List Text
     },
-    { name = "mrr"
-    , repo = "https://github.com/research-ag/motoko-lib"
+    { name = "sha2"
+    , repo = "https://github.com/research-ag/sha2.git"
+    , version = "main"
+    , dependencies = ["base"] : List Text
+    },
+    { name = "vector"
+    , repo = "https://github.com/research-ag/vector.git"
     , version = "main"
     , dependencies = ["base"] : List Text
     }

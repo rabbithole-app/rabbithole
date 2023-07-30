@@ -1,6 +1,7 @@
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
 import { formatNumber } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +12,6 @@ import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { isNull } from 'lodash';
 import { Observable, asapScheduler, observeOn } from 'rxjs';
-import { toObservable } from '@angular/core/rxjs-interop';
 
 import { JOURNAL_CYCLES_SHARE } from '@core/constants';
 import { BucketsService, ProfileService } from '@core/services';
@@ -64,8 +64,10 @@ export class RegisterComponent {
         return invoice ? invoice.stage >= InvoiceStage.PAID : false;
     });
     createJournalStep: Signal<boolean> = computed(() => this.registerService.invoice()?.stage === InvoiceStage.COMPLETE);
-    createInvoiceStateIcon: Signal<'number' | 'spinner'> = computed(() => this.registerService.loadingCreateInvoice() ? 'spinner' : 'number');
-    createJournalStateIcon: Signal<'number' | 'spinner'> = computed(() => this.registerService.journalStatus() === JournalStatus.Creating ? 'spinner' : 'number');
+    createInvoiceStateIcon: Signal<'number' | 'spinner'> = computed(() => (this.registerService.loadingCreateInvoice() ? 'spinner' : 'number'));
+    createJournalStateIcon: Signal<'number' | 'spinner'> = computed(() =>
+        this.registerService.journalStatus() === JournalStatus.Creating ? 'spinner' : 'number'
+    );
     dialog = inject(MatDialog);
     selectedIndex: Signal<number> = computed(() => {
         let index = 0;

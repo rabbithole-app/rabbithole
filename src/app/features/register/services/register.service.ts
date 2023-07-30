@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { CMCCanister } from '@dfinity/cmc';
 import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
@@ -30,7 +31,6 @@ import {
     throwError,
     timer
 } from 'rxjs';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 import { LEDGER_CANISTER_ID } from '@core/constants';
 import { mapLedgerError } from '@core/operators';
@@ -154,17 +154,19 @@ export class RegisterService extends RxState<State> {
             map(({ stage }) => stage === InvoiceStage.COMPLETE),
             filter(v => v)
         );
-        timer(0, this.invoicePollingInterval).pipe(
-            switchMap(() =>
-                this.authState.select('actor').pipe(
-                    switchMap(actor => from(actor.getInvoice()).pipe(map(v => fromNullable(v)))),
-                    map(v => (v ? prepareInvoice(v) : null))
-                )
-            ),
-            takeUntil(merge(paid$, complete$)),
-            repeat({ delay: () => active$ }),
-            takeUntilDestroyed()
-        ).subscribe(invoice => this.invoice.set(invoice));
+        timer(0, this.invoicePollingInterval)
+            .pipe(
+                switchMap(() =>
+                    this.authState.select('actor').pipe(
+                        switchMap(actor => from(actor.getInvoice()).pipe(map(v => fromNullable(v)))),
+                        map(v => (v ? prepareInvoice(v) : null))
+                    )
+                ),
+                takeUntil(merge(paid$, complete$)),
+                repeat({ delay: () => active$ }),
+                takeUntilDestroyed()
+            )
+            .subscribe(invoice => this.invoice.set(invoice));
     }
 
     async checkBalance() {

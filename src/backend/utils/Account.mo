@@ -1,5 +1,5 @@
 import CRC32 "mo:hash/CRC32";
-import SHA256 "mo:mrr/Sha256";
+import Sha256 "mo:sha2/Sha256";
 import Array "mo:base/Array";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
@@ -26,7 +26,7 @@ module {
     };
 
     public func accountIdentifier(principal : Principal, subaccount : Subaccount) : AccountIdentifier {
-        let hash = SHA256.Digest(#sha224);
+        let hash = Sha256.Digest(#sha224);
         hash.writeArray([0x0A]);
         hash.writeBlob(Text.encodeUtf8("account-id"));
         hash.writeBlob(Principal.toBlob(principal));
@@ -50,7 +50,7 @@ module {
     };
 
     public func principalToSubaccount(principal : Principal) : Blob {
-        let idHash = SHA256.Digest(#sha224);
+        let idHash = Sha256.Digest(#sha224);
         idHash.writeBlob(Principal.toBlob(principal));
         let hashSum : [Nat8] = Blob.toArray(idHash.sum());
         let crc32Bytes : [Nat8] = beBytes(CRC32.checksum(hashSum));

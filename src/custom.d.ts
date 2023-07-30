@@ -9,6 +9,12 @@ declare module 'vetkd_user_lib/ic_vetkd_utils.js' {
         constructor(seed: Uint8Array);
         free(): void;
         public_key(): Uint8Array;
-        decrypt_and_hash(encrypted_key_bytes: Uint8Array, derived_public_key_bytes: Uint8Array, derivation_id: Uint8Array, symmetric_key_bytes: number, symmetric_key_associated_data: Uint8Array): Uint8Array
+        decrypt_and_hash(
+            encrypted_key_bytes: Uint8Array,
+            derived_public_key_bytes: Uint8Array,
+            derivation_id: Uint8Array,
+            symmetric_key_bytes: number,
+            symmetric_key_associated_data: Uint8Array
+        ): Uint8Array;
     }
 }

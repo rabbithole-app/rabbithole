@@ -1,11 +1,10 @@
 import { OptKeys } from '@core/models';
-import { DirectoryColor as OptDirectoryColor } from '@declarations/journal/journal.did';
+import { FileShare, DirectoryColor as OptDirectoryColor } from '@declarations/journal/journal.did';
 
 export type JournalItemType = 'file' | 'folder';
 export type DirectoryColor = OptKeys<OptDirectoryColor>;
 
 type ItemsCommonAttrs = {
-    encrypted: boolean;
     loading?: boolean;
     disabled?: boolean;
 };
@@ -29,10 +28,12 @@ export type FileInfo = {
     fileSize: bigint;
     parentId?: string;
     path: string;
-    bucketId: string;
+    storageId: string;
     downloadUrl: string;
     thumbnail?: string;
     thumbnailUrl?: string;
+    encrypted: boolean;
+    share?: FileShare;
 };
 
 export type DirectoryExtended = Directory &
@@ -50,7 +51,7 @@ export type DirectoryCreate = {
     parent?: { id: string; path: string };
 };
 
-export type MenuItemAction = 'open' | 'remove' | 'download' | 'share';
+export type MenuItemAction = 'open' | 'remove' | 'download' | 'share' | 'unshare';
 
 export interface FileListIconsConfig {
     namespace: string;

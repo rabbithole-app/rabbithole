@@ -34,22 +34,36 @@ type TransferError =
 type Tokens__1 = record {e8s: nat64;};
 type Tokens = record {e8s: nat64;};
 type Time = int;
+type SharedFileParams = 
+ record {
+   limitDownloads: opt nat;
+   sharedWith: variant {
+                 everyone;
+                 users: vec principal;
+               };
+   timelock: opt Time;
+ };
+type SharedFileExtended = 
+ record {
+   createdAt: Time;
+   downloads: nat;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   journalId: BucketId;
+   limitDownloads: opt nat;
+   name: text;
+   owner: principal;
+   sharedWith: variant {
+                 everyone;
+                 users: vec principal;
+               };
+   storageId: BucketId;
+   thumbnail: opt ID;
+   timelock: opt Time;
+   updatedAt: Time;
+ };
 type Result_9 = 
- variant {
-   err: DirectoryCreateError;
-   ok;
- };
-type Result_8 = 
- variant {
-   err: FileCreateError;
-   ok;
- };
-type Result_7 = 
- variant {
-   err: DirectoryCreateError;
-   ok: Directory;
- };
-type Result_6 = 
  variant {
    err:
     variant {
@@ -59,32 +73,43 @@ type Result_6 =
     };
    ok;
  };
-type Result_5 = 
+type Result_8 = 
  variant {
    err: NotFoundError;
    ok;
  };
-type Result_4 = 
+type Result_7 = 
+ variant {
+   err: variant {
+          notFound;
+          vetKDEncryptedKey;
+        };
+   ok: text;
+ };
+type Result_6 = 
+ variant {
+   err: variant {
+          notFound;
+          vetKDPublicKey;
+        };
+   ok: text;
+ };
+type Result_5 = 
  variant {
    err: DirectoryStateError;
    ok: DirectoryState;
  };
-type Result_3 = 
+type Result_4 = 
  variant {
    err: DirectoryMoveError;
    ok;
  };
-type Result_2 = 
+type Result_3 = 
  variant {
    err: FileMoveError;
    ok;
  };
-type Result_10 = 
- variant {
-   err: FileCreateError;
-   ok: File__1;
- };
-type Result_1 = 
+type Result_2 = 
  variant {
    err: variant {
           alreadyExists: File__1;
@@ -92,6 +117,31 @@ type Result_1 =
           notFound;
         };
    ok: File__1;
+ };
+type Result_13 = 
+ variant {
+   err: FileCreateError;
+   ok: File__1;
+ };
+type Result_12 = 
+ variant {
+   err: DirectoryCreateError;
+   ok;
+ };
+type Result_11 = 
+ variant {
+   err: FileCreateError;
+   ok;
+ };
+type Result_10 = 
+ variant {
+   err: DirectoryCreateError;
+   ok: Directory;
+ };
+type Result_1 = 
+ variant {
+   err: variant {notFound;};
+   ok: FileExtended;
  };
 type Result = 
  variant {
@@ -119,36 +169,38 @@ type NotFoundError = variant {notFound;};
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
-   addFile: (FileCreate) -> (Result_10);
-   app_vetkd_public_key: (vec blob) -> (text);
+   addFile: (FileCreate) -> (Result_13);
    canisterStatus: (principal) ->
     (record {
        freezingThresholdInCycles: nat;
        id: principal;
        status: canister_status_response;
      });
-   checkDirname: (EntryCreate) -> (Result_9) query;
-   checkFilename: (EntryCreate) -> (Result_8) query;
-   createDirectory: (EntryCreate) -> (Result_7);
-   createInvite: (Time) -> (Result_6);
+   checkDirname: (EntryCreate) -> (Result_12) query;
+   checkFilename: (EntryCreate) -> (Result_11) query;
+   createDirectory: (EntryCreate) -> (Result_10);
+   createInvite: (Time) -> (Result_9);
    createPaths: (vec text, vec ID__1, opt ID__1) ->
     (vec record {
            text;
            ID__1;
          });
-   deleteDirectory: (text) -> (Result_5);
-   deleteFile: (text) -> (Result_5);
+   deleteDirectory: (text) -> (Result_8);
+   deleteFile: (text) -> (Result_8);
    deleteStorage: (BucketId__1) -> ();
-   encrypted_symmetric_key: (blob) -> (text);
+   fileEncryptedSymmetricKey: (ID__1, blob) -> (Result_7);
+   fileVetkdPublicKey: (ID__1, vec blob) -> (Result_6);
    getCanisters: () -> (vec Canister) query;
    getChildrenDirs: (opt ID__1) -> (vec Directory) query;
-   getJournal: (opt text) -> (Result_4) query;
+   getJournal: (opt text) -> (Result_5) query;
    getStorage: (nat) -> (opt BucketId__1);
-   listFiles: (opt ID__1) -> (vec File__1) query;
+   listFiles: (opt ID__1) -> (vec FileExtended) query;
    listStorages: () -> (vec BucketId__1) query;
-   moveDirectory: (text, opt text) -> (Result_3);
-   moveFile: (text, opt text) -> (Result_2);
-   renameFile: (text, text) -> (Result_1);
+   moveDirectory: (text, opt text) -> (Result_4);
+   moveFile: (text, opt text) -> (Result_3);
+   renameFile: (text, text) -> (Result_2);
+   shareFile: (ID__1, SharedFileParams) -> (Result_1);
+   sharedWithMe: () -> (vec SharedFileExtended) query;
    showDirectoriesTree: (opt ID__1) -> (text) query;
    startBucketMonitor: (BucketId__1) -> ();
    stopBucketMonitor: (BucketId__1) -> ();
@@ -157,6 +209,7 @@ type JournalBucket =
                                      total: nat;
                                    });
    storageResetWasm: () -> ();
+   unshareFile: (ID__1) -> (Result_1);
    updateDirectory: (DirectoryAction, DirectoryUpdatableFields) -> (Result);
    upgradeStorages: () -> ();
    withdraw: (record {
@@ -179,12 +232,50 @@ type File__1 =
    thumbnail: opt ID;
    updatedAt: Time;
  };
+type FileShare = 
+ record {
+   journalId: BucketId;
+   limitDownloads: opt nat;
+   sharedWith: variant {
+                 everyone;
+                 users: vec principal;
+               };
+   timelock: opt Time;
+ };
 type FileMoveError = 
  variant {
    invalidParams;
    notFound;
    sourceNotFound;
    targetNotFound;
+ };
+type FileExtended__1 = 
+ record {
+   bucketId: BucketId;
+   createdAt: Time;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   share: opt FileShare;
+   thumbnail: opt ID;
+   updatedAt: Time;
+ };
+type FileExtended = 
+ record {
+   bucketId: BucketId;
+   createdAt: Time;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID;
+   name: text;
+   parentId: opt ID;
+   path: text;
+   share: opt FileShare;
+   thumbnail: opt ID;
+   updatedAt: Time;
  };
 type FileCreateError = 
  variant {
@@ -228,7 +319,6 @@ type Directory__1 =
                  };
    color: opt DirectoryColor;
    createdAt: Time;
-   encrypted: bool;
    id: ID;
    name: text;
    parentId: opt ID;
@@ -247,7 +337,7 @@ type DirectoryState =
  record {
    breadcrumbs: vec Directory__1;
    dirs: vec Directory__1;
-   files: vec File;
+   files: vec FileExtended__1;
    id: opt ID;
  };
 type DirectoryMoveError = 
@@ -286,7 +376,6 @@ type Directory =
                  };
    color: opt DirectoryColor;
    createdAt: Time;
-   encrypted: bool;
    id: ID;
    name: text;
    parentId: opt ID;

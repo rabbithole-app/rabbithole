@@ -15,12 +15,17 @@ import Error "mo:base/Error";
 import Prelude "mo:base/Prelude";
 import Debug "mo:base/Debug";
 import IC "mo:base/ExperimentalInternetComputer";
+import Hex "mo:encoding/Hex";
+import VETKD_SYSTEM_API "canister:vetkd_system_api";
+import VetKDTypes "../types/vetkd_types";
+import Blob "mo:base/Blob";
 
 module {
     type ID = Text;
     type Entry = Types.Entry;
     type File = Types.File;
     type FileCreate = Types.FileCreate;
+    type FileExtended = Types.FileExtended;
     type FileCreateError = Types.FileCreateError;
     type CreatePath = Types.CreatePath;
     type Directory = Types.Directory;
@@ -35,15 +40,26 @@ module {
     type DirectoryStateError = Types.DirectoryStateError;
     type NotFoundError = Types.NotFoundError;
     type AlreadyExistsError<T> = Types.AlreadyExistsError<T>;
+    type SharedFile = Types.SharedFile;
+    type SharedFileParams = Types.SharedFileParams;
+    type SharedFileExtended = Types.SharedFileExtended;
+    type VetKDKeyId = VetKDTypes.VetKDKeyId;
+    type VetKDPublicKeyRequest = VetKDTypes.VetKDPublicKeyRequest;
+    type VetKDPublicKeyReply = VetKDTypes.VetKDPublicKeyReply;
+    type VetKDEncryptedKeyRequest = VetKDTypes.VetKDEncryptedKeyRequest;
+    type VetKDEncryptedKeyReply = VetKDTypes.VetKDEncryptedKeyReply;
+    type JournalArgs = { owner : Principal; installer : Principal };
 
     public type Journal = {
         putDirs : Iter.Iter<(Text, Directory)> -> ();
         // putDirs : [(Text, Directory)] -> ();
         putFiles : Iter.Iter<(Text, File)> -> ();
+        putSharedFiles : Iter.Iter<(ID, SharedFile)> -> ();
         // putFiles : [(Text, File)] -> ();
         listDirs : ?ID -> [Directory];
         listDirsExtend : ?ID -> [Directory];
         listFiles : ?ID -> [File];
+        listFilesExtend : ?ID -> [FileExtended];
         checkDirname : EntryCreate -> Result.Result<(), DirectoryCreateError>;
         checkFilename : EntryCreate -> Result.Result<(), FileCreateError>;
         getJournal : (?Text) -> Result.Result<DirectoryState, DirectoryStateError>;
@@ -58,14 +74,20 @@ module {
         showDirectoriesTree : ?ID -> Text;
         createPaths : ([Text], [ID], ?ID) -> async [(Text, ID)];
         putFile : FileCreate -> async Result.Result<File, FileCreateError>;
-        preupgrade : () -> ([(Text, Directory)], [(Text, File)]);
+        shareFile : (ID, SharedFileParams, Principal) -> async Result.Result<FileExtended, { #notFound }>;
+        unshareFile : ID -> async Result.Result<FileExtended, { #notFound }>;
+        sharedWithMe : Principal -> [SharedFileExtended];
+        fileEncryptedSymmetricKey : (Principal, ID, Blob) -> async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }>;
+        fileVetkdPublicKey : (ID, [Blob]) -> async Result.Result<Text, NotFoundError or { #vetKDPublicKey }>;
+        preupgrade : () -> ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]);
         // postupgrade : (([(Text, Directory)], [(Text, File)])) -> ();
     };
 
-    public class New() : Journal {
+    public class New({ owner; installer } : JournalArgs) : Journal {
         let { thash } = Map;
         var directories : Map.Map<Text, Directory> = Map.new<Text, Directory>(thash);
         var files : Map.Map<Text, File> = Map.new<Text, File>(thash);
+        var sharedFiles : Map.Map<ID, SharedFile> = Map.new<ID, SharedFile>(thash);
 
         public func putDirs(iter : Iter.Iter<(Text, Directory)>) : () {
             directories := Map.fromIter<Text, Directory>(iter, thash);
@@ -73,6 +95,10 @@ module {
 
         public func putFiles(iter : Iter.Iter<(Text, File)>) : () {
             files := Map.fromIter<Text, File>(iter, thash);
+        };
+
+        public func putSharedFiles(iter : Iter.Iter<(ID, SharedFile)>) : () {
+            sharedFiles := Map.fromIter<ID, SharedFile>(iter, thash);
         };
 
         // список директорий по id родителя
@@ -115,6 +141,23 @@ module {
         public func listFiles(id : ?ID) : [File] {
             let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
             Iter.toArray(Map.vals(filtered));
+        };
+
+        public func listFilesExtend(id : ?ID) : [FileExtended] {
+            let filtered = Map.filter<Text, File>(files, thash, func(k, v) = v.parentId == id);
+            let extendedMap = Map.map<Text, File, FileExtended>(
+                filtered,
+                thash,
+                func(path, file) = switch (Map.get(sharedFiles, thash, file.id)) {
+                    case (?{ journalId; sharedWith; timelock; limitDownloads }) {
+                        { file and { share = ?{ journalId; sharedWith; timelock; limitDownloads } } };
+                    };
+                    case null {
+                        { file and { share = null } };
+                    };
+                }
+            );
+            Iter.toArray(Map.vals(extendedMap));
         };
 
         func findDir(id : ID) : ?Directory {
@@ -205,7 +248,7 @@ module {
                     (?id, getBreadcrumbs(path));
                 };
             };
-            #ok({ id; dirs = listDirsExtend(id); files = listFiles(id); breadcrumbs });
+            #ok({ id; dirs = listDirsExtend(id); files = listFilesExtend(id); breadcrumbs });
         };
 
         public func createDir({ name; parentId } : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
@@ -655,15 +698,127 @@ module {
             #ok(value);
         };
 
-        public func preupgrade() : ([(Text, Directory)], [(Text, File)]) {
-            (Iter.toArray(Map.entries(directories)), Iter.toArray(Map.entries(files)));
+        public func shareFile(id : ID, fields : SharedFileParams, journalCanisterId : Principal) : async Result.Result<FileExtended, { #notFound }> {
+            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+            let value = label exit : SharedFile {
+                let now = Time.now();
+                let ?(_, v) = Map.find<ID, SharedFile>(sharedFiles, func(k, v) = v.id == id) else {
+                    let value : SharedFile = {
+                        {
+                            id;
+                            journalId = journalCanisterId;
+                            storageId = file.bucketId;
+                            owner;
+                            downloads = 0;
+                            createdAt = now;
+                            updatedAt = now;
+                        } and fields
+                    };
+                    break exit value;
+                };
+                { { v with fields } with updatedAt = now };
+            };
+            let rabbithole : actor { shareFile : shared (ID, SharedFile) -> async () } = actor (Principal.toText(installer));
+            await rabbithole.shareFile(id, value);
+            Map.set(sharedFiles, thash, id, value);
+            let share = { journalId = value.journalId; sharedWith = value.sharedWith; timelock = value.timelock; limitDownloads = value.limitDownloads };
+            #ok({ file and { share = ?share } });
+        };
+
+        public func unshareFile(id : ID) : async Result.Result<FileExtended, { #notFound }> {
+            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+            let rabbithole : actor { unshareFile : shared ID -> async () } = actor (Principal.toText(installer));
+            await rabbithole.unshareFile(id);
+            Map.delete(sharedFiles, thash, file.id);
+            #ok({ file and { share = null } });
+        };
+
+        public func sharedWithMe(caller : Principal) : [SharedFileExtended] {
+            let filtered = Map.filter<ID, SharedFile>(
+                sharedFiles,
+                thash,
+                func(k, v) = switch (v.sharedWith) {
+                    case (#users(users)) Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal);
+                    case _ false;
+                }
+            );
+            let extendedMap = Map.mapFilter<ID, SharedFile, SharedFileExtended>(
+                filtered,
+                thash,
+                func(id, file) = switch (findFileEntry(id)) {
+                    case (?(id, { name; fileSize; thumbnail; encrypted })) {
+                        ?{ file and { name; fileSize; thumbnail; encrypted } };
+                    };
+                    case null null;
+                }
+            );
+            Iter.toArray(Map.vals(extendedMap));
+        };
+
+        public func fileEncryptedSymmetricKey(caller : Principal, id : ID, tpk : Blob) : async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }> {
+            assert not Principal.isAnonymous(caller);
+            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+            validateCaller(caller, id);
+            let request : VetKDEncryptedKeyRequest = {
+                encryption_public_key = tpk;
+                key_id = bls12_381_test_key_1();
+                derivation_id = Principal.toBlob(owner);
+                public_key_derivation_path = [Text.encodeUtf8("symmetric_key" # id)];
+            };
+            let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else return #err(#vetKDEncryptedKey);
+            #ok(Hex.encode(Blob.toArray(response.encrypted_key)));
+        };
+
+        func validateCaller(caller : Principal, id : ID) {
+            switch (Map.get(sharedFiles, thash, id)) {
+                case (?v) {
+                    switch (v.sharedWith) {
+                        case (#everyone) {};
+                        case (#users(users)) assert Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal);
+                    };
+                };
+                case null assert Principal.equal(caller, owner);
+            };
+        };
+
+        public func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Result.Result<Text, NotFoundError or { #vetKDPublicKey }> {
+            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+            let request : VetKDPublicKeyRequest = {
+                canister_id = null;
+                derivation_path = derivationPath;
+                key_id = bls12_381_test_key_1();
+            };
+
+            let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else return #err(#vetKDPublicKey);
+            #ok(Hex.encode(Blob.toArray(response.public_key)));
+        };
+
+        func encrypted_symmetric_key(request : VetKDEncryptedKeyRequest) : async Blob {
+            let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else throw Error.reject("call to vetkd_encrypted_key failed");
+            response.encrypted_key;
+        };
+
+        func bls12_381_test_key_1() : VetKDKeyId {
+            {
+                curve = #bls12_381;
+                name = "test_key_1";
+            };
+        };
+
+        public func preupgrade() : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) {
+            (
+                Iter.toArray(Map.entries(directories)),
+                Iter.toArray(Map.entries(files)),
+                Iter.toArray(Map.entries(sharedFiles))
+            );
         };
     };
 
-    public func fromIter(dirsIter : Iter.Iter<(Text, Directory)>, filesIter : Iter.Iter<(Text, File)>) : Journal {
-        let j = New();
+    public func fromIter(args : JournalArgs, dirsIter : Iter.Iter<(Text, Directory)>, filesIter : Iter.Iter<(Text, File)>, sharedFilesIter : Iter.Iter<(ID, SharedFile)>) : Journal {
+        let j = New(args);
         j.putDirs(dirsIter);
         j.putFiles(filesIter);
+        j.putSharedFiles(sharedFilesIter);
         j;
     };
 };

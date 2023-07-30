@@ -2,6 +2,9 @@
 @use 'variables';
 
 .context-menu {
+    &.mat-mdc-menu-panel.mat-mdc-menu-panel {
+        min-width: 180px;
+    }
     .warn {
         &,
         fa-icon {

@@ -1,0 +1,39 @@
+<ng-container *transloco="let t; read: 'shared'">
+    <div mat-card class="mat-typography">
+        <h1>{{ t('title') }}</h1>
+    </div>
+    <!-- <mat-card class="user-card" *rxFor="let item of items(); trackBy: itemTrackBy">
+            <mat-card-header>
+                <app-user-card [user]="item.profile"></app-user-card>
+            </mat-card-header>
+            <mat-card-content>
+                <app-grid-list [items]="item.files" [showItemBadge]="false" (openContext)="handleContextMenu($event)"></app-grid-list>
+            </mat-card-content>
+        </mat-card> -->
+    <mat-card *rxFor="let item of items(); trackBy: itemTrackBy" appearance="outlined">
+        <mat-card-header>
+            <app-avatar mat-card-avatar [size]="40" [url]="item.user.avatarUrl ?? null"></app-avatar>
+            <mat-card-title>{{ item.user.displayName || item.user.username }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <app-shared-grid-list [items]="item.items" [user]="item.user"></app-shared-grid-list>
+        </mat-card-content>
+    </mat-card>
+    <!-- <ng-container *rxLet="contextMenuData(); let data">
+        <button #itemsTrigger [matMenuTriggerFor]="itemsMenu" [matMenuTriggerData]="data" [matMenuTriggerRestoreFocus]="false" aria-hidden="true"></button>
+    </ng-container>
+    <mat-menu #itemsMenu="matMenu" hasBackdrop="false" class="context-menu">
+        <ng-template
+            matMenuContent
+            let-items="items"
+            let-everyFile="everyFile"
+            let-everyFolder="everyFolder"
+            let-someFile="someFile"
+            let-someFolder="someFolder">
+            <button *rxIf="everyFile" mat-menu-item>
+                <mat-icon svgIcon="far:download"></mat-icon>
+                <span>{{ t('actions.download', { count: items?.length }) }}</span>
+            </button>
+        </ng-template>
+    </mat-menu> -->
+</ng-container>

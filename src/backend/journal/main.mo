@@ -74,7 +74,9 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     type CreatePath = JournalTypes.CreatePath;
     type NotFoundError = JournalTypes.NotFoundError;
     type AlreadyExistsError<T> = JournalTypes.AlreadyExistsError<T>;
-
+    type SharedFile = JournalTypes.SharedFile;
+    type SharedFileParams = JournalTypes.SharedFileParams;
+    type FileExtended = JournalTypes.FileExtended;
     type VetKDKeyId = VetKDTypes.VetKDKeyId;
     type VetKDPublicKeyRequest = VetKDTypes.VetKDPublicKeyRequest;
     type VetKDPublicKeyReply = VetKDTypes.VetKDPublicKeyReply;
@@ -106,7 +108,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     //     BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
     //     Text.equal
     // );
-    var journal = Journal.New();
+    var journal = Journal.New({ owner; installer });
 
     public shared ({ caller }) func createDirectory(directory : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
         assert validateCaller(caller);
@@ -187,14 +189,14 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         journal.listDirsExtend(id);
     };
 
-    public query ({ caller }) func listFiles(id : ?ID) : async [File] {
+    public query ({ caller }) func listFiles(id : ?ID) : async [FileExtended] {
         assert validateCaller(caller);
-        journal.listFiles(id);
+        journal.listFilesExtend(id);
     };
 
     // stable var stableDirectories : [(Directory, Text)] = [];
     // stable var stableFiles : [(File, Text)] = [];
-    stable var stableJournal : ([(Text, Directory)], [(Text, File)]) = ([], []);
+    stable var stableJournal : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) = ([], [], []);
     // stable var stableCanisters : [Canister] = [];
 
     system func preupgrade() {
@@ -214,7 +216,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
         let dirsIter = stableJournal.0.vals();
         let filesIter = stableJournal.1.vals();
-        journal := Journal.fromIter(dirsIter, filesIter);
+        let sharedFilesIter = stableJournal.2.vals();
+        journal := Journal.fromIter({ owner; installer }, dirsIter, filesIter, sharedFilesIter);
 
         // directories := BiMap.fromIter<Directory, Text>(
         //     stableDirectories.vals(),
@@ -792,33 +795,32 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     /*                                 Encryption                                 */
     /* -------------------------------------------------------------------------- */
 
-    public shared ({ caller }) func app_vetkd_public_key(derivationPath : [Blob]) : async Text {
-        let request : VetKDPublicKeyRequest = {
-            canister_id = null;
-            derivation_path = derivationPath;
-            key_id = bls12_381_test_key_1(); // file id
-        };
-
-        let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else throw Error.reject("call to vetkd_public_key failed");
-        Hex.encode(Blob.toArray(response.public_key));
+    public shared ({ caller }) func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Result.Result<Text, NotFoundError or { #vetKDPublicKey }> {
+        await journal.fileVetkdPublicKey(id, derivationPath);
     };
 
-    public shared ({ caller }) func encrypted_symmetric_key(encryptionPublicKey : Blob) : async Text {
-        let request : VetKDEncryptedKeyRequest = {
-            encryption_public_key = encryptionPublicKey;
-            key_id = bls12_381_test_key_1();
-            derivation_id = Principal.toBlob(caller);
-            public_key_derivation_path = [Text.encodeUtf8("symmetric_key")];
-        };
-
-        let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else throw Error.reject("call to vetkd_encrypted_key failed");
-        Hex.encode(Blob.toArray(response.encrypted_key));
+    public shared ({ caller }) func fileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }> {
+        await journal.fileEncryptedSymmetricKey(caller, id, tpk);
     };
 
-    func bls12_381_test_key_1() : VetKDKeyId {
-        {
-            curve = #bls12_381;
-            name = "test_key_1";
-        };
+    /* -------------------------------------------------------------------------- */
+    /*                                   Sharing                                  */
+    /* -------------------------------------------------------------------------- */
+
+    type SharedFileExtended = JournalTypes.SharedFileExtended;
+    public shared ({ caller }) func shareFile(id : ID, fields : SharedFileParams) : async Result.Result<FileExtended, { #notFound }> {
+        assert validateCaller(caller);
+        let self = Principal.fromActor(this);
+        await journal.shareFile(id, fields, self);
+    };
+
+    public shared ({ caller }) func unshareFile(id : ID) : async Result.Result<FileExtended, { #notFound }> {
+        assert validateCaller(caller);
+        await journal.unshareFile(id);
+    };
+
+    public query ({ caller }) func sharedWithMe() : async [SharedFileExtended] {
+        assert not Principal.isAnonymous(caller);
+        journal.sharedWithMe(caller);
     };
 };

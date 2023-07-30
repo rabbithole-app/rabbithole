@@ -16,7 +16,6 @@ module {
         updatedAt : Time.Time;
         parentId : ?ID;
         path : Text;
-        encrypted : Bool;
     };
     public type DirectoryColor = { #blue; #yellow; #orange; #purple; #pink; #gray; #green };
     public type Directory = CommonAttributes and {
@@ -34,9 +33,35 @@ module {
     public type Thumbnail = {
         thumbnail : ?ID;
     };
-    public type File = CommonAttributes and Thumbnail and {
+    type FileAttributes = {
         fileSize : Nat;
         bucketId : BucketId;
+        encrypted : Bool;
+    };
+    public type File = CommonAttributes and Thumbnail and FileAttributes;
+    public type SharedFileParams = {
+        sharedWith : { #everyone; #users : [Principal] };
+        timelock : ?Time.Time;
+        limitDownloads : ?Nat;
+    };
+    public type SharedFile = {
+        id : ID;
+        journalId : BucketId;
+        storageId : BucketId;
+        owner : Principal;
+        downloads : Nat;
+        createdAt : Time.Time;
+        updatedAt : Time.Time;
+    } and SharedFileParams;
+    public type SharedFileExtended = SharedFile and Thumbnail and {
+        name : Text;
+        fileSize : Nat;
+        encrypted : Bool;
+    };
+    type FileShare = SharedFileParams and { journalId : BucketId };
+    // file with share details
+    public type FileExtended = File and {
+        share : ?FileShare;
     };
     public type Entry = Directory or File;
     public type EntryCreate = {
@@ -53,7 +78,7 @@ module {
     public type DirectoryState = {
         id : ?ID;
         dirs : [Directory];
-        files : [File];
+        files : [FileExtended];
         breadcrumbs : [Directory];
     };
     public type DirectoryStateError = { #notFound };
@@ -71,10 +96,7 @@ module {
         id : ID;
         name : Text;
         parentId : ?ID;
-        fileSize : Nat;
-        bucketId : BucketId;
-        encrypted : Bool;
-    } and Thumbnail;
+    } and Thumbnail and FileAttributes;
     public type Canister = {
         canisterId : BucketId;
         owner : Principal;

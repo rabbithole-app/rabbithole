@@ -2,9 +2,9 @@ import { InjectionToken } from '@angular/core';
 import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { RxState } from '@rx-angular/state';
+import { selectSlice } from '@rx-angular/state/selections';
 import { filter, merge, switchMap } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { selectSlice } from '@rx-angular/state/selections';
 
 import { createActor } from '@core/utils';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
@@ -29,7 +29,10 @@ export const authStateFactory = () => {
     const state = new RxState<AuthState>();
     state
         .select('identity')
-        .pipe(map(identity => identity.getPrincipal().toText()), distinctUntilChanged())
+        .pipe(
+            map(identity => identity.getPrincipal().toText()),
+            distinctUntilChanged()
+        )
         .subscribe(principalId => console.info(`Principal ID: ${principalId}`));
     const init$ = state.select(selectSlice(['client', 'isAuthenticated'])).pipe(
         map(({ client, isAuthenticated }) => ({

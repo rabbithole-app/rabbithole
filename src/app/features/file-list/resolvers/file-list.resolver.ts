@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
@@ -12,7 +12,8 @@ import { DirectoryState, DirectoryStateError } from '@declarations/journal/journ
 import { JournalItem } from '../models';
 import { toDirectoryExtended, toFileExtended } from '../utils';
 
-export const fileListResolver = (route: ActivatedRouteSnapshot) => {
+export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+    const fallbackUrl = state.url.split('/').slice(0, 2).join('/');
     const router = inject(Router);
     const translocoService = inject(TranslocoService);
     const notificationService = inject(NotificationService);
@@ -50,7 +51,7 @@ export const fileListResolver = (route: ActivatedRouteSnapshot) => {
                     catchError(err => {
                         console.error(err);
                         notificationService.error(err.message);
-                        router.navigate(['/drive']);
+                        router.navigate([fallbackUrl]);
                         return EMPTY;
                     })
                 )

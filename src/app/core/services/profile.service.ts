@@ -9,7 +9,7 @@ import { defer, EMPTY, iif, merge, Observable, of, Subject } from 'rxjs';
 import { catchError, combineLatestWith, filter, finalize, first, map, startWith, switchMap, tap } from 'rxjs/operators';
 
 import { CanisterResult } from '@core/models';
-import { Profile, ProfileItem, ProfileUpdate } from '@core/models/profile';
+import { ProfileItem, ProfileUpdate } from '@core/models/profile';
 import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
 import { ProfileInfo, UsernameError } from '@declarations/rabbithole/rabbithole.did';
 import { NotificationService } from './notification.service';
@@ -70,7 +70,7 @@ export class ProfileService extends RxState<State> {
                 first(),
                 tap(() => this.listLoading.set(true)),
                 switchMap(actor => actor.listProfiles()),
-                map(list => list.map(profile => ({ ...profile, avatarUrl: fromNullable(profile.avatarUrl) }))),
+                map(list => list.map(profile => ({ ...profile, principal: profile.principal.toText(), avatarUrl: fromNullable(profile.avatarUrl) }))),
                 finalize(() => this.listLoading.set(false))
             )
             .subscribe(users => this.list.set(users));

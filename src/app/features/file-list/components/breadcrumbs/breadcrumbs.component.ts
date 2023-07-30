@@ -1,15 +1,15 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, Input, signal, Signal, ViewChild, WritableSignal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
-import { compact, dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
+import { dropRight, isEmpty, isNull, isString, isUndefined, last } from 'lodash';
 import { DndModule } from 'ngx-drag-drop';
 import { filter, map, pairwise, withLatestFrom } from 'rxjs/operators';
 
@@ -28,6 +28,8 @@ import { FileListService } from '@features/file-list/services/file-list.service'
     standalone: true
 })
 export class BreadcrumbsComponent {
+    #translocoService = inject(TranslocoService);
+    @Input() rootLabel = this.#translocoService.translate('navigation.my-files');
     @ViewChild('activeMenu', { read: ElementRef }) activeMenuRef!: ElementRef;
     @ViewChild('currentMenuTrigger', { read: MatMenuTrigger }) contextMenuTrigger!: MatMenuTrigger;
     @ViewChild('backButton', { read: ElementRef }) backButton!: ElementRef;
@@ -37,6 +39,10 @@ export class BreadcrumbsComponent {
         const breadcrumbs = this.fileListService.breadcrumbs();
         return breadcrumbs.length ? (last(breadcrumbs) as DirectoryExtended) : null;
     });
+    rootUrl: Signal<string> = computed(() => {
+        const length = this.fileListService.breadcrumbs().length;
+        return Array.from({ length }).fill('..').join('/');
+    });
     dragEnterCount: WritableSignal<number> = signal(0);
     entered: WritableSignal<string | null> = signal(null);
     backReceiving: Signal<boolean> = computed(() => {
@@ -44,7 +50,6 @@ export class BreadcrumbsComponent {
         const last = this.last();
         return entered === last?.parentId || (isUndefined(last?.parentId) && entered === 'root');
     });
-    backlink: Signal<string> = computed(() => this.getUrl(last(this.items())?.path ?? ''));
     contextMenuService = inject(ContextMenuService);
     readonly fileListService = inject(FileListService);
     private journalService = inject(JournalService);
@@ -60,7 +65,6 @@ export class BreadcrumbsComponent {
             { allowSignalWrites: true }
         );
         addFASvgIcons(['angle-left', 'angle-right', 'arrow-left', 'arrow-right', 'ellipsis-vertical'], 'far');
-
         // когда происходит изменение хлебных крошек (удалили родительскую директорию через контекстное меню),
         // сравниваем текущий путь и путь последней крошки, если не совпадает, то перенаправляем до последней крошки
         toObservable(this.last)
@@ -80,12 +84,8 @@ export class BreadcrumbsComponent {
                 takeUntilDestroyed()
             )
             .subscribe(([path]) => {
-                this.router.navigate([this.getUrl(path ?? '')]);
+                this.router.navigate([this.rootUrl(), path]);
             });
-    }
-
-    getUrl(path: string): string {
-        return compact(['/drive'].concat(path.split('/'))).join('/');
     }
 
     itemTrackBy(index: number, item: DirectoryExtended) {

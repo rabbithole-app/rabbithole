@@ -21,7 +21,7 @@ export const idlFactory = ({ IDL }) => {
         owner: IDL.Principal,
         cycles: IDL.Nat
     });
-    const ID__1 = IDL.Text;
+    const ID__2 = IDL.Text;
     const BlockIndex = IDL.Nat64;
     const NotifyCreateCanisterArg = IDL.Record({
         controller: IDL.Principal,
@@ -38,7 +38,7 @@ export const idlFactory = ({ IDL }) => {
         createCanister: Tokens
     });
     const Invoice = IDL.Record({
-        id: ID__1,
+        id: ID__2,
         expiredAt: Time,
         owner: IDL.Principal,
         createdAt: Time,
@@ -105,7 +105,7 @@ export const idlFactory = ({ IDL }) => {
         err: IDL.Variant({ notFound: IDL.Null })
     });
     const Invite = IDL.Record({
-        id: ID__1,
+        id: ID__2,
         status: IDL.Variant({
             active: IDL.Null,
             expired: IDL.Null,
@@ -117,7 +117,7 @@ export const idlFactory = ({ IDL }) => {
         cycles: IDL.Nat,
         canisterId: IDL.Principal
     });
-    const BucketId = IDL.Principal;
+    const BucketId__1 = IDL.Principal;
     const PublicKey = IDL.Text;
     const EncryptedKey = IDL.Text;
     const ProfileInfo = IDL.Record({
@@ -136,11 +136,33 @@ export const idlFactory = ({ IDL }) => {
     const Profile = IDL.Record({
         principal: IDL.Principal,
         username: IDL.Text,
+        displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
     });
     const ProfileUpdate = IDL.Record({
         displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
+    });
+    const ID__1 = IDL.Text;
+    const BucketId = IDL.Principal;
+    const SharedFile = IDL.Record({
+        id: ID__1,
+        owner: IDL.Principal,
+        createdAt: Time,
+        journalId: BucketId,
+        limitDownloads: IDL.Opt(IDL.Nat),
+        storageId: BucketId,
+        sharedWith: IDL.Variant({
+            everyone: IDL.Null,
+            users: IDL.Vec(IDL.Principal)
+        }),
+        updatedAt: Time,
+        downloads: IDL.Nat,
+        timelock: IDL.Opt(Time)
+    });
+    const UserShare = IDL.Record({
+        bucketId: IDL.Principal,
+        profile: Profile
     });
     return IDL.Service({
         accountBalance: IDL.Func([], [Tokens], []),
@@ -159,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
         deleteProfile: IDL.Func([], [Result_1], []),
         getInvites: IDL.Func([], [IDL.Vec(Invite)], ['query']),
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
-        getJournalBucket: IDL.Func([], [IDL.Opt(BucketId)], []),
+        getJournalBucket: IDL.Func([], [IDL.Opt(BucketId__1)], []),
         getKey: IDL.Func([PublicKey], [EncryptedKey], ['query']),
         getProfile: IDL.Func([], [IDL.Opt(ProfileInfo)], ['query']),
         getRegistrationMode: IDL.Func([], [RegistrationMode], ['query']),
@@ -179,11 +201,14 @@ export const idlFactory = ({ IDL }) => {
             [],
             []
         ),
-        listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId))], []),
+        listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId__1))], []),
         listProfiles: IDL.Func([], [IDL.Vec(Profile)], ['query']),
         putProfile: IDL.Func([ProfileUpdate], [Result_1], []),
         redeemInvite: IDL.Func([ID], [Result], []),
         setRegistrationMode: IDL.Func([RegistrationMode], [], []),
+        shareFile: IDL.Func([ID, SharedFile], [], []),
+        sharedWithMe: IDL.Func([], [IDL.Vec(UserShare)], ['query']),
+        unshareFile: IDL.Func([ID], [], []),
         upgradeJournalBuckets: IDL.Func([], [], [])
     });
 };

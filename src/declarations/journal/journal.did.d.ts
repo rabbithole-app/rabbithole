@@ -22,7 +22,6 @@ export interface Directory {
     path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
-    encrypted: boolean;
     children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
@@ -33,7 +32,7 @@ export type DirectoryCreateError = { illegalCharacters: null } | { alreadyExists
 export type DirectoryMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
 export interface DirectoryState {
     id: [] | [ID];
-    files: Array<File>;
+    files: Array<FileExtended__1>;
     dirs: Array<Directory__1>;
     breadcrumbs: Array<Directory__1>;
 }
@@ -50,7 +49,6 @@ export interface Directory__1 {
     path: string;
     color: [] | [DirectoryColor];
     size: [] | [bigint];
-    encrypted: boolean;
     children: [] | [[Array<Directory__1>, Array<File>]];
     updatedAt: Time;
     parentId: [] | [ID];
@@ -81,7 +79,39 @@ export interface FileCreate {
     parentId: [] | [ID];
 }
 export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
+export interface FileExtended {
+    id: ID;
+    thumbnail: [] | [ID];
+    name: string;
+    createdAt: Time;
+    path: string;
+    bucketId: BucketId;
+    fileSize: bigint;
+    encrypted: boolean;
+    share: [] | [FileShare];
+    updatedAt: Time;
+    parentId: [] | [ID];
+}
+export interface FileExtended__1 {
+    id: ID;
+    thumbnail: [] | [ID];
+    name: string;
+    createdAt: Time;
+    path: string;
+    bucketId: BucketId;
+    fileSize: bigint;
+    encrypted: boolean;
+    share: [] | [FileShare];
+    updatedAt: Time;
+    parentId: [] | [ID];
+}
 export type FileMoveError = { sourceNotFound: null } | { notFound: null } | { targetNotFound: null } | { invalidParams: null };
+export interface FileShare {
+    journalId: BucketId;
+    limitDownloads: [] | [bigint];
+    sharedWith: { everyone: null } | { users: Array<Principal> };
+    timelock: [] | [Time];
+}
 export interface File__1 {
     id: ID;
     thumbnail: [] | [ID];
@@ -98,8 +128,7 @@ export type ID = string;
 export type ID__1 = string;
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
-    addFile: ActorMethod<[FileCreate], Result_10>;
-    app_vetkd_public_key: ActorMethod<[Array<Uint8Array | number[]>], string>;
+    addFile: ActorMethod<[FileCreate], Result_13>;
     canisterStatus: ActorMethod<
         [Principal],
         {
@@ -108,29 +137,33 @@ export interface JournalBucket {
             freezingThresholdInCycles: bigint;
         }
     >;
-    checkDirname: ActorMethod<[EntryCreate], Result_9>;
-    checkFilename: ActorMethod<[EntryCreate], Result_8>;
-    createDirectory: ActorMethod<[EntryCreate], Result_7>;
-    createInvite: ActorMethod<[Time], Result_6>;
+    checkDirname: ActorMethod<[EntryCreate], Result_12>;
+    checkFilename: ActorMethod<[EntryCreate], Result_11>;
+    createDirectory: ActorMethod<[EntryCreate], Result_10>;
+    createInvite: ActorMethod<[Time], Result_9>;
     createPaths: ActorMethod<[Array<string>, Array<ID__1>, [] | [ID__1]], Array<[string, ID__1]>>;
-    deleteDirectory: ActorMethod<[string], Result_5>;
-    deleteFile: ActorMethod<[string], Result_5>;
+    deleteDirectory: ActorMethod<[string], Result_8>;
+    deleteFile: ActorMethod<[string], Result_8>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
-    encrypted_symmetric_key: ActorMethod<[Uint8Array | number[]], string>;
+    fileEncryptedSymmetricKey: ActorMethod<[ID__1, Uint8Array | number[]], Result_7>;
+    fileVetkdPublicKey: ActorMethod<[ID__1, Array<Uint8Array | number[]>], Result_6>;
     getCanisters: ActorMethod<[], Array<Canister>>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
-    getJournal: ActorMethod<[[] | [string]], Result_4>;
+    getJournal: ActorMethod<[[] | [string]], Result_5>;
     getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
-    listFiles: ActorMethod<[[] | [ID__1]], Array<File__1>>;
+    listFiles: ActorMethod<[[] | [ID__1]], Array<FileExtended>>;
     listStorages: ActorMethod<[], Array<BucketId__1>>;
-    moveDirectory: ActorMethod<[string, [] | [string]], Result_3>;
-    moveFile: ActorMethod<[string, [] | [string]], Result_2>;
-    renameFile: ActorMethod<[string, string], Result_1>;
+    moveDirectory: ActorMethod<[string, [] | [string]], Result_4>;
+    moveFile: ActorMethod<[string, [] | [string]], Result_3>;
+    renameFile: ActorMethod<[string, string], Result_2>;
+    shareFile: ActorMethod<[ID__1, SharedFileParams], Result_1>;
+    sharedWithMe: ActorMethod<[], Array<SharedFileExtended>>;
     showDirectoriesTree: ActorMethod<[[] | [ID__1]], string>;
     startBucketMonitor: ActorMethod<[BucketId__1], undefined>;
     stopBucketMonitor: ActorMethod<[BucketId__1], undefined>;
     storageLoadWasm: ActorMethod<[Uint8Array | number[]], { total: bigint; chunks: bigint }>;
     storageResetWasm: ActorMethod<[], undefined>;
+    unshareFile: ActorMethod<[ID__1], Result_1>;
     updateDirectory: ActorMethod<[DirectoryAction, DirectoryUpdatableFields], Result>;
     upgradeStorages: ActorMethod<[], undefined>;
     withdraw: ActorMethod<[{ to: [] | [AccountIdentifier]; amount: Tokens }], TransferResult>;
@@ -145,24 +178,48 @@ export type NotifyError =
     | { Processing: null }
     | { TransactionTooOld: BlockIndex__1 };
 export type Result = { ok: Directory } | { err: { alreadyExists: Directory } | { notFound: null } };
-export type Result_1 =
+export type Result_1 = { ok: FileExtended } | { err: { notFound: null } };
+export type Result_10 = { ok: Directory } | { err: DirectoryCreateError };
+export type Result_11 = { ok: null } | { err: FileCreateError };
+export type Result_12 = { ok: null } | { err: DirectoryCreateError };
+export type Result_13 = { ok: File__1 } | { err: FileCreateError };
+export type Result_2 =
     | { ok: File__1 }
     | {
           err: { illegalCharacters: null } | { alreadyExists: File__1 } | { notFound: null };
       };
-export type Result_10 = { ok: File__1 } | { err: FileCreateError };
-export type Result_2 = { ok: null } | { err: FileMoveError };
-export type Result_3 = { ok: null } | { err: DirectoryMoveError };
-export type Result_4 = { ok: DirectoryState } | { err: DirectoryStateError };
-export type Result_5 = { ok: null } | { err: NotFoundError };
-export type Result_6 =
+export type Result_3 = { ok: null } | { err: FileMoveError };
+export type Result_4 = { ok: null } | { err: DirectoryMoveError };
+export type Result_5 = { ok: DirectoryState } | { err: DirectoryStateError };
+export type Result_6 = { ok: string } | { err: { notFound: null } | { vetKDPublicKey: null } };
+export type Result_7 = { ok: string } | { err: { vetKDEncryptedKey: null } | { notFound: null } };
+export type Result_8 = { ok: null } | { err: NotFoundError };
+export type Result_9 =
     | { ok: null }
     | {
           err: { notify: NotifyError } | { insufficientFunds: { balance: Tokens__1 } } | { transfer: TransferError };
       };
-export type Result_7 = { ok: Directory } | { err: DirectoryCreateError };
-export type Result_8 = { ok: null } | { err: FileCreateError };
-export type Result_9 = { ok: null } | { err: DirectoryCreateError };
+export interface SharedFileExtended {
+    id: ID;
+    thumbnail: [] | [ID];
+    owner: Principal;
+    name: string;
+    createdAt: Time;
+    journalId: BucketId;
+    limitDownloads: [] | [bigint];
+    fileSize: bigint;
+    storageId: BucketId;
+    encrypted: boolean;
+    sharedWith: { everyone: null } | { users: Array<Principal> };
+    updatedAt: Time;
+    downloads: bigint;
+    timelock: [] | [Time];
+}
+export interface SharedFileParams {
+    limitDownloads: [] | [bigint];
+    sharedWith: { everyone: null } | { users: Array<Principal> };
+    timelock: [] | [Time];
+}
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;

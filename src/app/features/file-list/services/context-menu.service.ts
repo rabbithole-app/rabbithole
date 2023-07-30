@@ -13,7 +13,7 @@ interface State {
     origin: ElementRef;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ContextMenuService extends RxState<State> {
     private positionBuilder = inject(OverlayPositionBuilder);
     static openedMenu: MatMenuTrigger | null;

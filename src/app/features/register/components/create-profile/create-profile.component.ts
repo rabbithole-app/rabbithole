@@ -14,7 +14,7 @@ import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
 import { AvatarEditorComponent } from '@core/components/avatar-editor/avatar-editor.component';
 import { addFASvgIcons } from '@core/utils';
 import { UniqueUsernameValidator } from '@core/validators';
-import { RegisterService, ProfileStatus } from '@features/register/services/register.service';
+import { ProfileStatus, RegisterService } from '@features/register/services/register.service';
 
 @Component({
     selector: 'app-create-profile',

@@ -1,6 +1,6 @@
-<div class="grid-container" [class.dragging]="dragging" [appAnimateCssGrid]="{ duration: 250 }" [appAnimateCssGridDisabled]="animationDisabled">
+<div class="grid-container" [class.dragging]="dragging()" [appAnimateCssGrid]="{ duration: 250 }" [appAnimateCssGridDisabled]="animationDisabled()">
     <app-grid-list-item
-        *rxFor="let item of items$ | push; trackBy: itemTrackBy; let index = index"
+        *rxFor="let item of items(); trackBy: itemTrackBy; let index = index"
         dndDropzone
         [id]="item.id"
         (contextmenu)="handleContext($event, item)"
@@ -8,17 +8,17 @@
         (click)="handleItemClick($event, item.id)"
         (mousedown)="$event.stopPropagation()"
         [dndDraggable]="item.id"
-        [dndDisableIf]="item.disabled ?? false"
+        [dndDisableIf]="isDisabled(item)"
         [dndDisableDropIf]="selected.isSelected(item.id) || item.type === 'file'"
-        [class.cdk-drop-list-dragging]="activeDirectory === item.id"
+        [class.cdk-drop-list-dragging]="activeDirectory() === item.id"
         dndDraggingSourceClass="cdk-drag-placeholder"
         (dndStart)="handleStart($event, item.id)"
         (dndEnd)="handleEnd($event)"
         (dndDrop)="handleDrop($event, $any(item))"
         [data]="item"
-        [disabled]="item.disabled ?? false"
-        [loading]="item.loading ?? false"
-        [active]="activeDirectory === item.id"
+        [disabled]="isDisabled(item)"
+        [loading]="isDisabled(item)"
+        [active]="activeDirectory() === item.id"
         [selected]="selected.isSelected(item.id)"
         (dragleave)="handleDragleave($event)"
         (dragenter)="handleDragenter($event)"
@@ -26,4 +26,4 @@
     </app-grid-list-item>
 </div>
 <div #dragPreviewGhost class="drag-preview-ghost"></div>
-<app-drag-preview #dragPreview [selected]="dragSelected$ | push" *rxIf="dragging"></app-drag-preview>
+<app-drag-preview #dragPreview [selected]="dragSelected$ | push" *rxIf="dragging()"></app-drag-preview>

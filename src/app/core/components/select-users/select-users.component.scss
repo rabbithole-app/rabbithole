@@ -2,26 +2,3 @@
     width: 100%;
     max-width: 400px;
 }
-
-.user-option {
-    display: grid;
-    grid-template-areas: 'avatar username' 'avatar principal';
-    grid-column-gap: 0.75rem;
-    align-items: center;
-
-    app-avatar {
-        grid-area: avatar;
-    }
-    .username {
-        grid-area: username;
-    }
-    .principal {
-        grid-area: principal;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        opacity: .65;
-        font-size: .875rem;
-        line-height: initial;
-    }
-}

@@ -11,7 +11,6 @@ import {
     EventEmitter,
     HostBinding,
     HostListener,
-    Inject,
     Input,
     OnDestroy,
     Output,
@@ -24,15 +23,14 @@ import {
     inject,
     signal
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { RxState } from '@rx-angular/state';
 import { RxEffects } from '@rx-angular/state/effects';
-import { selectSlice } from '@rx-angular/state/selections';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNil, isNumber, isUndefined, last, nth, pick } from 'lodash';
+import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNumber, isUndefined, last, nth, pick } from 'lodash';
 import { DndDropEvent, DndModule } from 'ngx-drag-drop';
 import {
     BehaviorSubject,
@@ -40,6 +38,7 @@ import {
     Observable,
     Subject,
     animationFrameScheduler,
+    defer,
     fromEvent,
     iif,
     merge,
@@ -49,7 +48,7 @@ import {
     switchMap,
     timer
 } from 'rxjs';
-import { filter, map, pluck, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, pluck, repeat, takeUntil, tap } from 'rxjs/operators';
 
 import { AnimateCssGridDirective } from '@core/directives';
 import { OverlayService } from '@core/services';
@@ -64,19 +63,6 @@ import { addSvgIcons } from '@features/file-list/utils';
 const GRID_CELL_WIDTH = 102;
 const GRID_CELL_COLUMN_GAP = 16;
 
-interface State {
-    items: JournalItem[];
-    animationDisabled: boolean;
-    columns: number;
-    chunkedGridItems: Array<JournalItem['id'] | null>[];
-    activeDirectory: JournalItem['id'] | null;
-    drag: {
-        dragging: boolean;
-        startPosition: Point;
-        movePosition: Point;
-    };
-}
-
 @Component({
     selector: 'app-grid-list',
     templateUrl: './grid-list.component.html',
@@ -86,12 +72,10 @@ interface State {
     imports: [RxPush, RxFor, RxIf, GridListItemComponent, DragPreviewComponent, AnimateCssGridDirective, DndModule],
     standalone: true
 })
-export class GridListComponent implements OnDestroy, AfterViewInit {
-    @Input() set items(items: JournalItem[] | null) {
-        this.state.set({ items: items ?? [] });
-    }
-    get items(): JournalItem[] {
-        return this.state.get('items');
+export class GridListComponent<T extends { id: string }> implements OnDestroy, AfterViewInit {
+    items: WritableSignal<JournalItem[]> = signal([]);
+    @Input('items') set itemsFn(items: JournalItem[] | null) {
+        this.items.set(items ?? []);
     }
     @Output() openContext: EventEmitter<{ event: MouseEvent; origin?: ElementRef }> = new EventEmitter<{ event: MouseEvent; origin?: ElementRef }>();
     @ViewChild(AnimateCssGridDirective) animatedGrid!: AnimateCssGridDirective;
@@ -109,58 +93,60 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     #keyManager: Signal<ActiveDescendantKeyManager<GridListItemComponent>> = computed(() =>
         new ActiveDescendantKeyManager<GridListItemComponent>(this.#gridListItems()).withWrap().skipPredicate(item => item.disabled)
     );
-    private dropEntered: Subject<JournalItem['id']> = new Subject<JournalItem['id']>();
+    private dropEntered: Subject<string> = new Subject<string>();
     private dropExited: Subject<void> = new Subject<void>();
     #fileListService = inject(FileListService);
     private route = inject(ActivatedRoute);
     private journalService = inject(JournalService);
+    animationDisabled: WritableSignal<boolean> = signal(false);
+    activeDirectory: WritableSignal<string | null> = signal(null);
+    columns: WritableSignal<number> = signal(0);
+    drag: WritableSignal<{
+        dragging: boolean;
+        startPosition: Point;
+        movePosition: Point;
+    }> = signal({
+        movePosition: { x: 0, y: 0 },
+        startPosition: { x: 0, y: 0 },
+        dragging: false
+    });
+    dragging: Signal<boolean> = computed(() => this.drag().dragging);
 
-    get activeDirectory(): JournalItem['id'] | null {
-        return this.state.get().activeDirectory;
+    // учитывается не только изменение кол-ва элементов, но и изменение свойств любого элемента сетки
+    // (причина, по которой не используется QueryList и его observable-свойство changes)
+    chunkedGridItems: Signal<Array<string | null>[]> = computed(() =>
+        chunk(
+            this.items().map(item => (this.journalService.isFile(item) && item.disabled ? null : item.id)),
+            this.columns()
+        )
+    );
+
+    isDisabled(item: JournalItem): boolean {
+        return item.disabled ?? false;
     }
 
     #selectingPause: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
-    animationDisabled$: Observable<boolean> = this.state.select('animationDisabled');
-    items$: Observable<JournalItem[]> = this.state.select('items');
-    private rxEffects = inject(RxEffects);
-    private rxEffectsIds: number[] = [];
+    readonly #router = inject(Router);
+    #element = inject(ElementRef);
+    document: Document = inject(DOCUMENT);
+    readonly #cdr = inject(ChangeDetectorRef);
 
-    constructor(
-        @Inject(DOCUMENT) public document: Document,
-        private element: ElementRef,
-        private router: Router,
-        // private renderer: Renderer2,
-        // private dragDropService: DragDrop,
-        private cdr: ChangeDetectorRef,
-        // инъекция через конструктор позволяет передать тип состояния
-        private state: RxState<State>
-    ) {
+    constructor() {
         addSvgIcons(this.iconsConfig);
-        this.state.set({
-            items: [],
-            animationDisabled: false,
-            chunkedGridItems: [],
-            drag: {
-                movePosition: { x: 0, y: 0 },
-                startPosition: { x: 0, y: 0 },
-                dragging: false
-            }
-        });
-        this.state.connect(
-            'animationDisabled',
-            merge(
-                this.router.events.pipe(
-                    filter(event => event instanceof NavigationStart),
-                    map(() => true)
-                ),
-                this.router.events.pipe(
-                    filter(event => event instanceof NavigationEnd),
-                    map(() => false)
-                )
+        merge(
+            this.#router.events.pipe(
+                filter(event => event instanceof NavigationStart),
+                map(() => true)
+            ),
+            this.#router.events.pipe(
+                filter(event => event instanceof NavigationEnd),
+                map(() => false)
             )
-        );
+        )
+            .pipe(takeUntilDestroyed())
+            .subscribe(v => this.animationDisabled.set(v));
+
         this.init();
     }
 
@@ -168,12 +154,8 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         return event.metaKey;
     }
 
-    @HostBinding('@.disabled') get animationDisabled() {
-        return this.state.get().animationDisabled;
-    }
-
-    get dragging(): boolean {
-        return this.state.get().drag.dragging;
+    @HostBinding('@.disabled') get animationDisabledFn() {
+        return this.animationDisabled();
     }
 
     /**
@@ -188,17 +170,17 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         const activeItemIndex = this.#keyManager().activeItemIndex as number | null;
         let column = 0;
         let row = 0;
-        const chunkedGridItems = this.state.get().chunkedGridItems;
+        const chunkedGridItems = this.chunkedGridItems();
 
         if (isNumber(activeItemIndex) && activeItemIndex > -1) {
-            const id = this.items[activeItemIndex].id;
+            const id = this.items()[activeItemIndex].id;
             row = findIndex(chunkedGridItems, indexes => indexes.includes(id));
             column = chunkedGridItems[row].indexOf(id);
         }
 
         switch (event.code) {
             case 'ArrowUp': {
-                const index = findIndex(this.items, [
+                const index = findIndex(this.items(), [
                     'id',
                     last(compact(dropRight(chunkedGridItems, chunkedGridItems.length - row).map(arr => nth(arr, column))))
                 ]);
@@ -214,7 +196,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
                 break;
             }
             case 'ArrowDown': {
-                const index = findIndex(this.items, [
+                const index = findIndex(this.items(), [
                     'id',
                     head(
                         compact(
@@ -253,9 +235,13 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         this.hostResizeObserver = new ResizeObserver(entries => {
             const width = entries[0].contentRect.width;
             const columns = Math.floor((width + GRID_CELL_COLUMN_GAP) / (GRID_CELL_WIDTH + GRID_CELL_COLUMN_GAP));
-            this.state.set({ columns });
+            this.columns.set(columns);
         });
-        this.hostResizeObserver.observe(this.element.nativeElement);
+        this.hostResizeObserver.observe(this.#element.nativeElement);
+        // effect(() => {
+        //     this.columns();
+        //     this.animatedGrid?.forceGridAnimation();
+        // });
 
         // очистка выделения при клике вне рабочей области
         this.#selectingPause
@@ -276,7 +262,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
             )
             .subscribe(() => {
                 this.selected.clear();
-                this.cdr.markForCheck();
+                this.#cdr.markForCheck();
             });
 
         // TODO: при наведении и задержке на drop-элементе на 1 секунду перейти в папку
@@ -299,8 +285,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         const selected$ = this.selected.changed.pipe(
             // debounceTime(100),
             pluck('source', 'selected'),
-            withLatestFrom(this.state.select('items')),
-            map(([selectedItems, items]) => items.filter(({ id }) => selectedItems.includes(id))),
+            map(selectedItems => this.items().filter(({ id }) => selectedItems.includes(id))),
             shareReplay(1)
         );
         this.dragSelected$ = selected$.pipe(map(items => items.map(item => pick(item, ['id', 'type', 'extension']))));
@@ -309,49 +294,33 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
             this.#fileListService.selected.set(selected);
         });
 
-        const dragMove$: Observable<Point> = this.state
-            .select(
-                map(({ drag }) => drag),
-                filter(({ dragging }) => dragging),
-                map(({ movePosition }) => movePosition)
-            )
+        const dragging$ = toObservable(this.dragging);
+        const dragStart$ = dragging$.pipe(filter(v => v));
+        const dragEnd$ = dragging$.pipe(filter(v => !v));
+        fromEvent<MouseEvent>(this.#element.nativeElement, 'drag', { passive: true })
             .pipe(
+                map(e => ({ x: e.clientX, y: e.clientY })),
                 switchMap(point =>
                     iif(
                         () => isEqual(point, { x: 0, y: 0 }),
-                        this.state.select(pluck('drag', 'startPosition')).pipe(
-                            tap(value => {
-                                this.dragPreview?.animateToPoint(value);
-                            }),
-                            switchMap(() => EMPTY)
-                        ),
+                        defer(() => {
+                            this.dragPreview?.animateToPoint(this.drag().startPosition);
+                            return EMPTY;
+                        }),
                         of(point).pipe(
                             observeOn(animationFrameScheduler),
                             tap(point => this.dragPreview?.position(point))
                         )
                     )
-                )
-            );
-        this.rxEffectsIds.push(this.rxEffects.register(dragMove$));
+                ),
+                takeUntil(dragEnd$),
+                repeat({ delay: () => dragStart$ }),
+                takeUntilDestroyed()
+            )
+            .subscribe();
     }
 
     ngAfterViewInit() {
-        // учитывается не только изменение кол-ва элементов, но и изменение свойств любого элемента сетки
-        // (причина, по которой не используется QueryList и его observable-свойство changes)
-        this.state.connect(
-            'chunkedGridItems',
-            this.state.select(
-                selectSlice(['items', 'columns']),
-                map(({ items, columns }) =>
-                    chunk(
-                        items.map(({ id, disabled }) => (disabled ? null : id)),
-                        columns
-                    )
-                )
-            )
-        );
-        this.rxEffectsIds.push(this.rxEffects.register(this.state.select('columns'), () => this.animatedGrid?.forceGridAnimation()));
-
         // при начале выделения в случае если открыто контекстное меню, закрываем его
         /*this.selecting
             .asObservable()
@@ -368,8 +337,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy(): void {
-        this.hostResizeObserver.unobserve(this.element.nativeElement);
-        this.rxEffectsIds.forEach(effectId => this.rxEffects.unregister(effectId));
+        this.hostResizeObserver.unobserve(this.#element.nativeElement);
     }
 
     itemTrackBy(index: number, item: JournalItem) {
@@ -389,13 +357,13 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
                 break;
             }
             case shiftKey: {
-                const index = this.state.get().items.findIndex(({ id }) => id === _id);
+                const index = this.items().findIndex(({ id }) => id === _id);
                 let start = 0;
                 let end = index + 1;
 
                 if (this.selected.hasValue()) {
-                    const firstIndex = this.items.findIndex(({ id }) => this.selected.isSelected(id));
-                    const lastIndex = findLastIndex(this.items, ({ id }) => this.selected.isSelected(id));
+                    const firstIndex = this.items().findIndex(({ id }) => this.selected.isSelected(id));
+                    const lastIndex = findLastIndex(this.items(), ({ id }) => this.selected.isSelected(id));
 
                     if (index > lastIndex) {
                         [start, end] = [lastIndex, index + 1];
@@ -408,7 +376,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
                     }*/
                 }
 
-                const selected = this.items
+                const selected = this.items()
                     .slice(start, end) /*.filter(({ disabled }) => !disabled)*/
                     .map(({ id }) => id);
                 this.selected.clear();
@@ -428,7 +396,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
 
     handleItemDblClick(event: MouseEvent, item: JournalItem) {
         if (this.journalService.isDirectory(item)) {
-            this.router.navigate([item.name], { relativeTo: this.route });
+            this.#router.navigate([item.name], { relativeTo: this.route });
         }
     }
 
@@ -457,12 +425,12 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
             event.preventDefault();
             event.stopPropagation();
             this.selected.clear();
-            this.openContext.emit({ event, origin: this.element });
+            this.openContext.emit({ event, origin: this.#element });
         }
     }
 
     handleDrop(event: DndDropEvent, item: DirectoryExtended) {
-        this.state.set({ activeDirectory: null });
+        this.activeDirectory.set(null);
         this.dropExited.next();
         // JSON.parse(event.event.dataTransfer?.getData('text/plain') ?? '[]');
         const selected = this.#fileListService.selected();
@@ -476,19 +444,19 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         }
 
         event.dataTransfer?.setData('text/plain', JSON.stringify(this.selected.selected));
-        this.state.set('drag', state => ({ ...state.drag, dragging: true, startPosition: { x: event.clientX, y: event.clientY } }));
+        this.drag.update(drag => ({ ...drag, dragging: true, startPosition: { x: event.clientX, y: event.clientY } }));
         event.dataTransfer?.setDragImage(this.dragPreviewGhost.nativeElement, 60, 60);
         this.#fileListService.dragging.set(true);
     }
 
     handleEnd(event: DragEvent) {
         event.preventDefault();
-        this.state.set('drag', state => ({ ...state.drag, dragging: false }));
+        this.drag.update(drag => ({ ...drag, dragging: false }));
         this.#fileListService.dragging.set(false);
     }
 
     handleDrag(event: DragEvent) {
-        this.state.set('drag', state => ({ ...state.drag, movePosition: { x: event.clientX, y: event.clientY } }));
+        this.drag.update(drag => ({ ...drag, movePosition: { x: event.clientX, y: event.clientY } }));
     }
 
     handleDragleave(event: DragEvent) {
@@ -498,7 +466,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
         if (component) {
             if (this.checkDropList(component.data.id)) {
                 this.dropExited.next();
-                this.state.set({ activeDirectory: null });
+                this.activeDirectory.set(null);
             }
         }
     }
@@ -511,7 +479,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
             const id = component.data.id;
             if (this.checkDropList(id)) {
                 !this.selected.isSelected(id) && this.dropEntered.next(id);
-                this.state.set({ activeDirectory: this.selected.isSelected(id) ? null : id });
+                this.activeDirectory.set(this.selected.isSelected(id) ? null : id);
             }
         }
     }
@@ -522,7 +490,7 @@ export class GridListComponent implements OnDestroy, AfterViewInit {
      * @param id
      */
     private checkDropList(id: string): boolean {
-        const item = find(this.items, ['id', id]);
+        const item = find(this.items(), ['id', id]);
 
         return item ? item.type === 'folder' : false;
     }

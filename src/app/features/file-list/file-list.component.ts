@@ -4,6 +4,7 @@ import {
     Component,
     ElementRef,
     HostListener,
+    Input,
     Signal,
     TemplateRef,
     ViewChild,
@@ -18,7 +19,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { ActivatedRoute } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { Principal } from '@dfinity/principal';
+import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
@@ -32,12 +34,13 @@ import { addFASvgIcons } from '@core/utils';
 import { CreateDirectoryDialogComponent } from '@features/file-list/components/create-directory-dialog/create-directory-dialog.component';
 import { GridListComponent } from '@features/file-list/components/grid-list/grid-list.component';
 import { PageHeaderComponent } from '@features/file-list/components/page-header/page-header.component';
-import { DirectoryColor, DirectoryExtended, JournalItem, MenuItemAction } from '@features/file-list/models';
-import { ContextMenuService, JournalService } from '@features/file-list/services';
+import { DirectoryColor, DirectoryExtended, FileInfoExtended, JournalItem, MenuItemAction } from '@features/file-list/models';
+import { ContextMenuService, DownloadService, JournalService } from '@features/file-list/services';
 import { SnackbarProgressService } from '@features/file-list/services/snackbar-progress.service';
 import { UploadService } from '@features/upload/services';
 import { MoveDialogComponent } from './components/move-dialog/move-dialog.component';
 import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
+import { ShareFileDialogComponent } from './components/share-file-dialog/share-file-dialog.component';
 import { FileListService } from './services/file-list.service';
 
 interface State {
@@ -74,6 +77,13 @@ interface State {
     standalone: true
 })
 export class FileListComponent {
+    #translocoService = inject(TranslocoService);
+    #downloadService = inject(DownloadService);
+
+    title: WritableSignal<string> = signal('');
+    @Input('title') set _title(value: string) {
+        this.title.set(this.#translocoService.translate(value));
+    }
     @ViewChild(EmptyComponent, { read: ElementRef }) set emptyRef(value: ElementRef) {
         this.state.set({ emptyRef: value });
     }
@@ -109,7 +119,7 @@ export class FileListComponent {
     }
 
     constructor(private dialog: MatDialog, private location: Location, private contextMenuService: ContextMenuService, private state: RxState<State>) {
-        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree'], 'far');
+        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree', 'users', 'users-slash'], 'far');
         this.route.data
             .pipe(
                 map(({ fileList }) => fileList),
@@ -156,11 +166,15 @@ export class FileListComponent {
     handleItemsAction(action: MenuItemAction, items: JournalItem[]) {
         switch (action) {
             case 'download': {
-                this.journalService.download(items);
+                this.#downloadService.download(items);
                 break;
             }
             case 'remove': {
                 this.journalService.remove(items);
+                break;
+            }
+            case 'unshare': {
+                this.journalService.unshareFile(items.filter(this.journalService.isFile));
                 break;
             }
             default:
@@ -200,6 +214,33 @@ export class FileListComponent {
         dialogRef.afterClosed().subscribe((data?: { id: string; path: string }) => {
             if (data) {
                 this.journalService.move(items, data.path);
+            }
+        });
+    }
+
+    async openShareDialog(event: MouseEvent, item: FileInfoExtended) {
+        const dialogRef = this.dialog.open<
+            ShareFileDialogComponent,
+            { item: FileInfoExtended },
+            {
+                share: {
+                    sharedWith: { everyone: null } | { users: Principal[] };
+                    limitDownloads?: number;
+                    timelock?: Date;
+                } | null;
+            }
+        >(ShareFileDialogComponent, {
+            width: '450px',
+            autoFocus: false,
+            data: { item }
+        });
+
+        dialogRef.afterClosed().subscribe(data => {
+            if (data?.share) {
+                console.log(data);
+                this.journalService.shareFile(item, data.share);
+            } else if (data) {
+                this.journalService.unshareFile([item]);
             }
         });
     }

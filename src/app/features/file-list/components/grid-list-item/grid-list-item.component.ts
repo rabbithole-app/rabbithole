@@ -1,7 +1,24 @@
 import { Highlightable } from '@angular/cdk/a11y';
 import { Point } from '@angular/cdk/drag-drop';
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostBinding, Input, Output, booleanAttribute, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    EventEmitter,
+    HostBinding,
+    Input,
+    OnInit,
+    Output,
+    Signal,
+    WritableSignal,
+    booleanAttribute,
+    computed,
+    inject,
+    signal
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -13,7 +30,7 @@ import { addFASvgIcons } from '@core/utils';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { JournalItem } from '@features/file-list/models';
-import { JournalService } from '@features/file-list/services';
+import { DownloadService, JournalService } from '@features/file-list/services';
 import { getIconByFilename } from '@features/file-list/utils';
 
 @Component({
@@ -25,9 +42,9 @@ import { getIconByFilename } from '@features/file-list/utils';
     imports: [RxIf, AnimatedFolderComponent, MatIconModule, MatProgressBarModule, NgTemplateOutlet, MiddleEllipsisComponent],
     standalone: true
 })
-export class GridListItemComponent implements Highlightable {
+export class GridListItemComponent implements Highlightable, OnInit {
     @Input({ required: true }) data!: JournalItem;
-    @Input() active?: boolean = false;
+    @Input({ transform: booleanAttribute }) active: boolean = false;
     @Output() openContext: EventEmitter<{ trigger: MatMenuTrigger; position: Point }> = new EventEmitter<{ trigger: MatMenuTrigger; position: Point }>();
     @HostBinding('attr.tabindex') tabindex = '-1';
     @HostBinding('attr.role') role = 'listitem';
@@ -39,17 +56,14 @@ export class GridListItemComponent implements Highlightable {
     @HostBinding('class.selected') @Input({ transform: booleanAttribute }) selected = false;
     private _isActive = false;
 
-    /*
-    adding$: Observable<boolean>;
-    added$: Observable<boolean>;
-    removed$: Observable<boolean>;
-    statusIcon$: Observable<boolean>;
-    */
-
     hostAnimationParams = { value: '', params: { duration: 250, delay: 0 } };
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
     element = inject(ElementRef);
     journalService = inject(JournalService);
+    #downloadService = inject(DownloadService);
+    #destroyed = inject(DestroyRef);
+    status: WritableSignal<string> = signal('');
+    showStatus: Signal<boolean> = computed(() => this.status().length > 0);
 
     @HostBinding('class.active') get isActive() {
         return this._isActive;
@@ -71,7 +85,14 @@ export class GridListItemComponent implements Highlightable {
     }*/
 
     constructor() {
-        addFASvgIcons(['users', 'lock'], 'far');
+        addFASvgIcons(['users', 'lock', 'share-nodes'], 'far');
+    }
+
+    ngOnInit(): void {
+        this.#downloadService
+            .fileProgress(this.data.id)
+            .pipe(takeUntilDestroyed(this.#destroyed))
+            .subscribe(value => this.status.set(value));
     }
 
     getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);

@@ -66,7 +66,7 @@ export class RedeemInviteDialogComponent {
             if (this.registerService.inviteStatus() === InviteStatus.Redeemed) {
                 this.dialogRef.close();
             }
-        })
+        });
     }
 
     handleRedeem() {

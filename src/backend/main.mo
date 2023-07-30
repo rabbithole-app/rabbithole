@@ -33,6 +33,7 @@ import Prelude "mo:base/Prelude";
 import Order "mo:base/Order";
 import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
+import Vector "mo:vector";
 
 actor Rabbithole {
     type ID = Types.ID;
@@ -146,11 +147,11 @@ actor Rabbithole {
         };
     };
 
-    type Profile = { username : Text; principal : Principal; avatarUrl : ?Text };
+    type Profile = { username : Text; displayName : Text; principal : Principal; avatarUrl : ?Text };
     public query func listProfiles() : async [Profile] {
         let buffer : Buffer.Buffer<Profile> = Buffer.Buffer(0);
-        for ({ id; username; avatarUrl } in profiles.vals()) {
-            buffer.add({ username; principal = id; avatarUrl });
+        for ({ id; username; displayName; avatarUrl } in profiles.vals()) {
+            buffer.add({ username; displayName; principal = id; avatarUrl });
         };
         Buffer.toArray(buffer);
     };
@@ -779,5 +780,85 @@ actor Rabbithole {
         setTimers();
         profiles := TrieMap.fromEntries<Principal, ProfileInfo>(stableProfiles.vals(), Principal.equal, Principal.hash);
         stableProfiles := [];
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /*                                File sharing                                */
+    /* -------------------------------------------------------------------------- */
+
+    // type SharedFile = {
+    //     owner : Principal;
+    //     journalId : Principal;
+    //     sharedWith : [Principal];
+    //     createdAt : Time.Time;
+    // };
+
+    // <user, fileId, [user]>
+    type SharedFile = JournalTypes.SharedFile;
+    stable var sharedFiles : Trie.Trie2D<Principal, ID, SharedFile> = Trie.empty();
+
+    public shared ({ caller }) func shareFile(fileId : ID, sharedFile : SharedFile) : async () {
+        assert not Principal.isAnonymous(caller) and isJournal(caller);
+        let ?owner = findJournalOwner(caller) else Prelude.unreachable();
+        sharedFiles := Trie.put2D<Principal, ID, SharedFile>(
+            sharedFiles,
+            Utils.keyPrincipal(owner),
+            Principal.equal,
+            Utils.keyText(fileId),
+            Text.equal,
+            sharedFile
+        );
+    };
+
+    public shared ({ caller }) func unshareFile(fileId : ID) : async () {
+        assert not Principal.isAnonymous(caller) and isJournal(caller);
+        let ?owner = findJournalOwner(caller) else Prelude.unreachable();
+        sharedFiles := Trie.remove2D<Principal, ID, SharedFile>(
+            sharedFiles,
+            Utils.keyPrincipal(owner),
+            Principal.equal,
+            Utils.keyText(fileId),
+            Text.equal
+        ).0;
+    };
+
+    type UserShare = {
+        profile : Profile;
+        bucketId : Principal;
+    };
+
+    public query ({ caller }) func sharedWithMe() : async [UserShare] {
+        assert not Principal.isAnonymous(caller);
+        let buffer : Buffer.Buffer<UserShare> = Buffer.Buffer(0);
+        for ((owner, trie) in Trie.iter(sharedFiles)) {
+            let sharedMe = Trie.some<ID, SharedFile>(
+                trie,
+                func(fileId, { sharedWith }) = switch (sharedWith) {
+                    case (#users(users)) Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal);
+                    case _ false;
+                }
+            );
+            let journalBucketId : ?Principal = Trie.get<Principal, BucketId>(journals, Utils.keyPrincipal(owner), Principal.equal);
+            let profile : ?ProfileInfo = profiles.get(owner);
+            switch (sharedMe, journalBucketId, profile) {
+                case (true, ?bucketId, ?{ id; username; displayName; avatarUrl }) {
+                    let value = { profile = { principal = id; username; displayName; avatarUrl }; bucketId };
+                    if (not Buffer.contains<UserShare>(buffer, value, func(a, b) = Principal.equal(a.bucketId, b.bucketId))) {
+                        buffer.add(value);
+                    };
+                };
+                case _ {};
+            };
+        };
+        Buffer.toArray(buffer);
+    };
+
+    func findJournalOwner(canisterId : Principal) : ?Principal {
+        label exit : ?Principal {
+            for ((owner, bucketId) in Trie.iter<Principal, BucketId>(journals)) {
+                if (Principal.equal(canisterId, bucketId)) break exit(?owner);
+            };
+            null;
+        };
     };
 };

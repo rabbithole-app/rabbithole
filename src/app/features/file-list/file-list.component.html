@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'fileList'">
-    <app-page-header [class.dragging]="fileListService.dragging()">My Drive</app-page-header>
+    <app-page-header [class.dragging]="fileListService.dragging()">{{ title() }}</app-page-header>
     <ng-container *ngIf="hasItems(); else empty">
         <app-grid-list [items]="fileListService.items()" (openContext)="handleContextMenu($event)"></app-grid-list>
     </ng-container>
@@ -81,19 +81,31 @@
             &lt;!&ndash;<span translate [translateParams]="{ count: items?.length }">file-list.actions.remove</span>&ndash;&gt;
             <span>Open</span>
         </button>-->
-        <button *rxIf="everyFile && items.length === 1" mat-menu-item (click)="openRenameDialog($event, items[0])">
-            <mat-icon svgIcon="far:pen-to-square"></mat-icon>
-            <span>{{ t('actions.rename') }}</span>
-        </button>
+        <ng-container *rxIf="everyFile && items.length === 1">
+            <button mat-menu-item (click)="openShareDialog($event, items[0])">
+                <mat-icon svgIcon="far:users"></mat-icon>
+                <span>{{ t('actions.share') }}</span>
+            </button>
+            <button *rxIf="items[0].share" mat-menu-item (click)="handleItemsAction('unshare', items)">
+                <mat-icon svgIcon="far:users-slash"></mat-icon>
+                <span>{{ t('actions.unshare') }}</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="openRenameDialog($event, items[0])">
+                <mat-icon svgIcon="far:pen-to-square"></mat-icon>
+                <span>{{ t('actions.rename') }}</span>
+            </button>
+        </ng-container>
         <button mat-menu-item (click)="openMoveDialog($event, items)">
             <mat-icon svgIcon="far:folder-tree"></mat-icon>
             <span>{{ t('actions.move', { count: items?.length }) }}</span>
         </button>
-        <button *rxIf="everyFile" mat-menu-item class="warn" (click)="handleItemsAction('download', items)">
+        <button *rxIf="everyFile" mat-menu-item (click)="handleItemsAction('download', items)">
             <mat-icon svgIcon="far:download"></mat-icon>
             <span>{{ t('actions.download', { count: items?.length }) }}</span>
         </button>
-        <button mat-menu-item class="warn" (click)="handleItemsAction('remove', items)">
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="handleItemsAction('remove', items)">
             <mat-icon svgIcon="far:trash-can"></mat-icon>
             <span>{{ t('actions.remove', { count: items?.length }) }}</span>
         </button>

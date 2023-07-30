@@ -1,4 +1,4 @@
 {
-  dependencies = [ "base", "encoding", "bimap", "uuid", "hashmap", "hash", "ic-certification", "cbor", "mrr", "stableBTree" ],
-  compiler = Some "0.9.4"
+  dependencies = [ "base", "encoding", "bimap", "uuid", "hashmap", "hash", "ic-certification", "cbor", "sha2", "stableBTree", "vector" ],
+  compiler = Some "0.9.7"
 }

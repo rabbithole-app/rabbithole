@@ -109,8 +109,7 @@ export class FileListService {
             children: undefined,
             loading: true,
             disabled: true,
-            path: parent ? `${parent.path}/${name}` : name,
-            encrypted: false
+            path: parent ? `${parent.path}/${name}` : name
         };
         this.#items.update(items => [...items, tempDirectory]);
     }

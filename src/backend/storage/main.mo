@@ -36,7 +36,6 @@ import ReqData "mo:ic-certification/ReqData";
 import CanisterSigs "mo:ic-certification/CanisterSigs";
 import MerkleTree "mo:ic-certification/MerkleTree";
 import CertifiedData "mo:base/CertifiedData";
-import SHA256 "mo:mrr/Sha256";
 import Hex "mo:encoding/Hex";
 
 shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
@@ -261,10 +260,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             totalLength += chunk.size();
         };
 
-        let id : ID = switch (batch.key.id) {
-            case null await Utils.generateId();
-            case (?v) v;
-        };
+        let id : ID = batch.key.id;
         let asset : Asset = {
             id;
             key = batch.key;

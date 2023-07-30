@@ -2,8 +2,8 @@
     <mat-label>{{ label }}</mat-label>
     <mat-chip-grid #chipGrid aria-label="User selection">
         <mat-chip-row *rxFor="let user of selected()" (removed)="remove(user)">
-            <img matChipAvatar [src]="user.avatarUrl" [attr.alt]="user.username" />
-            {{ user.username }}
+            <img *rxIf="user.avatarUrl" matChipAvatar [src]="user.avatarUrl" [attr.alt]="user.username" />
+            {{ user.displayName || user.username }}
             <button matChipRemove [attr.aria-label]="'remove ' + user.username">
                 <mat-icon svgIcon="far:xmark"></mat-icon>
             </button>
@@ -17,11 +17,7 @@
         [matAutocomplete]="auto" />
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="select($event)">
         <mat-option *rxFor="let user of filteredUsers$ | push" [value]="user">
-            <div class="user-option">
-                <app-avatar [size]="32" [url]="user.avatarUrl ?? null"></app-avatar>
-                <span class="username">{{ user.username }}</span>
-                <span class="principal">{{ user.principal.toText() }}</span>
-            </div>
+            <app-user-card [user]="user"></app-user-card>
         </mat-option>
     </mat-autocomplete>
 </mat-form-field>

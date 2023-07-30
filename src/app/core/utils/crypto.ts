@@ -1,24 +1,47 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { arrayBufferToUint8Array, hexStringToUint8Array, uint8ArrayToArrayOfNumber } from '@dfinity/utils';
+import { arrayBufferToUint8Array, hexStringToUint8Array } from '@dfinity/utils';
+import { get, has } from 'lodash';
 
 // See also https://github.com/rollup/plugins/tree/master/packages/wasm#using-with-wasm-bindgen-and-wasm-pack
-import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
+import { _SERVICE as JournalActor, NotFoundError } from 'declarations/journal/journal.did';
 import { TransportSecretKey, default as vetkd } from 'vetkd_user_lib/ic_vetkd_utils';
+
+export async function loadWasm() {
+    await vetkd('vetkd_user_lib/ic_vetkd_utils_bg.wasm');
+}
+
+function checkResponse<K extends keyof ActorSubclass<JournalActor>>(response: Awaited<ReturnType<ActorSubclass<JournalActor>[K]>>) {
+    if (has(response, 'err')) {
+        const err = Object.keys(get(response, 'err') as unknown as NotFoundError | { vetKDEncryptedKey: null } | { vetKDPublicKey: null })[0];
+        switch (err) {
+            case 'notFound':
+                throw new Error('File ID not found');
+            case 'vetKDEncryptedKey':
+                throw new Error('Call to vetkd_encrypted_key failed');
+            case 'vetKDPublicKey':
+                throw new Error('Call to vetkd_public_key failed');
+            default:
+                throw new Error('Unknown error');
+        }
+    }
+}
 
 /**
  * Fetch the authenticated user's vetKD key and derive an AES-GCM key from it
  */
-export async function initVetAesGcmKey(caller: Principal, actor: ActorSubclass<JournalActor>): Promise<CryptoKey | null> {
+export async function initVetAesGcmKey(id: string, caller: Principal, actor: ActorSubclass<JournalActor>): Promise<CryptoKey | null> {
     try {
-        await vetkd('vetkd_user_lib/ic_vetkd_utils_bg.wasm');
         // Showcase that the integration of the vetkd user library works
         const seed = crypto.getRandomValues(new Uint8Array(32));
         const tsk = new TransportSecretKey(seed);
-
-        const ek_bytes_hex = await actor.encrypted_symmetric_key(tsk.public_key());
-        const pk_bytes_hex = await actor.app_vetkd_public_key([new TextEncoder().encode('symmetric_key')]);
-        console.log('Successfully used vetKD user library via WASM to create new transport secret key');
+        const tpk = tsk.public_key();
+        const responseESK = await actor.fileEncryptedSymmetricKey(id, tpk);
+        checkResponse<'fileEncryptedSymmetricKey'>(responseESK);
+        const ek_bytes_hex = get(responseESK, 'ok') as unknown as string;
+        const responsePK = await actor.fileVetkdPublicKey(id, [new TextEncoder().encode(`symmetric_key${id}`)]);
+        checkResponse<'fileVetkdPublicKey'>(responsePK);
+        const pk_bytes_hex = get(responsePK, 'ok') as unknown as string;
         const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
             hexStringToUint8Array(ek_bytes_hex),
             hexStringToUint8Array(pk_bytes_hex),
@@ -27,7 +50,6 @@ export async function initVetAesGcmKey(caller: Principal, actor: ActorSubclass<J
             new TextEncoder().encode('aes-256-gcm')
         );
         const aes_key = await crypto.subtle.importKey('raw', aes_256_gcm_key_raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
-        console.log({ ek_bytes_hex, pk_bytes_hex, aes_key });
         return aes_key;
     } catch (err) {
         console.error(err);

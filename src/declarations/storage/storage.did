@@ -133,7 +133,7 @@ type AssetKey =
  record {
    encrypted: bool;
    fileSize: nat;
-   id: opt ID;
+   id: ID;
    name: text;
    parentId: opt ID;
    sha256: opt vec nat8;

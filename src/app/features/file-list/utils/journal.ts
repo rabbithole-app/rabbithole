@@ -1,8 +1,9 @@
-import { Directory, File, DirectoryColor as JournalDirectoryColor } from '@declarations/journal/journal.did.js';
 import { fromNullable } from '@dfinity/utils';
+import { has, isUndefined } from 'lodash';
+
+import { Directory, File, FileExtended, FileShare, DirectoryColor as JournalDirectoryColor } from '@declarations/journal/journal.did.js';
 import { DirectoryColor, DirectoryExtended, FileInfoExtended } from '@features/file-list/models';
 import { environment } from 'environments/environment';
-import { isUndefined } from 'lodash';
 
 export const uint8ToBase64 = (arr: Uint8Array): string =>
     btoa(
@@ -17,6 +18,10 @@ export const fromNullableOption = <T extends Record<string, null>, K>(value: [] 
 
     return isUndefined(v) ? defaultValue : (Object.keys(v)[0] as unknown as K);
 };
+
+function isFileExtend(item: File | FileExtended): item is FileExtended {
+    return has(item, 'share');
+}
 
 export function toDirectoryExtended(directory: Directory): DirectoryExtended {
     const children = fromNullable(directory.children);
@@ -38,19 +43,24 @@ export function toDirectoryExtended(directory: Directory): DirectoryExtended {
     };
 }
 
-export function toFileExtended(file: File): FileInfoExtended {
-    const bucketId = file.bucketId.toText();
-    const host: string = environment.production ? `https://${bucketId}.raw.ic0.app` : `http://${bucketId}.localhost:8080`;
+export function toFileExtended(file: File | FileExtended): FileInfoExtended {
+    const storageId = file.bucketId.toText();
+    const host: string = environment.production ? `https://${storageId}.raw.ic0.app` : `http://${storageId}.localhost:8080`;
     const downloadUrl = `${host}/${file.id}`;
     const thumbnail = fromNullable(file.thumbnail);
     const thumbnailUrl = thumbnail ? `${host}/${thumbnail}` : undefined;
+    let share: FileShare | undefined;
+    if (isFileExtend(file)) {
+        share = fromNullable(file.share);
+    }
     return {
         ...file,
-        bucketId,
+        storageId,
         downloadUrl,
         type: 'file',
         parentId: fromNullable(file.parentId),
         thumbnail,
-        thumbnailUrl
-    } as FileInfoExtended;
+        thumbnailUrl,
+        share
+    };
 }

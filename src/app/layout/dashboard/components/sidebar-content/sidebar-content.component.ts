@@ -52,7 +52,7 @@ export class SidebarContentComponent {
     readonly navigation: NavigationItem[] = [
         { path: '/drive', label: 'navigation.my-files', icon: 'far:house', activeIcon: 'fas:house' },
         { path: '/canisters', label: 'navigation.canisters', icon: 'far:database', activeIcon: 'fas:database', visibleInExpertMode: true },
-        { path: '/shared', label: 'navigation.shared', icon: 'far:share', activeIcon: 'fas:share', disabled: true },
+        { path: '/shared', label: 'navigation.shared', icon: 'far:share', activeIcon: 'fas:share' },
         { path: '/favorites', label: 'navigation.favorites', icon: 'far:star', activeIcon: 'fas:star', disabled: true },
         { path: '/trash', label: 'navigation.trash', icon: 'far:trash-can', activeIcon: 'fas:trash-can', disabled: true }
     ];

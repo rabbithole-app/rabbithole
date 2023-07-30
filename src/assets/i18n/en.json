@@ -113,7 +113,9 @@
             "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",
             "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}",
             "rename": "Rename",
-            "move": "Move{count, plural, =0 {} =1 {} other { (# items)}}"
+            "move": "Move{count, plural, =0 {} =1 {} other { (# items)}}",
+            "share": "Share",
+            "unshare": "Unshare"
         },
         "move": {
             "title": "Where to move{count, plural, =1 { {type, select, 0 {file} other {directory}}} other { # {type, select, 0 {files} 1 {directories} other {items}}}}?",
@@ -162,12 +164,34 @@
             }
         },
         "file": {
+            "share": {
+                "title": "Share file <strong>{{ name }}</strong>",
+                "shareWith": "Share with",
+                "actions": {
+                    "cancel": "Cancel",
+                    "share": "Share",
+                    "unshare": "Unshare"
+                },
+                "messages": {
+                    "err": {
+                        "notFound": "File not found"
+                    }
+                }
+            },
+            "unshare.messages.err.notFound": "File not found",
             "remove": {
                 "messages": {
                     "err": {
                         "notFound": "File not found"
                     }
                 }
+            },
+            "download": {
+                "retrievingKey": "Retrieving key...",
+                "decryption": "Decryption...",
+                "progress": "{{ percent }}%",
+                "failed": "Failed",
+                "failedMessage": "An error occurred while decrypting the file"
             }
         },
         "notification": {
@@ -209,6 +233,20 @@
                 "warning": "An error occurred while updating {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
                 "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} updated} other {Updated # {type, select, 0 {files} 1 {directories} other {items}}}}",
                 "failed": "An error occurred while updating {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
+            },
+            "share": {
+                "prepare": "Preparing to share {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Shared{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while sharing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} shared} other {Shared # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while sharing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
+            },
+            "unshare": {
+                "prepare": "Preparing to unshare {total, plural, =1 { {name} } other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "message": "Unshared{total, plural, =0 {} =1 { {name}} other { {current} of # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "warning": "An error occurred while unsharing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "success": "{count, plural, =0 {} =1 { {type, select, 0 {File} other {Directory}} {name} unshared} other {Unshared # {type, select, 0 {files} 1 {directories} other {items}}}}",
+                "failed": "An error occurred while unsharing {count, plural, =0 {} =1 {# {type, select, 0 {file} 1 {directory} other {item}}} other {# {type, select, 0 {files} 1 {directories} other {items}}}}"
             }
         },
         "dialog": {
@@ -351,5 +389,11 @@
                 "notFound": "Profile not found"
             }
         }        
+    },
+    "shared": {
+        "title": "Shared with me",
+        "actions": {
+            "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}"
+        }
     }
 }

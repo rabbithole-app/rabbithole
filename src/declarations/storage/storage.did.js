@@ -84,7 +84,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const ID = IDL.Text;
     const AssetKey = IDL.Record({
-        id: IDL.Opt(ID),
+        id: ID,
         sha256: IDL.Opt(IDL.Vec(IDL.Nat8)),
         thumbnail: IDL.Opt(ID__1),
         name: IDL.Text,

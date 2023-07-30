@@ -2,19 +2,19 @@
     <ul class="links">
         <li class="links__item">
             <a
-                routerLink="/drive"
+                [routerLink]="this.rootUrl()"
                 dndDropzone
                 [class.receiving]="entered() === 'root'"
                 (drop)="handleDrop($event)"
                 (dragleave)="handleDragleave()"
                 (dragenter)="handleDragenter($event, 'root')"
-                >My Drive</a
+                >{{ rootLabel }}</a
             >
             <mat-icon svgIcon="far:angle-right"></mat-icon>
         </li>
         <li class="links__item" *rxFor="let link of items(); trackBy: itemTrackBy">
             <a
-                [routerLink]="getUrl(link.path)"
+                [routerLink]="[this.rootUrl(), link.path]"
                 dndDropzone
                 [class.receiving]="entered() === link.id"
                 (drop)="handleDrop($event)"
@@ -30,7 +30,7 @@
             class="back-button"
             #backButton
             mat-button
-            [routerLink]="backlink()"
+            routerLink="../"
             [class.receiving]="backReceiving()"
             dndDropzone
             (drop)="handleDrop($event)"

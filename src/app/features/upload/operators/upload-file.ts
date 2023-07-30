@@ -17,7 +17,7 @@ type UploadParams = {
 export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbnail' | 'canvas'>, storage: Bucket<StorageActor>) {
     const hash = await crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data));
     const assetKey: AssetKey = {
-        id: toNullable(item.id),
+        id: item.id,
         name: item.name,
         parentId: toNullable<string>(item.parentId),
         fileSize: BigInt(item.fileSize),
@@ -43,7 +43,7 @@ export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbn
 export function uploadFile({ storage, item, options, state }: UploadParams): Observable<Partial<FileUploadState>> {
     return new Observable(subscriber => {
         const assetKey: AssetKey = {
-            id: toNullable(),
+            id: item.id,
             name: item.name,
             parentId: toNullable<string>(item.parentId),
             fileSize: BigInt(item.fileSize),

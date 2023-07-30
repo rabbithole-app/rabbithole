@@ -5,11 +5,13 @@ export type AccountIdentifier = Uint8Array | number[];
 export type BlockIndex = bigint;
 export type BlockIndex__1 = bigint;
 export type BucketId = Principal;
+export type BucketId__1 = Principal;
 export type EncryptedKey = string;
 export type ID = string;
 export type ID__1 = string;
+export type ID__2 = string;
 export interface Invite {
-    id: ID__1;
+    id: ID__2;
     status: { active: null } | { expired: null } | { used: Principal };
     expiredAt: Time;
     owner: Principal;
@@ -25,7 +27,7 @@ export interface InviteCreate {
 export type InviteDeleteError = { alreadyUsed: Principal } | { expired: null } | { notFound: null } | { notPermission: null };
 export type InviteError = { alreadyUsed: null } | { expired: null } | { notFound: null };
 export interface Invoice {
-    id: ID__1;
+    id: ID__2;
     expiredAt: Time;
     owner: Principal;
     createdAt: Time;
@@ -57,6 +59,7 @@ export type NotifyError =
 export interface Profile {
     principal: Principal;
     username: string;
+    displayName: string;
     avatarUrl: [] | [string];
 }
 export interface ProfileCreate {
@@ -90,6 +93,18 @@ export type Result_4 =
           err: { notify: NotifyError } | { wrongStage: null } | { notFound: null } | { transfer: TransferError };
       };
 export type Result_5 = { ok: null } | { err: UsernameError__1 };
+export interface SharedFile {
+    id: ID__1;
+    owner: Principal;
+    createdAt: Time;
+    journalId: BucketId;
+    limitDownloads: [] | [bigint];
+    storageId: BucketId;
+    sharedWith: { everyone: null } | { users: Array<Principal> };
+    updatedAt: Time;
+    downloads: bigint;
+    timelock: [] | [Time];
+}
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;
@@ -102,6 +117,10 @@ export type TransferError =
     | { TxDuplicate: { duplicate_of: BlockIndex__1 } }
     | { TxCreatedInFuture: null }
     | { InsufficientFunds: { balance: Tokens } };
+export interface UserShare {
+    bucketId: Principal;
+    profile: Profile;
+}
 export type UsernameError = { illegalCharacters: null } | { alreadyExists: null } | { maxLength: null } | { minLength: null };
 export type UsernameError__1 = { illegalCharacters: null } | { alreadyExists: null } | { maxLength: null } | { minLength: null };
 export interface _SERVICE {
@@ -121,7 +140,7 @@ export interface _SERVICE {
     deleteProfile: ActorMethod<[], Result_1>;
     getInvites: ActorMethod<[], Array<Invite>>;
     getInvoice: ActorMethod<[], [] | [Invoice]>;
-    getJournalBucket: ActorMethod<[], [] | [BucketId]>;
+    getJournalBucket: ActorMethod<[], [] | [BucketId__1]>;
     getKey: ActorMethod<[PublicKey], EncryptedKey>;
     getProfile: ActorMethod<[], [] | [ProfileInfo]>;
     getRegistrationMode: ActorMethod<[], RegistrationMode>;
@@ -136,10 +155,13 @@ export interface _SERVICE {
         ],
         undefined
     >;
-    listBuckets: ActorMethod<[string], Array<[Principal, BucketId]>>;
+    listBuckets: ActorMethod<[string], Array<[Principal, BucketId__1]>>;
     listProfiles: ActorMethod<[], Array<Profile>>;
     putProfile: ActorMethod<[ProfileUpdate], Result_1>;
     redeemInvite: ActorMethod<[ID], Result>;
     setRegistrationMode: ActorMethod<[RegistrationMode], undefined>;
+    shareFile: ActorMethod<[ID, SharedFile], undefined>;
+    sharedWithMe: ActorMethod<[], Array<UserShare>>;
+    unshareFile: ActorMethod<[ID], undefined>;
     upgradeJournalBuckets: ActorMethod<[], undefined>;
 }

@@ -25,6 +25,8 @@ export const appRoutes: Route[] = [
             {
                 path: 'drive',
                 canActivateChild: [journalGuard],
+                title: 'navigation.my-files',
+                data: { title: 'navigation.my-files' },
                 children: [
                     {
                         path: '',
@@ -37,6 +39,13 @@ export const appRoutes: Route[] = [
                         loadComponent: () => import('./features/file-list/file-list.component').then(m => m.FileListComponent)
                     }
                 ]
+            },
+            {
+                path: 'shared',
+                canActivateChild: [journalGuard],
+                title: 'navigation.shared',
+                data: { title: 'navigation.shared' },
+                loadComponent: () => import('./features/shared-with-me/shared-with-me.component').then(m => m.SharedWithMeComponent)
             },
             {
                 path: 'invitations',

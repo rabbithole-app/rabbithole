@@ -15,8 +15,8 @@ import { TranslocoModule } from '@ngneat/transloco';
     imports: [MatIconModule, MatButtonModule, MatTooltipModule, ClipboardModule, TranslocoModule]
 })
 export class CopyIDComponent {
-    @Input() content = '';
-    private clipboard = inject(Clipboard);
+    @Input({ required: true }) content = '';
+    #clipboard = inject(Clipboard);
 
     constructor() {
         addFASvgIcons(['copy'], 'far');
@@ -24,6 +24,6 @@ export class CopyIDComponent {
 
     copy(event: MouseEvent) {
         event.stopPropagation();
-        this.clipboard.copy(this.content);
+        this.#clipboard.copy(this.content);
     }
 }

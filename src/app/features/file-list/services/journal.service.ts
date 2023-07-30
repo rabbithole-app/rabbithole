@@ -1,18 +1,19 @@
 import { inject, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActorSubclass } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
-import { saveAs } from 'file-saver';
 import { get, has, head, isEqual, isNil, isNull, pick } from 'lodash';
 import { nanoid } from 'nanoid';
 import { defer, EMPTY, from, iif, Observable, of, throwError } from 'rxjs';
-import { catchError, delayWhen, filter, finalize, first, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, finalize, first, map, switchMap, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OptKeys } from '@core/models';
-import { BucketsService, CoreService, NotificationService } from '@core/services';
+import { BucketsService, NotificationService } from '@core/services';
+import { toTimestamp } from '@core/utils';
 import {
     Directory,
     DirectoryAction,
@@ -38,20 +39,6 @@ export class JournalService {
     private snackbarProgressService = inject(SnackbarProgressService);
     readonly #fileListService = inject(FileListService);
     private translocoService = inject(TranslocoService);
-    readonly #coreService = inject(CoreService);
-
-    constructor() {
-        this.#coreService.workerMessage$.pipe(takeUntilDestroyed()).subscribe(({ data }) => {
-            switch (data.action) {
-                case 'download': {
-                    saveAs(data.payload.blob, data.payload.name);
-                    break;
-                }
-                default:
-                    break;
-            }
-        });
-    }
 
     createDirectory({ name, parent }: DirectoryCreate) {
         const id = `temp_${nanoid(4)}`;
@@ -163,14 +150,6 @@ export class JournalService {
             ?.afterDismissed()
             .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
             .subscribe(() => this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: false }));
-    }
-
-    download(selected: JournalItem[]) {
-        const worker = this.#coreService.worker();
-        if (worker) {
-            worker.postMessage({ action: 'download', items: selected });
-        }
-        // TODO: добавить скачивание не в воркере
     }
 
     remove(selected: JournalItem[]) {
@@ -360,6 +339,66 @@ export class JournalService {
 
     isFile(item: JournalItem): item is FileInfoExtended {
         return item.type === 'file';
+    }
+
+    shareFile(
+        file: FileInfoExtended,
+        params: {
+            sharedWith: { everyone: null } | { users: Principal[] };
+            limitDownloads?: number;
+            timelock?: Date;
+        }
+    ) {
+        const timelock = toNullable(params.timelock ? toTimestamp(params.timelock) : undefined);
+        const limitDownloads = toNullable(params.limitDownloads ? BigInt(params.limitDownloads) : undefined);
+        this.#fileListService.updateItems(id => id === file.id, { disabled: true });
+        const handler: (item: FileInfoExtended) => Observable<unknown> = item =>
+            this.wrapActionHandler(actor => actor.shareFile(item.id, { ...params, limitDownloads, timelock })).pipe(
+                map(result => {
+                    if (has(result, 'err')) {
+                        const key = Object.keys(get(result, 'err') as unknown as NotFoundError)[0];
+                        throw Error(this.translocoService.translate(`fileList.file.share.messages.err.${key}`));
+                    }
+
+                    return toFileExtended(get(result, 'ok') as unknown as File);
+                }),
+                tap({
+                    error: err => console.error(err),
+                    next: value => this.#fileListService.updateItems(id => id === item.id, value),
+                    finalize: () => this.#fileListService.updateItems(id => id === item.id, { disabled: false })
+                })
+            );
+        this.snackbarProgressService.add<FileInfoExtended>('share', [file], handler);
+        this.snackbarProgressService.snackBarRef
+            ?.afterDismissed()
+            .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
+            .subscribe(() => this.#fileListService.update());
+    }
+
+    unshareFile(items: FileInfoExtended[]) {
+        const selectedIds = items.map(({ id }) => id);
+        this.#fileListService.updateItems(id => selectedIds.includes(id), { disabled: true });
+        const handler: (item: FileInfoExtended) => Observable<unknown> = item =>
+            this.wrapActionHandler(actor => actor.unshareFile(item.id)).pipe(
+                map(result => {
+                    if (has(result, 'err')) {
+                        const key = Object.keys(get(result, 'err') as unknown as NotFoundError)[0];
+                        throw Error(this.translocoService.translate(`fileList.file.unshare.messages.err.${key}`));
+                    }
+
+                    return toFileExtended(get(result, 'ok') as unknown as File);
+                }),
+                tap({
+                    error: err => console.error(err),
+                    next: value => this.#fileListService.updateItems(id => id === item.id, value),
+                    finalize: () => this.#fileListService.updateItems(id => id === item.id, { disabled: false })
+                })
+            );
+        this.snackbarProgressService.add<FileInfoExtended>('unshare', items, handler);
+        this.snackbarProgressService.snackBarRef
+            ?.afterDismissed()
+            .pipe(switchMap(({ dismissedByAction }) => iif(() => dismissedByAction, of(true), EMPTY)))
+            .subscribe(() => this.#fileListService.update());
     }
 
     /*

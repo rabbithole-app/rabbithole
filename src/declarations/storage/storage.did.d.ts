@@ -2,7 +2,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
 
 export interface AssetKey {
-    id: [] | [ID];
+    id: ID;
     sha256: [] | [Uint8Array | number[]];
     thumbnail: [] | [ID__1];
     name: string;
