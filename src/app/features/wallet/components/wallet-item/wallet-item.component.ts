@@ -4,7 +4,7 @@ import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer } from '@angular/platform-browser';
-import { ICPToken, TokenAmount } from '@dfinity/nns';
+import { ICPToken, TokenAmount } from '@dfinity/utils';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 

@@ -50,7 +50,7 @@ export class AppComponent {
     ).pipe(distinctUntilChanged(), startWith(true));
 
     constructor(@Inject(FETCH_INTERCEPTOR) interceptor: FetchInterceptor) {
-        interceptor.on('response', async response => {
+        interceptor.on('response', async ({ response }) => {
             if (response.status === 403 && response.body) {
                 const result = await concatStringStream(response.body);
                 if (result.includes('Failed to authenticate request')) {

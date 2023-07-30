@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, inject, ViewChild } from '@angular/core';
-import { AccountIdentifier, ICPToken, Token, TokenAmount } from '@dfinity/nns';
-import { toNullable } from '@dfinity/utils';
+import { AccountIdentifier } from '@dfinity/nns';
+import { ICPToken, Token, TokenAmount, toNullable } from '@dfinity/utils';
 import { RxPush } from '@rx-angular/template/push';
 import { lastValueFrom, Observable } from 'rxjs';
 

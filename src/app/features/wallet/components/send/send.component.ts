@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
-import { AccountIdentifier, Token, TokenAmount } from '@dfinity/nns';
+import { AccountIdentifier } from '@dfinity/nns';
+import { Token, TokenAmount } from '@dfinity/utils';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxLet } from '@rx-angular/template/let';

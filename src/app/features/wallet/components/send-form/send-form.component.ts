@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatInput, MatInputModule } from '@angular/material/input';
 import { DomSanitizer } from '@angular/platform-browser';
-import { convertStringToE8s, Token, TokenAmount } from '@dfinity/nns';
+import { convertStringToE8s, Token, TokenAmount } from '@dfinity/utils';
 import { createMask, InputMaskModule, InputmaskOptions } from '@ngneat/input-mask';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';

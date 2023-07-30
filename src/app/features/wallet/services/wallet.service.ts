@@ -1,7 +1,7 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
+import { AccountIdentifier, LedgerCanister } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
-import { createAgent } from '@dfinity/utils';
+import { createAgent, ICPToken, Token, TokenAmount } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { get, has, isNull } from 'lodash';

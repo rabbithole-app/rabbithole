@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-import { convertStringToE8s } from '@dfinity/nns';
+import { convertStringToE8s } from '@dfinity/utils';
 import { combineLatest, first, map, Observable } from 'rxjs';
 import { WalletService } from '../services';
 

@@ -2,9 +2,9 @@ import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@a
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { CMCCanister } from '@dfinity/cmc';
-import { AccountIdentifier, ICPToken, LedgerCanister, Token, TokenAmount } from '@dfinity/nns';
+import { AccountIdentifier, LedgerCanister } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
-import { createAgent, fromNullable } from '@dfinity/utils';
+import { createAgent, fromNullable, ICPToken, Token, TokenAmount } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
