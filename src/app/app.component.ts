@@ -1,10 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, Inject } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, inject, Inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouteConfigLoadEnd, RouteConfigLoadStart, Router, RouterModule } from '@angular/router';
+import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 import { RxIf } from '@rx-angular/template/if';
-import { distinctUntilChanged, filter, first, map, merge, Observable, startWith } from 'rxjs';
+import { WINDOW } from 'ngx-window-token';
+import { interval, merge, Observable } from 'rxjs';
+import { distinctUntilChanged, exhaustMap, filter, first, map, startWith, switchMap } from 'rxjs/operators';
 
+import { UpdateApplicationDialogComponent } from '@core/components/update-application-dialog/update-application-dialog.component';
 import { AuthService } from '@core/services';
 import { FETCH_INTERCEPTOR } from '@core/tokens';
 import { concatStringStream } from '@core/utils';
@@ -36,6 +42,7 @@ import { concatStringStream } from '@core/utils';
 export class AppComponent {
     private authService = inject(AuthService);
     private router = inject(Router);
+    #appRef = inject(ApplicationRef);
     loading$: Observable<boolean> = merge(
         this.router.events.pipe(
             filter(event => event instanceof RouteConfigLoadStart),
@@ -48,6 +55,9 @@ export class AppComponent {
             map(() => false)
         )
     ).pipe(distinctUntilChanged(), startWith(true));
+    readonly #swUpdate = inject(SwUpdate);
+    readonly #dialog = inject(MatDialog);
+    readonly window = inject(WINDOW);
 
     constructor(@Inject(FETCH_INTERCEPTOR) interceptor: FetchInterceptor) {
         interceptor.on('response', async ({ response }) => {
@@ -56,6 +66,38 @@ export class AppComponent {
                 if (result.includes('Failed to authenticate request')) {
                     this.authService.signOut();
                 }
+            }
+        });
+
+        if (this.#swUpdate.isEnabled) {
+            this.#swUpdate.versionUpdates
+                .pipe(
+                    filter((event: VersionEvent): event is VersionReadyEvent => event.type === 'VERSION_READY'),
+                    takeUntilDestroyed()
+                )
+                .subscribe(({ currentVersion, latestVersion }: VersionReadyEvent) => {
+                    console.info({ currentVersion, latestVersion });
+                    this.#updateDialog();
+                });
+            this.#appRef.isStable
+                .pipe(
+                    first(stable => stable),
+                    switchMap(() => interval(20000)),
+                    exhaustMap(() => this.#swUpdate.checkForUpdate()),
+                    takeUntilDestroyed()
+                )
+                .subscribe();
+        }
+    }
+
+    #updateDialog() {
+        const dialogRef = this.#dialog.open(UpdateApplicationDialogComponent, {
+            width: '450px'
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                this.window?.location.reload();
             }
         });
     }

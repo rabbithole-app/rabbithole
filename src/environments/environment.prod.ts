@@ -5,6 +5,7 @@ export const environment = {
     identityUrl: 'https://identity.ic0.app/#authorize',
     appName: 'Rabbit Hole',
     envName: 'PROD',
+    registrationEnabled: true,
     versions: {
         app: packageJson.version
     }

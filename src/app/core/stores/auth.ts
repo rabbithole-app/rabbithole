@@ -3,8 +3,8 @@ import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { filter, merge, switchMap } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { merge } from 'rxjs';
+import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 
 import { createActor } from '@core/utils';
 import { canisterId, idlFactory } from 'declarations/rabbithole';

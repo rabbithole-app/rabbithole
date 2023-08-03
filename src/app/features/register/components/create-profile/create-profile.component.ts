@@ -9,7 +9,8 @@ import { toNullable } from '@dfinity/utils';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { EMPTY, Observable, map, shareReplay, startWith } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
+import { map, shareReplay, startWith } from 'rxjs/operators';
 
 import { AvatarEditorComponent } from '@core/components/avatar-editor/avatar-editor.component';
 import { addFASvgIcons } from '@core/utils';

@@ -13,7 +13,8 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { RxPush } from '@rx-angular/template/push';
 import { isEqual, trimEnd } from 'lodash';
-import { combineLatest, combineLatestWith, defer, distinctUntilChanged, filter, fromEvent, iif, map, of, switchMap, takeUntil, withLatestFrom } from 'rxjs';
+import { combineLatest, defer, fromEvent, iif, of } from 'rxjs';
+import { combineLatestWith, distinctUntilChanged, filter, map, switchMap, takeUntil, withLatestFrom } from 'rxjs/operators';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { E8S_PER_TOKEN } from '@core/constants';

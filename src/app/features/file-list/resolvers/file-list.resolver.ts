@@ -4,6 +4,7 @@ import { fromNullable, toNullable } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
 import { get, has, isNull } from 'lodash';
+import { WINDOW } from 'ngx-window-token';
 import { EMPTY, from, iif, throwError } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
@@ -17,6 +18,7 @@ export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterSta
     const router = inject(Router);
     const translocoService = inject(TranslocoService);
     const notificationService = inject(NotificationService);
+    const window = inject(WINDOW);
     const path: string = route.url.map(({ path }) => path).join('/');
     return inject(BucketsService)
         .select(selectSlice(['journal', 'loaded']))
@@ -47,14 +49,16 @@ export const fileListResolver = (route: ActivatedRouteSnapshot, state: RouterSta
                             breadcrumbs,
                             parent: parentId && path ? { id: parentId, path } : null
                         };
-                    }),
-                    catchError(err => {
-                        console.error(err);
-                        notificationService.error(err.message);
-                        router.navigate([fallbackUrl]);
-                        return EMPTY;
                     })
                 )
-            )
+            ),
+            catchError(err => {
+                console.error(err);
+                notificationService.error(err.message);
+                if (window?.navigator.onLine) {
+                    router.navigate([fallbackUrl]);
+                }
+                return EMPTY;
+            })
         );
 };

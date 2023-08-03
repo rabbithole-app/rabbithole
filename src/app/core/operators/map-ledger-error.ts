@@ -2,7 +2,8 @@ import { formatICP } from '@core/utils';
 import { NotifyError, Tokens, TransferError } from '@declarations/journal/journal.did';
 import { translate } from '@ngneat/transloco';
 import { get, has } from 'lodash';
-import { MonoTypeOperatorFunction, map, pipe } from 'rxjs';
+import { MonoTypeOperatorFunction, pipe } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export function mapLedgerError<T>(): MonoTypeOperatorFunction<T> {
     return pipe(

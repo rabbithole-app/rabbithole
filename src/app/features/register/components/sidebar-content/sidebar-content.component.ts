@@ -8,7 +8,7 @@ import { RouterLinkActive, RouterLinkWithHref } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { shareReplay } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { SETTINGS_RX_STATE } from '@core/stores';

@@ -5,13 +5,12 @@ import { fromFetch } from 'rxjs/fetch';
 import { connect, exhaustMap, filter, last, map, repeat, scan, takeWhile } from 'rxjs/operators';
 
 function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
-    let totalLength = arrays.reduce((acc, value) => acc + value.length, 0);
-
-    let result = new Uint8Array(totalLength);
+    const totalLength = arrays.reduce((acc, value) => acc + value.length, 0);
+    const result = new Uint8Array(totalLength);
 
     if (!arrays.length) return result;
     let length = 0;
-    for (let array of arrays) {
+    for (const array of arrays) {
         result.set(array, length);
         length += array.length;
     }
@@ -65,7 +64,7 @@ export function download(url: string): Observable<DownloadProgress | DownloadCom
                         shared.pipe(
                             scan((acc, { value }) => [...acc, value as Uint8Array], [] as Uint8Array[]),
                             last(),
-                            map(chunks => ({ status: DownloadStatus.Complete, result: concatUint8Arrays(chunks), contentType } as DownloadComplete))
+                            map(chunks => ({ status: DownloadStatus.Complete, result: concatUint8Arrays(chunks), contentType }) as DownloadComplete)
                         )
                     )
                 )

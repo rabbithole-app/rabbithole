@@ -10,7 +10,8 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { Observable, map, shareReplay } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { SETTINGS_RX_STATE } from '@core/stores';

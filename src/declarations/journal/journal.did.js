@@ -42,7 +42,7 @@ export const idlFactory = ({ IDL }) => {
         alreadyExists: File,
         parentNotFound: IDL.Null
     });
-    const Result_13 = IDL.Variant({ ok: File__1, err: FileCreateError });
+    const Result_11 = IDL.Variant({ ok: File__1, err: FileCreateError });
     const definite_canister_settings = IDL.Record({
         freezing_threshold: IDL.Nat,
         controllers: IDL.Vec(IDL.Principal),
@@ -92,11 +92,11 @@ export const idlFactory = ({ IDL }) => {
         alreadyExists: Directory__1,
         parentNotFound: IDL.Null
     });
-    const Result_12 = IDL.Variant({
+    const Result_10 = IDL.Variant({
         ok: IDL.Null,
         err: DirectoryCreateError
     });
-    const Result_11 = IDL.Variant({ ok: IDL.Null, err: FileCreateError });
+    const Result_9 = IDL.Variant({ ok: IDL.Null, err: FileCreateError });
     const Directory = IDL.Record({
         id: ID,
         name: IDL.Text,
@@ -108,7 +108,7 @@ export const idlFactory = ({ IDL }) => {
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
-    const Result_10 = IDL.Variant({
+    const Result_8 = IDL.Variant({
         ok: Directory,
         err: DirectoryCreateError
     });
@@ -136,7 +136,7 @@ export const idlFactory = ({ IDL }) => {
         TxCreatedInFuture: IDL.Null,
         InsufficientFunds: IDL.Record({ balance: Tokens })
     });
-    const Result_9 = IDL.Variant({
+    const Result_7 = IDL.Variant({
         ok: IDL.Null,
         err: IDL.Variant({
             notify: NotifyError,
@@ -146,19 +146,8 @@ export const idlFactory = ({ IDL }) => {
     });
     const ID__1 = IDL.Text;
     const NotFoundError = IDL.Variant({ notFound: IDL.Null });
-    const Result_8 = IDL.Variant({ ok: IDL.Null, err: NotFoundError });
+    const Result_6 = IDL.Variant({ ok: IDL.Null, err: NotFoundError });
     const BucketId__1 = IDL.Principal;
-    const Result_7 = IDL.Variant({
-        ok: IDL.Text,
-        err: IDL.Variant({
-            vetKDEncryptedKey: IDL.Null,
-            notFound: IDL.Null
-        })
-    });
-    const Result_6 = IDL.Variant({
-        ok: IDL.Text,
-        err: IDL.Variant({ notFound: IDL.Null, vetKDPublicKey: IDL.Null })
-    });
     const Canister = IDL.Record({
         status: IDL.Opt(canister_status_response),
         owner: IDL.Principal,
@@ -283,7 +272,7 @@ export const idlFactory = ({ IDL }) => {
     });
     const JournalBucket = IDL.Service({
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
-        addFile: IDL.Func([FileCreate], [Result_13], []),
+        addFile: IDL.Func([FileCreate], [Result_11], []),
         canisterStatus: IDL.Func(
             [IDL.Principal],
             [
@@ -295,18 +284,18 @@ export const idlFactory = ({ IDL }) => {
             ],
             []
         ),
-        checkDirname: IDL.Func([EntryCreate], [Result_12], ['query']),
-        checkFilename: IDL.Func([EntryCreate], [Result_11], ['query']),
-        createDirectory: IDL.Func([EntryCreate], [Result_10], []),
-        createInvite: IDL.Func([Time], [Result_9], []),
+        checkDirname: IDL.Func([EntryCreate], [Result_10], ['query']),
+        checkFilename: IDL.Func([EntryCreate], [Result_9], ['query']),
+        createDirectory: IDL.Func([EntryCreate], [Result_8], []),
+        createInvite: IDL.Func([Time], [Result_7], []),
         createPaths: IDL.Func([IDL.Vec(IDL.Text), IDL.Vec(ID__1), IDL.Opt(ID__1)], [IDL.Vec(IDL.Tuple(IDL.Text, ID__1))], []),
-        deleteDirectory: IDL.Func([IDL.Text], [Result_8], []),
-        deleteFile: IDL.Func([IDL.Text], [Result_8], []),
+        deleteDirectory: IDL.Func([IDL.Text], [Result_6], []),
+        deleteFile: IDL.Func([IDL.Text], [Result_6], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
-        fileEncryptedSymmetricKey: IDL.Func([ID__1, IDL.Vec(IDL.Nat8)], [Result_7], []),
-        fileVetkdPublicKey: IDL.Func([ID__1, IDL.Vec(IDL.Vec(IDL.Nat8))], [Result_6], []),
+        fileVetkdPublicKey: IDL.Func([ID__1, IDL.Vec(IDL.Vec(IDL.Nat8))], [IDL.Text], []),
         getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
         getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
+        getFileEncryptedSymmetricKey: IDL.Func([ID__1, IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_5], ['query']),
         getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId__1)], []),
         listFiles: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(FileExtended)], ['query']),
@@ -314,6 +303,7 @@ export const idlFactory = ({ IDL }) => {
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_4], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_3], []),
         renameFile: IDL.Func([IDL.Text, IDL.Text], [Result_2], []),
+        setFileEncryptedSymmetricKey: IDL.Func([ID__1, IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         shareFile: IDL.Func([ID__1, SharedFileParams], [Result_1], []),
         sharedWithMe: IDL.Func([], [IDL.Vec(SharedFileExtended)], ['query']),
         showDirectoriesTree: IDL.Func([IDL.Opt(ID__1)], [IDL.Text], ['query']),

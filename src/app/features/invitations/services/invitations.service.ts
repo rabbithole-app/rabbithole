@@ -4,7 +4,8 @@ import { translate } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { isNull, sortBy } from 'lodash';
-import { catchError, combineLatestWith, defer, finalize, first, iif, map, of, startWith, Subject, switchMap, throwError } from 'rxjs';
+import { defer, iif, of, Subject, throwError } from 'rxjs';
+import { catchError, combineLatestWith, finalize, first, map, startWith, switchMap } from 'rxjs/operators';
 
 import { mapLedgerError } from '@core/operators';
 import { BucketsService, NotificationService } from '@core/services';

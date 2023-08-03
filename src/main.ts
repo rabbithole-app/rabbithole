@@ -1,10 +1,12 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
-import { APP_INITIALIZER, enableProdMode, importProvidersFrom } from '@angular/core';
+import { APP_INITIALIZER, enableProdMode, importProvidersFrom, isDevMode } from '@angular/core';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { PreloadAllModules, TitleStrategy, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { NoPreloading, TitleStrategy, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { AuthClient } from '@dfinity/auth-client';
 import { TRANSLOCO_LOADING_TEMPLATE, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
@@ -32,8 +34,8 @@ function initAuthClientAndPreloadLanguage(settingsState: RxState<SettingsState>,
 
 bootstrapApplication(AppComponent, {
     providers: [
-        importProvidersFrom(BrowserAnimationsModule, MatSnackBarModule, TranslocoRootModule),
-        provideRouter(appRoutes, withPreloading(PreloadAllModules), withComponentInputBinding()),
+        importProvidersFrom(BrowserAnimationsModule, MatSnackBarModule, TranslocoRootModule, MatDialogModule),
+        provideRouter(appRoutes, withPreloading(NoPreloading), withComponentInputBinding()),
         provideHttpClient(withFetch() /*withInterceptors([])*/),
         { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'fill' } },
         ProfileService,
@@ -58,6 +60,10 @@ bootstrapApplication(AppComponent, {
             },
             deps: [CoreService]
         },
-        { provide: TitleStrategy, useClass: PageTitleStrategy }
+        { provide: TitleStrategy, useClass: PageTitleStrategy },
+        provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+        })
     ]
 }).catch(err => console.error(err));

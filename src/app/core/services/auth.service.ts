@@ -6,8 +6,8 @@ import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { isNull } from 'lodash';
 import { WINDOW } from 'ngx-window-token';
-import { filter, firstValueFrom, from, merge, Observable, repeat, Subject, switchMap, takeUntil, throwError } from 'rxjs';
-import { catchError, delayWhen, map, skip, tap, withLatestFrom } from 'rxjs/operators';
+import { firstValueFrom, from, merge, Observable, Subject, throwError } from 'rxjs';
+import { catchError, delayWhen, filter, map, repeat, skip, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
 import { AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';

@@ -1,10 +1,11 @@
 import { Principal } from '@dfinity/principal';
 import { fromNullable } from '@dfinity/utils';
+import { OperatorFunction, pipe } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { formatBytes } from '@features/file-list/utils';
 import { formatTCycles } from '@features/wallet/utils';
 import { canister_status_response } from 'declarations/journal/journal.did';
-
-import { map, OperatorFunction, pipe } from 'rxjs';
 import { CanisterDetails, CanisterDetailsRaw, CanisterStatus } from '../models';
 import { formatFreezingThreshold, toStatus } from '../utils';
 

@@ -1,11 +1,10 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, InjectionToken, RendererFactory2 } from '@angular/core';
+import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
-import { pairwise, startWith } from 'rxjs';
+import { filter, pairwise, startWith } from 'rxjs/operators';
 
 import { LocalStorageService } from '@core/services';
-import { TranslocoService } from '@ngneat/transloco';
-import { filter } from 'rxjs/operators';
 
 export const SETTINGS_LS_KEY = 'SETTINGS';
 

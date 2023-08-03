@@ -5,7 +5,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { Observable, from, map, switchMap, toArray } from 'rxjs';
+import { Observable, from } from 'rxjs';
+import { map, switchMap, toArray } from 'rxjs/operators';
 
 import { JournalService, SnackbarProgressService } from '@features/file-list/services';
 import { CanistersTableComponent } from './components/canisters-table/canisters-table.component';

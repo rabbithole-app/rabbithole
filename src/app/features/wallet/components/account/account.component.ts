@@ -7,7 +7,8 @@ import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxPush } from '@rx-angular/template/push';
-import { Observable, Subject, asyncScheduler, map, merge, of, startWith, switchMap, timer } from 'rxjs';
+import { Observable, Subject, asyncScheduler, merge, of, timer } from 'rxjs';
+import { map, startWith, switchMap } from 'rxjs/operators';
 
 import { addFASvgIcons } from '@core/utils';
 import { WalletService } from '@features/wallet/services';

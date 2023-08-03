@@ -1,7 +1,8 @@
 import { InviteDeleteError } from '@declarations/rabbithole/rabbithole.did';
 import { translate } from '@ngneat/transloco';
 import { get, has } from 'lodash';
-import { MonoTypeOperatorFunction, map, pipe } from 'rxjs';
+import { MonoTypeOperatorFunction, pipe } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export function mapDeleteInviteError<T>(): MonoTypeOperatorFunction<T> {
     return pipe(

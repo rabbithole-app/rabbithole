@@ -795,12 +795,17 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     /*                                 Encryption                                 */
     /* -------------------------------------------------------------------------- */
 
-    public shared ({ caller }) func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Result.Result<Text, NotFoundError or { #vetKDPublicKey }> {
+    public shared ({ caller }) func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Text {
         await journal.fileVetkdPublicKey(id, derivationPath);
     };
 
-    public shared ({ caller }) func fileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }> {
-        await journal.fileEncryptedSymmetricKey(caller, id, tpk);
+    public shared ({ caller }) func setFileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Text {
+        assert validateCaller(caller);
+        await journal.setFileEncryptedSymmetricKey(id, tpk);
+    };
+
+    public shared ({ caller }) func getFileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Text {
+        await journal.getFileEncryptedSymmetricKey(caller, id, tpk);
     };
 
     /* -------------------------------------------------------------------------- */

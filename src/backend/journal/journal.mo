@@ -77,8 +77,9 @@ module {
         shareFile : (ID, SharedFileParams, Principal) -> async Result.Result<FileExtended, { #notFound }>;
         unshareFile : ID -> async Result.Result<FileExtended, { #notFound }>;
         sharedWithMe : Principal -> [SharedFileExtended];
-        fileEncryptedSymmetricKey : (Principal, ID, Blob) -> async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }>;
-        fileVetkdPublicKey : (ID, [Blob]) -> async Result.Result<Text, NotFoundError or { #vetKDPublicKey }>;
+        setFileEncryptedSymmetricKey : (ID, Blob) -> async Text;
+        getFileEncryptedSymmetricKey : (Principal, ID, Blob) -> async Text;
+        fileVetkdPublicKey : (ID, [Blob]) -> async Text;
         preupgrade : () -> ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]);
         // postupgrade : (([(Text, Directory)], [(Text, File)])) -> ();
     };
@@ -755,21 +756,12 @@ module {
             Iter.toArray(Map.vals(extendedMap));
         };
 
-        public func fileEncryptedSymmetricKey(caller : Principal, id : ID, tpk : Blob) : async Result.Result<Text, NotFoundError or { #vetKDEncryptedKey }> {
-            assert not Principal.isAnonymous(caller);
-            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
-            validateCaller(caller, id);
-            let request : VetKDEncryptedKeyRequest = {
-                encryption_public_key = tpk;
-                key_id = bls12_381_test_key_1();
-                derivation_id = Principal.toBlob(owner);
-                public_key_derivation_path = [Text.encodeUtf8("symmetric_key" # id)];
-            };
-            let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else return #err(#vetKDEncryptedKey);
-            #ok(Hex.encode(Blob.toArray(response.encrypted_key)));
+        public func setFileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Text {
+            await vetkdEncryptedKey(tpk, [Text.encodeUtf8("symmetric_key" # id)]);
         };
 
-        func validateCaller(caller : Principal, id : ID) {
+        public func getFileEncryptedSymmetricKey(caller : Principal, id : ID, tpk : Blob) : async Text {
+            let ?(path, file) = findFileEntry(id) else throw Error.reject("File ID not found");
             switch (Map.get(sharedFiles, thash, id)) {
                 case (?v) {
                     switch (v.sharedWith) {
@@ -779,23 +771,29 @@ module {
                 };
                 case null assert Principal.equal(caller, owner);
             };
+            await vetkdEncryptedKey(tpk, [Text.encodeUtf8("symmetric_key" # id)]);
         };
 
-        public func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Result.Result<Text, NotFoundError or { #vetKDPublicKey }> {
-            let ?(path, file) = findFileEntry(id) else return #err(#notFound);
+        func vetkdEncryptedKey(tpk : Blob, derivationPath : [Blob]) : async Text {
+            let request : VetKDEncryptedKeyRequest = {
+                encryption_public_key = tpk;
+                key_id = bls12_381_test_key_1();
+                derivation_id = Principal.toBlob(owner);
+                public_key_derivation_path = derivationPath;
+            };
+            let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else throw Error.reject("Call to vetkd_encrypted_key failed");
+            Hex.encode(Blob.toArray(response.encrypted_key));
+        };
+
+        public func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Text {
             let request : VetKDPublicKeyRequest = {
                 canister_id = null;
                 derivation_path = derivationPath;
                 key_id = bls12_381_test_key_1();
             };
 
-            let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else return #err(#vetKDPublicKey);
-            #ok(Hex.encode(Blob.toArray(response.public_key)));
-        };
-
-        func encrypted_symmetric_key(request : VetKDEncryptedKeyRequest) : async Blob {
-            let response : VetKDEncryptedKeyReply = await VETKD_SYSTEM_API.vetkd_encrypted_key(request) else throw Error.reject("call to vetkd_encrypted_key failed");
-            response.encrypted_key;
+            let response : VetKDPublicKeyReply = await VETKD_SYSTEM_API.vetkd_public_key(request) else throw Error.reject("Call to vetkd_public_key failed");
+            Hex.encode(Blob.toArray(response.public_key));
         };
 
         func bls12_381_test_key_1() : VetKDKeyId {

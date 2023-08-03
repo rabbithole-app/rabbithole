@@ -32,7 +32,10 @@ export class TreeDataSource implements DataSource<DirectoryFlatNode> {
         disableParent: true
     });
 
-    constructor(private treeControl: FlatTreeControl<DirectoryFlatNode, string>, private options: TreeDataSourceOptions) {
+    constructor(
+        private treeControl: FlatTreeControl<DirectoryFlatNode, string>,
+        private options: TreeDataSourceOptions
+    ) {
         this.#options.update(value => ({ ...value, ...options }));
         effect(() => {
             const data = this.#data();

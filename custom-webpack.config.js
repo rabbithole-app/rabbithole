@@ -24,15 +24,17 @@ function initCanisterIds() {
 
     for (const canister in canisters) {
         if (canisters.hasOwnProperty(canister)) {
-            process.env[canister.toUpperCase() + '_CANISTER_ID'] = canisters[canister][network];
+            process.env['CANISTER_ID_' + canister.toUpperCase()] = canisters[canister][network];
         }
     }
 }
 
 initCanisterIds();
 
-const canister_ids = {
-    RABBITHOLE_CANISTER_ID: canisters['rabbithole']
+const env = {
+    DFX_NETWORK: network,
+    CANISTER_ID_RABBITHOLE: canisters['rabbithole'],
+    CANISTER_ID_VETKD_SYSTEM_API: canisters['vetkd_system_api']
 };
 
 module.exports = {
@@ -44,7 +46,7 @@ module.exports = {
         }
     },
     plugins: [
-        new webpack.EnvironmentPlugin(canister_ids),
+        new webpack.EnvironmentPlugin(env),
         new webpack.ProvidePlugin({
             Buffer: [require.resolve('buffer'), 'Buffer'],
             process: require.resolve('process/browser')

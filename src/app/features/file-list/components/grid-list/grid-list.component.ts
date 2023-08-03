@@ -32,23 +32,8 @@ import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { chunk, compact, drop, dropRight, find, findIndex, findLastIndex, head, isEqual, isNumber, isUndefined, last, nth, pick } from 'lodash';
 import { DndDropEvent, DndModule } from 'ngx-drag-drop';
-import {
-    BehaviorSubject,
-    EMPTY,
-    Observable,
-    Subject,
-    animationFrameScheduler,
-    defer,
-    fromEvent,
-    iif,
-    merge,
-    observeOn,
-    of,
-    shareReplay,
-    switchMap,
-    timer
-} from 'rxjs';
-import { filter, map, pluck, repeat, takeUntil, tap } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, Subject, animationFrameScheduler, defer, fromEvent, iif, merge, observeOn, of, timer } from 'rxjs';
+import { filter, map, repeat, shareReplay, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { AnimateCssGridDirective } from '@core/directives';
 import { OverlayService } from '@core/services';
@@ -284,7 +269,7 @@ export class GridListComponent<T extends { id: string }> implements OnDestroy, A
 
         const selected$ = this.selected.changed.pipe(
             // debounceTime(100),
-            pluck('source', 'selected'),
+            map(e => e.source.selected),
             map(selectedItems => this.items().filter(({ id }) => selectedItems.includes(id))),
             shareReplay(1)
         );
@@ -320,6 +305,7 @@ export class GridListComponent<T extends { id: string }> implements OnDestroy, A
             .subscribe();
     }
 
+    // eslint-disable-next-line @angular-eslint/no-empty-lifecycle-method
     ngAfterViewInit() {
         // при начале выделения в случае если открыто контекстное меню, закрываем его
         /*this.selecting

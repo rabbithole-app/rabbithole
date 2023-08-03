@@ -8,8 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
-import { EMPTY, Observable, filter } from 'rxjs';
-import { delayWhen, map } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
+import { delayWhen, filter, map } from 'rxjs/operators';
 
 import { DirectoryNameValidator } from '@features/file-list/validators';
 

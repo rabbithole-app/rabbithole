@@ -11,7 +11,8 @@ import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { isNull } from 'lodash';
-import { Observable, asapScheduler, observeOn } from 'rxjs';
+import { Observable, asapScheduler } from 'rxjs';
+import { observeOn } from 'rxjs/operators';
 
 import { JOURNAL_CYCLES_SHARE } from '@core/constants';
 import { BucketsService, ProfileService } from '@core/services';
@@ -19,6 +20,7 @@ import { addFASvgIcons } from '@core/utils';
 import { InvoiceStage } from '@features/register/models';
 import { JournalStatus, RegisterService } from '@features/register/services/register.service';
 import { cyclesToICP } from '@features/wallet/utils';
+import { environment } from 'environments/environment';
 import { InvoiceComponent } from './components/invoice/invoice.component';
 import { RedeemInviteDialogComponent } from './components/redeem-invite-dialog/redeem-invite-dialog.component';
 
@@ -76,7 +78,7 @@ export class RegisterComponent {
         return index;
     });
     selectedIndex$: Observable<number> = toObservable(this.selectedIndex).pipe(observeOn(asapScheduler));
-    readonly inviteEnabled = false;
+    readonly inviteEnabled = !environment.registrationEnabled;
 
     constructor() {
         addFASvgIcons(['check', 'envelope', 'database'], 'far');

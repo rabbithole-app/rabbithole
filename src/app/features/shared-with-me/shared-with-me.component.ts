@@ -24,18 +24,7 @@ import { SharedFileExtended } from './models';
     templateUrl: './shared-with-me.component.html',
     styleUrls: ['./shared-with-me.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        MatIconModule,
-        RxFor,
-        MatMenuModule,
-        SharedGridListComponent,
-        TranslocoModule,
-        RxLet,
-        RxIf,
-        MatCardModule,
-        AvatarComponent,
-        CopyIDComponent
-    ]
+    imports: [MatIconModule, RxFor, MatMenuModule, SharedGridListComponent, TranslocoModule, RxLet, RxIf, MatCardModule, AvatarComponent, CopyIDComponent]
 })
 export class SharedWithMeComponent implements OnInit {
     readonly #coreService = inject(CoreService);

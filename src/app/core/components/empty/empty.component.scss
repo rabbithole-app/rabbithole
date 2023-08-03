@@ -41,6 +41,7 @@ $sizes: (
     display: grid;
     place-items: center;
     padding: 1rem;
+    row-gap: 1rem;
 
     @each $modifier, $multi in $sizes {
         &.size-#{$modifier} mat-icon {

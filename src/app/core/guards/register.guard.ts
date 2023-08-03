@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { combineLatestWith, map } from 'rxjs';
+import { combineLatestWith, map } from 'rxjs/operators';
 
 import { hasJournalGuard, hasProfileGuard } from '.';
 

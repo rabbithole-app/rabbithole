@@ -8,7 +8,15 @@
         "synchronizing": "Synchronizing...",
         "synchronizing.description": "Please keep the app open on a device that's already added.",
         "signed-out": "You have been logged out because your session has expired.",
-        "toggle-sidebar": "Toggle sidebar"
+        "toggle-sidebar": "Toggle sidebar",
+        "offline": "No internet connection. Check your Internet connection.",
+        "try-again": "Try again",
+        "update": {
+            "title": "Update available",
+            "description": "A new version of the client is available, updating requires a page reload",
+            "cancel": "Cancel",
+            "reload": "Reload"
+        }
     },
     "breadcrumbs": {
         "back": "Back",

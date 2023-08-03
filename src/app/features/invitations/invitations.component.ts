@@ -7,7 +7,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { selectSlice } from '@rx-angular/state/selections';
 import { RxPush } from '@rx-angular/template/push';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { addFASvgIcons } from '@core/utils';
 import { CreateInviteDialogComponent } from './components/create-invite-dialog/create-invite-dialog.component';

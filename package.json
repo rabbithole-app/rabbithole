@@ -6,7 +6,8 @@
         "start": "ng serve",
         "build": "ng build",
         "watch": "ng build --watch --configuration development",
-        "lint": "ng lint"
+        "lint": "ng lint",
+        "http-server": "http-server -p 8081 -c-1 dist --gzip --cors"
     },
     "private": true,
     "dependencies": {
@@ -21,6 +22,7 @@
         "@angular/platform-browser": "^16.1.7",
         "@angular/platform-browser-dynamic": "^16.1.7",
         "@angular/router": "^16.1.7",
+        "@angular/service-worker": "^16.1.7",
         "@dfinity/agent": "^0.18.1",
         "@dfinity/auth-client": "^0.18.1",
         "@dfinity/candid": "^0.18.1",

@@ -22,7 +22,13 @@
                 <ng-template matStepContent>
                     <div class="content">
                         <p [innerHTML]="t('steps.createInvoice.description', { xdr, usd })"></p>
-                        <ng-container *rxIf="registerService.loadingCreateInvoice(); then loadingButton; else createInvoiceButton; suspense: loadingButton"></ng-container>
+                        <ng-container
+                            *rxIf="
+                                registerService.loadingCreateInvoice();
+                                then loadingButton;
+                                else createInvoiceButton;
+                                suspense: loadingButton
+                            "></ng-container>
                     </div>
                 </ng-template>
             </mat-step>

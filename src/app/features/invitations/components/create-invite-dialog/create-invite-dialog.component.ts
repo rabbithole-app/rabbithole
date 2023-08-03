@@ -10,7 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { add, startOfTomorrow } from 'date-fns';
 import { enUS, ru } from 'date-fns/locale';
-import { AsyncSubject, takeUntil } from 'rxjs';
+import { AsyncSubject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { DATE_FORMATS } from '@core/config';
 

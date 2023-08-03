@@ -64,7 +64,11 @@ export class DragPreviewComponent implements OnDestroy {
     });
     readonly blankIcon = `${this.iconsConfig.namespace}:blank`;
 
-    constructor(public element: ElementRef, private renderer: Renderer2, private animationBuilder: AnimationBuilder) {}
+    constructor(
+        public element: ElementRef,
+        private renderer: Renderer2,
+        private animationBuilder: AnimationBuilder
+    ) {}
 
     @HostBinding('@bounceInOnEnter') get bounceInOnEnter() {
         return this.hostAnimationParams;

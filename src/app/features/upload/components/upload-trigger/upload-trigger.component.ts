@@ -9,7 +9,7 @@ import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { RxIf } from '@rx-angular/template/if';
 import { isUndefined } from 'lodash';
-import { filter, map, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
 
 import { OverlayService } from '@core/services';
 import { addFASvgIcons } from '@core/utils';

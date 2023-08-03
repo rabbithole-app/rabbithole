@@ -6,7 +6,8 @@ import { ActorSubclass } from '@dfinity/agent';
 import { RxState } from '@rx-angular/state';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
 import { isUndefined } from 'lodash';
-import { EMPTY, defer, from, iif, switchMap } from 'rxjs';
+import { EMPTY, defer, from, iif } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 interface State {
     actor: ActorSubclass<RabbitholeActor>;

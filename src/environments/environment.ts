@@ -5,6 +5,7 @@ export const environment = {
     identityUrl: `http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080/#authorize`,
     appName: 'Rabbit Hole',
     envName: 'DEV',
+    registrationEnabled: true,
     versions: {
         app: packageJson.version
     }

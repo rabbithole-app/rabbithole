@@ -5,24 +5,8 @@ import { createAgent, ICPToken, Token, TokenAmount } from '@dfinity/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { get, has, isNull } from 'lodash';
-import {
-    catchError,
-    combineLatestWith,
-    connect,
-    defer,
-    filter,
-    finalize,
-    first,
-    forkJoin,
-    from,
-    iif,
-    map,
-    merge,
-    share,
-    shareReplay,
-    switchMap,
-    throwError
-} from 'rxjs';
+import { defer, forkJoin, from, iif, merge, throwError } from 'rxjs';
+import { catchError, combineLatestWith, connect, filter, finalize, first, map, share, shareReplay, switchMap } from 'rxjs/operators';
 
 import { LEDGER_CANISTER_ID } from '@core/constants';
 import { BucketsService, NotificationService } from '@core/services';

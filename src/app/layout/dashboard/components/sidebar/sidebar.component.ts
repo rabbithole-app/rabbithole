@@ -8,8 +8,8 @@ import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { AsyncSubject, Observable, shareReplay, timer } from 'rxjs';
-import { switchMap, take, tap } from 'rxjs/operators';
+import { AsyncSubject, Observable, timer } from 'rxjs';
+import { shareReplay, switchMap, take, tap } from 'rxjs/operators';
 
 import { SIDEBAR_TEXT_ANIMATION } from '@core/animations';
 import { AuthService } from '@core/services';

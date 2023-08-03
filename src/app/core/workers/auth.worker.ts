@@ -2,7 +2,8 @@
 
 import { IdbStorage, KEY_STORAGE_DELEGATION } from '@dfinity/auth-client';
 import { DelegationChain, isDelegationValid } from '@dfinity/identity';
-import { Subject, bufferCount, filter, forkJoin, interval, repeat, switchMap, take, takeUntil } from 'rxjs';
+import { Subject, forkJoin, interval } from 'rxjs';
+import { bufferCount, filter, repeat, switchMap, take, takeUntil } from 'rxjs/operators';
 import { AUTH_TIMER_INTERVAL } from '../constants';
 import { createAuthClient } from '../utils';
 

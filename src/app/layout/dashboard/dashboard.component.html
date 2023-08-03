@@ -1,16 +1,24 @@
-<mat-drawer-container class="container" autosize>
-    <mat-drawer-content>
-        <mat-progress-bar *rxIf="loading$" mode="indeterminate"></mat-progress-bar>
-        <app-sidebar></app-sidebar>
-        <div class="wrapper">
-            <app-header></app-header>
-            <main [@routeAnimations]="hasRouteAnimations" cdkScrollable>
-                <router-outlet></router-outlet>
-            </main>
-            <app-footer></app-footer>
-        </div>
-    </mat-drawer-content>
-    <mat-drawer mode="over" position="end">
-        <router-outlet name="sidebar-right"></router-outlet>
-    </mat-drawer>
-</mat-drawer-container>
+<ng-container *transloco="let t">
+    <mat-drawer-container class="container" autosize>
+        <mat-drawer-content>
+            <mat-progress-bar *rxIf="loading$" mode="indeterminate"></mat-progress-bar>
+            <app-sidebar></app-sidebar>
+            <div class="wrapper">
+                <app-header></app-header>
+                <main [@routeAnimations]="hasRouteAnimations" cdkScrollable [ngClass]="{ offline: !online() }">
+                    <router-outlet *rxIf="online(); else offline"></router-outlet>
+                    <ng-template #offline>
+                        <app-empty icon="error">
+                            {{ t('application.offline') }}
+                            <button mat-raised-button color="primary">{{ t('application.try-again') }}</button>
+                        </app-empty>
+                    </ng-template>
+                </main>
+                <app-footer></app-footer>
+            </div>
+        </mat-drawer-content>
+        <mat-drawer mode="over" position="end">
+            <router-outlet name="sidebar-right"></router-outlet>
+        </mat-drawer>
+    </mat-drawer-container>
+</ng-container>

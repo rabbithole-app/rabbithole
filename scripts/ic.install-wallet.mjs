@@ -2,7 +2,8 @@
 
 import { Command, Option } from 'commander';
 import { Listr } from 'listr2';
-import { concatMap, from, map, range, tap } from 'rxjs';
+import { from, range } from 'rxjs';
+import { concatMap, map, tap } from 'rxjs/operators';
 import { rabbitholeActorIC, rabbitholeActorLocal } from './actors/rabbithole.actors.mjs';
 import { loadWasm } from './utils/code.utils.mjs';
 

@@ -5,29 +5,8 @@ import { fromNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { isNull, isUndefined } from 'lodash';
-import {
-    catchError,
-    combineLatest,
-    combineLatestWith,
-    concat,
-    connect,
-    defer,
-    filter,
-    first,
-    from,
-    iif,
-    map,
-    merge,
-    mergeMap,
-    Observable,
-    of,
-    startWith,
-    Subject,
-    switchMap,
-    tap,
-    throwError,
-    toArray
-} from 'rxjs';
+import { combineLatest, concat, defer, from, iif, merge, Observable, of, Subject, throwError } from 'rxjs';
+import { catchError, combineLatestWith, connect, filter, first, map, mergeMap, startWith, switchMap, tap, toArray } from 'rxjs/operators';
 
 import { getStorageBySize } from '@features/upload/operators';
 import { AUTH_RX_STATE } from 'app/core/stores/auth';

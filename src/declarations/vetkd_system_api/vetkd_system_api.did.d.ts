@@ -1,5 +1,5 @@
-import type { ActorMethod } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
 
 export type canister_id = Principal;
 export type vetkd_curve = { bls12_381: null };

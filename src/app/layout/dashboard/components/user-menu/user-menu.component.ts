@@ -10,7 +10,7 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { RxIf } from '@rx-angular/template/if';
 import { isNull, isUndefined } from 'lodash';
-import { filter, map, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
 
 import { CustomOverlayRef } from '@core/components/overlay';
 import { AuthService, ProfileService } from '@core/services';

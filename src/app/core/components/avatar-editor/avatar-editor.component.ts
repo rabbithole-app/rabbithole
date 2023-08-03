@@ -23,22 +23,8 @@ import { RxPush } from '@rx-angular/template/push';
 import { bounceInOnEnterAnimation, bounceOutOnLeaveAnimation } from 'angular-animations';
 import { isNull, isString } from 'lodash';
 import { showOpenFilePicker } from 'native-file-system-adapter';
-import {
-    Observable,
-    Subject,
-    distinctUntilChanged,
-    endWith,
-    filter,
-    fromEvent,
-    map,
-    merge,
-    repeat,
-    startWith,
-    switchMap,
-    take,
-    takeUntil,
-    withLatestFrom
-} from 'rxjs';
+import { Observable, Subject, fromEvent, merge } from 'rxjs';
+import { distinctUntilChanged, endWith, filter, map, repeat, startWith, switchMap, take, takeUntil, withLatestFrom } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import { CoreService, NotificationService } from '@core/services';

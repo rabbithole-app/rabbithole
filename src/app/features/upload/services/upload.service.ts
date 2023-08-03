@@ -1,4 +1,4 @@
-import { effect, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { arrayBufferToUint8Array } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
@@ -7,7 +7,7 @@ import { defaults, entries, isEqual, isPlainObject, isUndefined, orderBy, remove
 import { showDirectoryPicker, showOpenFilePicker } from 'native-file-system-adapter';
 import { type FileSystemDirectoryHandle } from 'native-file-system-adapter/types/src/FileSystemDirectoryHandle';
 import { type FileSystemFileHandle } from 'native-file-system-adapter/types/src/FileSystemFileHandle';
-import { forkJoin, from, merge, mergeMap, Observable, of, onErrorResumeNext, Subject, timer } from 'rxjs';
+import { forkJoin, from, merge, Observable, of, onErrorResumeNext, Subject, timer } from 'rxjs';
 import {
     concatWith,
     connect,
@@ -18,6 +18,7 @@ import {
     first,
     map,
     mergeAll,
+    mergeMap,
     shareReplay,
     skip,
     switchMap,

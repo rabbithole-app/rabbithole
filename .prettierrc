@@ -8,7 +8,6 @@
     "bracketSpacing": true,
     "arrowParens": "avoid",
     "bracketSameLine": true,
-    "organizeImportsSkipDestructiveCodeActions": true,
     "overrides": [
         {
             "files": "*.html",

@@ -8,7 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TRANSLOCO_SCOPE, TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { map, Observable, startWith } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 import { addFASvgIcons } from '@core/utils';
 import { InviteValidator } from '@core/validators';

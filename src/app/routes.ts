@@ -1,5 +1,3 @@
-import { importProvidersFrom } from '@angular/core';
-import { MatDialogModule } from '@angular/material/dialog';
 import { Route } from '@angular/router';
 
 import { authGuard, createProfileGuard, dashboardGuard, invitationsGuard, journalGuard, loginGuard, registerGuard } from '@core/guards';
@@ -85,7 +83,6 @@ export const appRoutes: Route[] = [
             UploadService,
             JournalService,
             SnackbarProgressService,
-            importProvidersFrom(MatDialogModule),
             {
                 provide: FILE_LIST_ICONS_CONFIG,
                 useValue: GRAY_ICONS_CONFIG
@@ -102,7 +99,7 @@ export const appRoutes: Route[] = [
                 path: '',
                 canMatch: [createProfileGuard],
                 loadComponent: () => import('./features/register/components/create-profile/create-profile.component').then(m => m.CreateProfileComponent),
-                providers: [UploadService, FileListService, JournalService, SnackbarProgressService, importProvidersFrom(MatDialogModule)]
+                providers: [UploadService, FileListService, JournalService, SnackbarProgressService]
             },
             {
                 path: '',

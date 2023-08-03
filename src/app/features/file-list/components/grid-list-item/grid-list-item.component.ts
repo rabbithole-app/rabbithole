@@ -44,7 +44,7 @@ import { getIconByFilename } from '@features/file-list/utils';
 })
 export class GridListItemComponent implements Highlightable, OnInit {
     @Input({ required: true }) data!: JournalItem;
-    @Input({ transform: booleanAttribute }) active: boolean = false;
+    @Input({ transform: booleanAttribute }) active = false;
     @Output() openContext: EventEmitter<{ trigger: MatMenuTrigger; position: Point }> = new EventEmitter<{ trigger: MatMenuTrigger; position: Point }>();
     @HostBinding('attr.tabindex') tabindex = '-1';
     @HostBinding('attr.role') role = 'listitem';

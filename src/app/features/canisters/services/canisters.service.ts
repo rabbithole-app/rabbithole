@@ -3,7 +3,8 @@ import { Principal } from '@dfinity/principal';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { isNil } from 'lodash';
-import { catchError, concat, defer, EMPTY, filter, from, map, merge, mergeMap, of, repeat, retry, switchMap, takeUntil, throwError, toArray } from 'rxjs';
+import { concat, defer, EMPTY, from, merge, of, throwError } from 'rxjs';
+import { catchError, filter, map, mergeMap, repeat, retry, switchMap, takeUntil, toArray } from 'rxjs/operators';
 
 import { BucketsService, NotificationService } from '@core/services';
 import { AUTH_RX_STATE, AuthStatus } from '@core/stores';

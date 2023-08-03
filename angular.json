@@ -95,7 +95,9 @@
                         "stylePreprocessorOptions": {
                             "includePaths": ["src/styles"]
                         },
-                        "webWorkerTsConfig": "tsconfig.worker.json"
+                        "webWorkerTsConfig": "tsconfig.worker.json",
+                        "serviceWorker": true,
+                        "ngswConfigPath": "ngsw-config.json"
                     },
                     "configurations": {
                         "production": {

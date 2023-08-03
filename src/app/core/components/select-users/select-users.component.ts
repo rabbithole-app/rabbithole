@@ -23,7 +23,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { RxFor } from '@rx-angular/template/for';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
-import { Observable, combineLatestWith, fromEvent, map, startWith, take } from 'rxjs';
+import { Observable, fromEvent } from 'rxjs';
+import { combineLatestWith, map, startWith, take } from 'rxjs/operators';
 
 import { ProfileItem } from '@core/models/profile';
 import { ProfileService } from '@core/services';

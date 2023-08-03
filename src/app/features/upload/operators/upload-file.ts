@@ -1,7 +1,8 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
 import { addSeconds, differenceInSeconds } from 'date-fns';
 import { defaults, get, has, includes, isNull, pick } from 'lodash';
-import { EMPTY, Observable, catchError, defer, from, iif, last, map, mergeScan, of, switchMap, tap, throwError } from 'rxjs';
+import { EMPTY, Observable, defer, from, iif, of, throwError } from 'rxjs';
+import { catchError, last, map, mergeScan, switchMap, tap } from 'rxjs/operators';
 
 import { AssetKey, CommitBatch, CommitUploadError, _SERVICE as StorageActor } from '@declarations/storage/storage.did';
 import { BATCH_EXPIRY_SECONDS } from '../constants';

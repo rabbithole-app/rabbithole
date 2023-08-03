@@ -1,47 +1,26 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { arrayBufferToUint8Array, hexStringToUint8Array } from '@dfinity/utils';
-import { get, has } from 'lodash';
 
 // See also https://github.com/rollup/plugins/tree/master/packages/wasm#using-with-wasm-bindgen-and-wasm-pack
-import { _SERVICE as JournalActor, NotFoundError } from 'declarations/journal/journal.did';
+import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { TransportSecretKey, default as vetkd } from 'vetkd_user_lib/ic_vetkd_utils';
 
 export async function loadWasm() {
     await vetkd('vetkd_user_lib/ic_vetkd_utils_bg.wasm');
 }
 
-function checkResponse<K extends keyof ActorSubclass<JournalActor>>(response: Awaited<ReturnType<ActorSubclass<JournalActor>[K]>>) {
-    if (has(response, 'err')) {
-        const err = Object.keys(get(response, 'err') as unknown as NotFoundError | { vetKDEncryptedKey: null } | { vetKDPublicKey: null })[0];
-        switch (err) {
-            case 'notFound':
-                throw new Error('File ID not found');
-            case 'vetKDEncryptedKey':
-                throw new Error('Call to vetkd_encrypted_key failed');
-            case 'vetKDPublicKey':
-                throw new Error('Call to vetkd_public_key failed');
-            default:
-                throw new Error('Unknown error');
-        }
-    }
-}
-
 /**
  * Fetch the authenticated user's vetKD key and derive an AES-GCM key from it
  */
-export async function initVetAesGcmKey(id: string, caller: Principal, actor: ActorSubclass<JournalActor>): Promise<CryptoKey | null> {
+export async function initVetAesGcmKey(id: string, caller: Principal, actor: ActorSubclass<JournalActor>, exists = true): Promise<CryptoKey | null> {
     try {
         // Showcase that the integration of the vetkd user library works
         const seed = crypto.getRandomValues(new Uint8Array(32));
         const tsk = new TransportSecretKey(seed);
         const tpk = tsk.public_key();
-        const responseESK = await actor.fileEncryptedSymmetricKey(id, tpk);
-        checkResponse<'fileEncryptedSymmetricKey'>(responseESK);
-        const ek_bytes_hex = get(responseESK, 'ok') as unknown as string;
-        const responsePK = await actor.fileVetkdPublicKey(id, [new TextEncoder().encode(`symmetric_key${id}`)]);
-        checkResponse<'fileVetkdPublicKey'>(responsePK);
-        const pk_bytes_hex = get(responsePK, 'ok') as unknown as string;
+        const ek_bytes_hex = exists ? await actor.getFileEncryptedSymmetricKey(id, tpk) : await actor.setFileEncryptedSymmetricKey(id, tpk);
+        const pk_bytes_hex = await actor.fileVetkdPublicKey(id, [new TextEncoder().encode(`symmetric_key${id}`)]);
         const aes_256_gcm_key_raw = tsk.decrypt_and_hash(
             hexStringToUint8Array(ek_bytes_hex),
             hexStringToUint8Array(pk_bytes_hex),

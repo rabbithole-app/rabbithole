@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProfileService } from '@core/services';
-import { map } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export const invitationsGuard = () => {
     const router = inject(Router);

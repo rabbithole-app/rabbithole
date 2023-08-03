@@ -9,11 +9,12 @@ import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
 import { defaults, get, has, isNull, isUndefined, omit, partition, pick } from 'lodash';
 import { CropperPosition } from 'ngx-image-cropper';
-import { EMPTY, Observable, Subject, concat, connect, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, throwError, timer } from 'rxjs';
+import { EMPTY, Observable, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, throwError, timer } from 'rxjs';
 import {
     catchError,
     combineLatestWith,
     concatWith,
+    connect,
     delayWhen,
     exhaustMap,
     filter,
@@ -408,7 +409,7 @@ const fileUpload$ = files.asObservable().pipe(
                         options && options.encryption
                             ? state.select(selectSlice(['journal', 'identity'])).pipe(
                                   first(),
-                                  switchMap(({ journal, identity }) => initVetAesGcmKey(item.id, identity.getPrincipal(), journal)),
+                                  switchMap(({ journal, identity }) => initVetAesGcmKey(item.id, identity.getPrincipal(), journal, false)),
                                   switchMap(aesKey => encryptArrayBuffer(aesKey, item.data)),
                                   catchError(err => {
                                       console.log(err);

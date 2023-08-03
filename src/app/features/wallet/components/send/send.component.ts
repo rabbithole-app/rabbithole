@@ -8,7 +8,8 @@ import { RxState } from '@rx-angular/state';
 import { RxLet } from '@rx-angular/template/let';
 import { RxPush } from '@rx-angular/template/push';
 import { isEqual, isNull } from 'lodash';
-import { combineLatestWith, distinctUntilChanged, filter, map, Observable, startWith } from 'rxjs';
+import { Observable } from 'rxjs';
+import { combineLatestWith, distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 
 import { E8S_PER_TOKEN } from '@core/constants';
 import { NotificationService } from '@core/services';
