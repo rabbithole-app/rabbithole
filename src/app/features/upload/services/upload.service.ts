@@ -283,18 +283,21 @@ export class UploadService extends RxState<State> {
 
     private updateProgressAll<T = FileUploadState>(predicate: (v: FileUploadState) => boolean, partialValue: Partial<T>) {
         this.set('progress', state =>
-            entries(state.progress).reduce((result, [id, value]) => {
-                if (predicate(value)) {
-                    result[id] = {
-                        ...value,
-                        ...partialValue
-                    };
-                } else {
-                    result[id] = value;
-                }
+            entries(state.progress).reduce(
+                (result, [id, value]) => {
+                    if (predicate(value)) {
+                        result[id] = {
+                            ...value,
+                            ...partialValue
+                        };
+                    } else {
+                        result[id] = value;
+                    }
 
-                return result;
-            }, {} as State['progress'])
+                    return result;
+                },
+                {} as State['progress']
+            )
         );
     }
 
@@ -411,10 +414,13 @@ export class UploadService extends RxState<State> {
         this.set('progress', state =>
             values<FileUploadState>(state.progress)
                 .filter(({ status }) => status !== UPLOAD_STATUS.Done)
-                .reduce((res, item) => {
-                    res[item.id] = item;
-                    return res;
-                }, {} as State['progress'])
+                .reduce(
+                    (res, item) => {
+                        res[item.id] = item;
+                        return res;
+                    },
+                    {} as State['progress']
+                )
         );
     }
 

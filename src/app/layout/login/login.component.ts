@@ -32,7 +32,10 @@ export class LoginComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) {
+    constructor(
+        private matIconRegistry: MatIconRegistry,
+        private domSanitizer: DomSanitizer
+    ) {
         entries({
             dfinity: '../../../assets/dfn.svg',
             fullyOnChain: '../../../assets/fully_on_chain-stripe-dark_text.svg'

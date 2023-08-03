@@ -90,7 +90,7 @@ export class JournalService {
 
             this.snackbarProgressService.add<Task>(
                 'createPath',
-                args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' } as Task)),
+                args.paths.map(name => ({ id: `temp_${nanoid(4)}`, name, type: 'folder' }) as Task),
                 handler
             );
             const subscription = this.snackbarProgressService.snackBarRef
@@ -302,7 +302,7 @@ export class JournalService {
                                 ({
                                     expandable: dir.children && dir.children[0].length > 0,
                                     directory: pick(dir, ['id', 'name', 'parentId', 'path'])
-                                } as Pick<DirectoryFlatNode, 'expandable' | 'directory'>)
+                                }) as Pick<DirectoryFlatNode, 'expandable' | 'directory'>
                         )
                     ),
                     catchError(() => of([]))

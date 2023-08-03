@@ -6,7 +6,7 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { isNull, isUndefined } from 'lodash';
 import { combineLatest, concat, defer, from, iif, merge, Observable, of, Subject, throwError } from 'rxjs';
-import { catchError, combineLatestWith, connect, filter, first, map, mergeMap, startWith, switchMap, tap, toArray } from 'rxjs/operators';
+import { catchError, combineLatestWith, connect, first, map, mergeMap, startWith, switchMap, tap, toArray } from 'rxjs/operators';
 
 import { getStorageBySize } from '@features/upload/operators';
 import { AUTH_RX_STATE } from 'app/core/stores/auth';
@@ -84,7 +84,7 @@ export class BucketsService extends RxState<State> {
                                         canisterId: bucketId,
                                         idlFactory: storageIdlFactory,
                                         identity
-                                    }).pipe(map(storageActor => ({ actor: storageActor, canisterId: bucketId.toText() } as Bucket<StorageActor>)))
+                                    }).pipe(map(storageActor => ({ actor: storageActor, canisterId: bucketId.toText() })))
                                 ),
                                 toArray(),
                                 map(storages => ({ storages }))
@@ -119,9 +119,7 @@ export class BucketsService extends RxState<State> {
 
     getStorageBySize(fileSize: bigint): Observable<Bucket<StorageActor>> {
         return this.select('journal').pipe(
-            first(),
-            filter(actor => !isNull(actor)),
-            map(actor => actor as NonNullable<typeof actor>),
+            first((actor): actor is NonNullable<typeof actor> => !isNull(actor)),
             switchMap(actor => getStorageBySize(actor, fileSize)),
             switchMap(bucketId => this.getStorage(bucketId.toText()))
         );

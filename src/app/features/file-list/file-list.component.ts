@@ -118,7 +118,12 @@ export class FileListComponent {
         this.fileListService.contextMenuTemplate.set(value);
     }
 
-    constructor(private dialog: MatDialog, private location: Location, private contextMenuService: ContextMenuService, private state: RxState<State>) {
+    constructor(
+        private dialog: MatDialog,
+        private location: Location,
+        private contextMenuService: ContextMenuService,
+        private state: RxState<State>
+    ) {
         addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree', 'users', 'users-slash'], 'far');
         this.route.data
             .pipe(

@@ -31,7 +31,7 @@ export function canisterDetails(): OperatorFunction<
                         controllers: data.status.settings.controllers
                     },
                     moduleHash: fromNullable(data.status.module_hash)
-                } as CanisterDetailsRaw)
+                }) as CanisterDetailsRaw
         )
     );
 }

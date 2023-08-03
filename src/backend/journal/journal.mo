@@ -477,6 +477,11 @@ module {
                 case null {};
                 case (?id) ignore storageBucket.delete(id);
             };
+            if (Map.has(sharedFiles, thash, file.id)) {
+                let rabbithole : actor { unshareFile : shared ID -> async () } = actor (Principal.toText(installer));
+                ignore rabbithole.unshareFile(file.id);
+                Map.delete(sharedFiles, thash, file.id);
+            };
             #ok();
         };
 

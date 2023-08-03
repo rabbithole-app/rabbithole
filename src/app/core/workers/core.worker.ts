@@ -608,7 +608,7 @@ function downloadFile({ id, downloadUrl, name }: { id: string; downloadUrl: stri
                             ({
                                 status,
                                 file: new File([result.buffer], name, { type: contentType })
-                            } as DownloadCompleteExt)
+                            }) as DownloadCompleteExt
                     )
                 )
             )
@@ -652,7 +652,7 @@ function downloadEncryptedFile({
                                     ),
                                     shared.pipe(
                                         last(),
-                                        map(() => ({ status: DownloadStatus.Decryption } as DownloadDecryption))
+                                        map(() => ({ status: DownloadStatus.Decryption }) as DownloadDecryption)
                                     ),
                                     shared.pipe(
                                         last(),
@@ -665,7 +665,7 @@ function downloadEncryptedFile({
                                                         ({
                                                             status,
                                                             file: new File([decodedBuffer], name, { type: contentType })
-                                                        } as DownloadCompleteExt)
+                                                        }) as DownloadCompleteExt
                                                 ),
                                                 catchError(err => {
                                                     console.error(err);
