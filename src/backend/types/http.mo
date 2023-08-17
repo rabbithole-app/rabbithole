@@ -31,7 +31,7 @@ module {
     public type StreamingCallbackToken = {
         id : ID;
         headers : [HeaderField];
-        sha256 : ?[Nat8];
+        sha256 : ?Blob;
         index : Nat;
     };
 

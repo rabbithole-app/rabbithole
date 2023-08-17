@@ -1,6 +1,7 @@
 import { fromNullable } from '@dfinity/utils';
 import { has, isUndefined } from 'lodash';
 
+import { isDevMode } from '@angular/core';
 import { Directory, File, FileExtended, FileShare, DirectoryColor as JournalDirectoryColor } from '@declarations/journal/journal.did.js';
 import { DirectoryColor, DirectoryExtended, FileInfoExtended } from '@features/file-list/models';
 import { environment } from 'environments/environment';
@@ -45,7 +46,7 @@ export function toDirectoryExtended(directory: Directory): DirectoryExtended {
 
 export function toFileExtended(file: File | FileExtended): FileInfoExtended {
     const storageId = file.bucketId.toText();
-    const host: string = environment.production ? `https://${storageId}.raw.ic0.app` : `http://${storageId}.localhost:8080`;
+    const host: string = isDevMode() ? `http://${storageId}.localhost:8080` : `https://${storageId}.raw.ic0.app`;
     const downloadUrl = `${host}/${file.id}`;
     const thumbnail = fromNullable(file.thumbnail);
     const thumbnailUrl = thumbnail ? `${host}/${thumbnail}` : undefined;

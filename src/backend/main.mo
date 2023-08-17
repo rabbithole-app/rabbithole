@@ -34,12 +34,16 @@ import Order "mo:base/Order";
 import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
 import Vector "mo:vector";
+import Map "mo:hashmap/Map";
 
 actor Rabbithole {
     type ID = Types.ID;
     type ProfileInfo = Types.ProfileInfo;
+    type ProfileInfoV2 = Types.ProfileInfoV2;
     type ProfileCreate = Types.ProfileCreate;
+    type ProfileCreateV2 = Types.ProfileCreateV2;
     type ProfileUpdate = Types.ProfileUpdate;
+    type ProfileUpdateV2 = Types.ProfileUpdateV2;
     type ProfileCreateError = Types.ProfileCreateError;
     type UsernameError = Types.UsernameError;
     type Invite = Types.Invite;
@@ -80,9 +84,11 @@ actor Rabbithole {
     /* -------------------------------------------------------------------------- */
 
     var profiles = TrieMap.TrieMap<Principal, ProfileInfo>(Principal.equal, Principal.hash);
+    let { phash } = Map;
+    stable var profilesV2 : Map.Map<Principal, ProfileInfoV2> = Map.new(phash);
     let usernameAllowedSymbols : Text = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_";
 
-    public shared ({ caller }) func createProfile({ displayName; username; avatarUrl } : ProfileCreate) : async Result.Result<(), ProfileCreateError> {
+    public shared ({ caller }) func createProfile({ displayName; username; avatarUrl } : ProfileCreateV2) : async Result.Result<(), ProfileCreateError> {
         assert not Principal.isAnonymous(caller);
 
         let hasJournal = Option.isSome(Trie.find<Principal, BucketId>(journals, Utils.keyPrincipal(caller), Principal.equal));
@@ -105,60 +111,52 @@ actor Rabbithole {
         switch (checkUsername_(username)) {
             case (#err e) return #err(#username e);
             case (#ok) {
-                let now : Time.Time = Time.now();
-                let userProfile : ProfileInfo = { username; displayName; id = caller; createdAt = now; updatedAt = now; inviter; avatarUrl };
-                switch (profiles.get(caller)) {
-                    case (?_) #err(#alreadyExists);
-                    case null {
-                        profiles.put(caller, userProfile);
-                        #ok();
-                    };
+                if (Map.has(profilesV2, phash, caller)) {
+                    return #err(#alreadyExists);
                 };
+                let now : Time.Time = Time.now();
+                let userProfile : ProfileInfoV2 = { username; displayName; id = caller; createdAt = now; updatedAt = now; inviter; avatarUrl };
+                Map.set(profilesV2, phash, caller, userProfile);
+                #ok();
             };
         };
     };
 
-    public shared ({ caller }) func putProfile({ avatarUrl; displayName } : ProfileUpdate) : async Result.Result<(), { #notFound }> {
+    public shared ({ caller }) func putProfile({ avatarUrl; displayName } : ProfileUpdateV2) : async Result.Result<(), { #notFound }> {
         assert not Principal.isAnonymous(caller);
-
-        switch (profiles.get(caller)) {
-            case null #err(#notFound);
-            case (?v) {
-                let userProfile : ProfileInfo = { v with avatarUrl; displayName; updatedAt = Time.now() };
-                profiles.put(caller, userProfile);
-                #ok();
-            };
-        };
+        let ?profile = Map.get(profilesV2, phash, caller) else return #err(#notFound);
+        let userProfile : ProfileInfoV2 = { profile with avatarUrl; displayName; updatedAt = Time.now() };
+        Map.set(profilesV2, phash, caller, userProfile);
+        #ok();
     };
 
     //TODO - delete profile with journal and storages
     public shared ({ caller }) func deleteProfile() : async Result.Result<(), { #notFound }> {
         assert not Principal.isAnonymous(caller);
-
-        switch (profiles.get(caller)) {
-            case null #err(#notFound);
-            case (?_) {
-                profiles.delete(caller);
-                let (newJournals, bucketId) = Trie.remove<Principal, BucketId>(journals, Utils.keyPrincipal(caller), Principal.equal);
-                journals := newJournals;
-                #ok();
-                // await canisterUtils.deleteCanister(bucketId);
-            };
+        if (not Map.has(profilesV2, phash, caller)) {
+            return #err(#notFound);
         };
+
+        Map.delete(profilesV2, phash, caller);
+        let (newJournals, bucketId) = Trie.remove<Principal, BucketId>(journals, Utils.keyPrincipal(caller), Principal.equal);
+        journals := newJournals;
+        // await canisterUtils.deleteCanister(bucketId);
+        #ok();
     };
 
     type Profile = { username : Text; displayName : Text; principal : Principal; avatarUrl : ?Text };
+
     public query func listProfiles() : async [Profile] {
-        let buffer : Buffer.Buffer<Profile> = Buffer.Buffer(0);
-        for ({ id; username; displayName; avatarUrl } in profiles.vals()) {
-            buffer.add({ username; displayName; principal = id; avatarUrl });
-        };
-        Buffer.toArray(buffer);
+        Map.mapFilter<Principal, ProfileInfoV2, Profile>(
+            profilesV2,
+            phash,
+            func (principal, { username; displayName; avatarUrl }) = ?{ username; displayName; principal; avatarUrl }
+        ) |> Map.vals _ |> Iter.toArray _;
     };
 
-    public query ({ caller }) func getProfile() : async ?ProfileInfo {
+    public query ({ caller }) func getProfile() : async ?ProfileInfoV2 {
         assert not Principal.isAnonymous(caller);
-        profiles.get(caller);
+        Map.get(profilesV2, phash, caller);
     };
 
     public query func checkUsername(username : Text) : async Result.Result<(), UsernameError> {
@@ -179,12 +177,12 @@ actor Rabbithole {
         };
 
         if (length < 2) return #err(#minLength) else if (length > 20) return #err(#maxLength) else if (isIllegalUsername) return #err(#illegalCharacters);
-        #ok(());
+        #ok();
     };
 
     public query func checkUsernameAvailability(username : Text) : async Bool {
         var available = true;
-        label usernames for (p in profiles.vals()) {
+        label usernames for (p in Map.vals(profilesV2)) {
             if (Text.equal(p.username, username)) {
                 available := false;
                 break usernames;
@@ -268,11 +266,6 @@ actor Rabbithole {
             };
             case (_) throw Error.reject("Incorrect bucket type");
         };
-    };
-
-    public query ({ caller }) func getKey(tpk : PublicKey) : async EncryptedKey {
-        // await ic.derive_key(master_key_id, tpk, caller);
-        "test tpk";
     };
 
     //SECTION - Invoices
@@ -779,6 +772,9 @@ actor Rabbithole {
         stableInvites := [];
         setTimers();
         profiles := TrieMap.fromEntries<Principal, ProfileInfo>(stableProfiles.vals(), Principal.equal, Principal.hash);
+        profilesV2 := Map.fromIterMap<Principal, ProfileInfoV2, (Principal, ProfileInfo)>(stableProfiles.vals(), phash, func ((key, value)) {
+            ?(key, { value and { avatarUrl = null } });
+        });
         stableProfiles := [];
     };
 
@@ -839,7 +835,7 @@ actor Rabbithole {
                 }
             );
             let journalBucketId : ?Principal = Trie.get<Principal, BucketId>(journals, Utils.keyPrincipal(owner), Principal.equal);
-            let profile : ?ProfileInfo = profiles.get(owner);
+            let profile : ?ProfileInfoV2 = Map.get(profilesV2, phash, owner);
             switch (sharedMe, journalBucketId, profile) {
                 case (true, ?bucketId, ?{ id; username; displayName; avatarUrl }) {
                     let value = { profile = { principal = id; username; displayName; avatarUrl }; bucketId };

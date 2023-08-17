@@ -9,8 +9,7 @@ import { catchError, distinctUntilKeyChanged, filter, map, mergeAll, mergeMap } 
 
 import { CoreService, NotificationService } from '@core/services';
 import { SharedFileExtended } from '@features/shared-with-me/models';
-import { JournalItem } from '../models';
-import { DownloadStatus } from '../operators';
+import { JournalItem, DownloadStatus } from '../models';
 
 type FileDownloadState = {
     loaded: number;
@@ -89,8 +88,6 @@ export class DownloadService extends RxState<State> {
                         return this.#translocoService.translate('fileList.file.download.retrievingKey');
                     case DownloadStatus.Progress:
                         return this.#translocoService.translate('fileList.file.download.progress', { percent: Math.floor((loaded / total) * 100) });
-                    case DownloadStatus.Decryption:
-                        return this.#translocoService.translate('fileList.file.download.decryption');
                     case DownloadStatus.Failed:
                         throw Error(this.#translocoService.translate('fileList.file.download.failedMessage'));
                     default:

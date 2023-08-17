@@ -208,7 +208,7 @@ export class UploadService extends RxState<State> {
                                                     options: {
                                                         concurrentChunksCount: this.concurrentChunksCount,
                                                         chunkSize: this.chunkSize,
-                                                        encrypted: false
+                                                        aesKey: null
                                                     },
                                                     state
                                                 }).pipe(

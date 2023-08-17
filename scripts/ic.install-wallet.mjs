@@ -32,7 +32,7 @@ program.parse(process.argv);
         {
             title: 'Load wasm module',
             task: async ctx => {
-                const wasmModule = await loadWasm('wallet');
+                const wasmModule = await loadWasm('wallet', 'local');
                 ctx.wasmModule = wasmModule;
             }
         },

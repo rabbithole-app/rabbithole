@@ -83,7 +83,7 @@ function myParseInt(value) {
             title: 'Load wasm module',
             enabled: () => !opts.list,
             task: async ctx => {
-                const wasmModule = await loadWasm(opts.type);
+                const wasmModule = await loadWasm(opts.type, opts.network);
                 ctx.wasmModule = wasmModule;
             }
         },

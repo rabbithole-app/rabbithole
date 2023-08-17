@@ -1,4 +1,4 @@
-import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, isDevMode, signal, WritableSignal } from '@angular/core';
 import { AccountIdentifier, LedgerCanister } from '@dfinity/nns';
 import { Principal } from '@dfinity/principal';
 import { createAgent, ICPToken, Token, TokenAmount } from '@dfinity/utils';
@@ -12,7 +12,6 @@ import { LEDGER_CANISTER_ID } from '@core/constants';
 import { BucketsService, NotificationService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
 import { AccountIdentifier as AccountIdentifierRaw, Tokens, TransferError } from '@declarations/journal/journal.did';
-import { environment } from 'environments/environment';
 import { formatICP } from '../utils/icp';
 
 interface State {
@@ -58,7 +57,7 @@ export class WalletService extends RxState<State> {
             this.authState.select('identity').pipe(
                 combineLatestWith(accountIdentifier$),
                 switchMap(([identity, accountIdentifier]) =>
-                    from(createAgent({ identity, fetchRootKey: !environment.production })).pipe(
+                    from(createAgent({ identity, fetchRootKey: isDevMode() })).pipe(
                         map(agent => LedgerCanister.create({ agent, canisterId: Principal.fromText(LEDGER_CANISTER_ID) })),
                         connect(shared =>
                             merge(

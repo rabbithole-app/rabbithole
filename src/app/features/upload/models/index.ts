@@ -52,7 +52,7 @@ export type FileUploadState = {
     batch?: BatchInfo;
     progress: number;
     status: UPLOAD_STATUS;
-    chunkIds: Array<bigint | null>;
+    chunkIds: Array<number | null>;
     errorMessage?: string | null;
 
     // используется для обновления дерева после успешной загрузки
@@ -62,7 +62,7 @@ export type FileUploadState = {
 export type UploadFileOptions = {
     concurrentChunksCount: number;
     chunkSize: number;
-    encrypted: boolean;
+    aesKey: CryptoKey | null;
 };
 
 export type Summary = {

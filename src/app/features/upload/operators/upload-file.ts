@@ -7,6 +7,7 @@ import { catchError, last, map, mergeScan, switchMap, tap } from 'rxjs/operators
 import { AssetKey, CommitBatch, CommitUploadError, _SERVICE as StorageActor } from '@declarations/storage/storage.did';
 import { BATCH_EXPIRY_SECONDS } from '../constants';
 import { BatchInfo, Bucket, FileUpload, FileUploadState, UPLOAD_STATUS, UploadFileOptions, WithRequiredProperty } from '../models';
+import { encryptArrayBuffer } from '@core/utils';
 
 type UploadParams = {
     storage: Bucket<StorageActor>;
@@ -28,7 +29,7 @@ export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbn
     };
     const { batchId } = await storage.actor.initUpload(assetKey);
     const content = arrayBufferToUint8Array(item.data);
-    const { chunkId } = await storage.actor.uploadChunk({ batchId, content });
+    const { chunkId } = await storage.actor.uploadChunk({ batchId, content, encrypted: false });
     const commitBatch: CommitBatch = {
         batchId,
         chunkIds: [chunkId],
@@ -50,7 +51,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
             fileSize: BigInt(item.fileSize),
             sha256: toNullable(item.sha256),
             thumbnail: toNullable(item.thumbnail),
-            encrypted: options.encrypted
+            encrypted: !isNull(options.aesKey)
         };
         const hasSameCanisterId = (canisterId: string) => canisterId === state.canisterId;
         const hasValidBatch = has(state, 'batch.id') && differenceInSeconds((state.batch as BatchInfo).expiredAt, Date.now()) > 0;
@@ -103,11 +104,24 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                                             const startByte = index * opts.chunkSize;
                                             const endByte = Math.min(item.fileSize, startByte + opts.chunkSize);
                                             const chunk = item.data.slice(startByte, endByte);
-                                            return from(
-                                                storage.actor.uploadChunk({
-                                                    batchId: batch.id,
-                                                    content: arrayBufferToUint8Array(chunk)
-                                                })
+                                            return iif(
+                                                () => isNull(options.aesKey),
+                                                defer(() =>
+                                                    storage.actor.uploadChunk({
+                                                        batchId: batch.id,
+                                                        content: arrayBufferToUint8Array(chunk),
+                                                        encrypted: false
+                                                    })
+                                                ),
+                                                defer(() => encryptArrayBuffer(options.aesKey, chunk)).pipe(
+                                                    switchMap(encryptedChunkContent =>
+                                                        storage.actor.uploadChunk({
+                                                            batchId: batch.id,
+                                                            content: arrayBufferToUint8Array(encryptedChunkContent),
+                                                            encrypted: true
+                                                        })
+                                                    )
+                                                )
                                             ).pipe(
                                                 map(({ chunkId }) => {
                                                     acc.chunkIds[index] = chunkId;
@@ -144,7 +158,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                             storage.actor.commitUpload(
                                 {
                                     batchId: batch.id,
-                                    chunkIds: chunkIds as bigint[],
+                                    chunkIds: chunkIds as number[],
                                     headers: [['Content-Type', item.contentType]]
                                 },
                                 true

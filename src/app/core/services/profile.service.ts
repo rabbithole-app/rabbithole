@@ -11,11 +11,11 @@ import { catchError, combineLatestWith, filter, finalize, first, map, startWith,
 import { CanisterResult } from '@core/models';
 import { ProfileItem, ProfileUpdate } from '@core/models/profile';
 import { AUTH_RX_STATE, AuthStatus } from '@core/stores';
-import { ProfileInfo, UsernameError } from '@declarations/rabbithole/rabbithole.did';
+import { ProfileInfoV2, UsernameError } from '@declarations/rabbithole/rabbithole.did';
 import { NotificationService } from './notification.service';
 
 export interface State {
-    profile: ProfileInfo | null;
+    profile: ProfileInfoV2 | null;
     loaded: boolean;
     canInvite: boolean;
 }

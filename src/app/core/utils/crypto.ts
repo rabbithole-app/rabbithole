@@ -1,13 +1,22 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { arrayBufferToUint8Array, hexStringToUint8Array } from '@dfinity/utils';
+import { fromFetch } from 'rxjs/fetch';
+import { map } from 'rxjs/operators';
 
 // See also https://github.com/rollup/plugins/tree/master/packages/wasm#using-with-wasm-bindgen-and-wasm-pack
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
-import { TransportSecretKey, default as vetkd } from 'vetkd_user_lib/ic_vetkd_utils';
+import { TransportSecretKey, initSync } from 'vetkd_user_lib/ic_vetkd_utils';
 
-export async function loadWasm() {
-    await vetkd('vetkd_user_lib/ic_vetkd_utils_bg.wasm');
+export function loadWasm() {
+    return fromFetch('vetkd_user_lib/ic_vetkd_utils_bg.wasm', {
+        selector: response => response.arrayBuffer()
+    }).pipe(
+        map(buffer => {
+            const module = new WebAssembly.Module(buffer);
+            return initSync(module);
+        })
+    );
 }
 
 /**

@@ -85,12 +85,12 @@ type RegistrationMode =
    prepaid;
  };
 type PublicKey = text;
-type ProfileUpdate = 
+type ProfileUpdateV2 = 
  record {
    avatarUrl: opt text;
    displayName: text;
  };
-type ProfileInfo = 
+type ProfileInfoV2 = 
  record {
    avatarUrl: opt text;
    createdAt: Time;
@@ -100,17 +100,17 @@ type ProfileInfo =
    updatedAt: Time;
    username: text;
  };
+type ProfileCreateV2 = 
+ record {
+   avatarUrl: opt text;
+   displayName: text;
+   username: text;
+ };
 type ProfileCreateError = 
  variant {
    alreadyExists;
    journalNotFound;
    username: UsernameError;
- };
-type ProfileCreate = 
- record {
-   avatarUrl: opt text;
-   displayName: text;
-   username: text;
  };
 type Profile = 
  record {
@@ -212,7 +212,7 @@ service : {
   createInvite: (InviteCreate) -> ();
   createInvoice: () -> (Invoice);
   createJournal: (ID) -> (Result_4);
-  createProfile: (ProfileCreate) -> (Result_3);
+  createProfile: (ProfileCreateV2) -> (Result_3);
   deleteInvite: (ID) -> (Result_2);
   deleteInvoice: () -> ();
   deleteProfile: () -> (Result_1);
@@ -220,7 +220,7 @@ service : {
   getInvoice: () -> (opt Invoice) query;
   getJournalBucket: () -> (opt BucketId__1);
   getKey: (PublicKey) -> (EncryptedKey) query;
-  getProfile: () -> (opt ProfileInfo) query;
+  getProfile: () -> (opt ProfileInfoV2) query;
   getRegistrationMode: () -> (RegistrationMode) query;
   installCode:
    (record {
@@ -238,7 +238,7 @@ service : {
                                 BucketId__1;
                               });
   listProfiles: () -> (vec Profile) query;
-  putProfile: (ProfileUpdate) -> (Result_1);
+  putProfile: (ProfileUpdateV2) -> (Result_1);
   redeemInvite: (ID) -> (Result);
   setRegistrationMode: (RegistrationMode) -> ();
   shareFile: (ID, SharedFile) -> ();

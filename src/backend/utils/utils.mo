@@ -11,6 +11,7 @@ import Trie "mo:base/Trie";
 import AsyncSource "mo:uuid/async/SourceV4";
 import UUID "mo:uuid/UUID";
 import Base64 "mo:encoding/Base64";
+import { hashNat32 } = "mo:hashmap/utils";
 
 import Types "../types/types";
 import Env "../env";
@@ -51,6 +52,10 @@ module {
 
     public func keyText(t : Text) : Trie.Key<Text> {
         { key = t; hash = Text.hash t };
+    };
+
+    public func keyNat32(n : Nat32) : Trie.Key<Nat32> {
+        { key = n; hash = hashNat32 n };
     };
 
     public func generateId() : async ID {

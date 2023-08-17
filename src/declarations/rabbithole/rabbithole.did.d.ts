@@ -1,5 +1,5 @@
-import type { ActorMethod } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
 
 export type AccountIdentifier = Uint8Array | number[];
 export type BlockIndex = bigint;
@@ -62,13 +62,13 @@ export interface Profile {
     displayName: string;
     avatarUrl: [] | [string];
 }
-export interface ProfileCreate {
+export type ProfileCreateError = { username: UsernameError } | { alreadyExists: null } | { journalNotFound: null };
+export interface ProfileCreateV2 {
     username: string;
     displayName: string;
     avatarUrl: [] | [string];
 }
-export type ProfileCreateError = { username: UsernameError } | { alreadyExists: null } | { journalNotFound: null };
-export interface ProfileInfo {
+export interface ProfileInfoV2 {
     id: Principal;
     username: string;
     displayName: string;
@@ -77,7 +77,7 @@ export interface ProfileInfo {
     updatedAt: Time;
     avatarUrl: [] | [string];
 }
-export interface ProfileUpdate {
+export interface ProfileUpdateV2 {
     displayName: string;
     avatarUrl: [] | [string];
 }
@@ -134,7 +134,7 @@ export interface _SERVICE {
     createInvite: ActorMethod<[InviteCreate], undefined>;
     createInvoice: ActorMethod<[], Invoice>;
     createJournal: ActorMethod<[ID], Result_4>;
-    createProfile: ActorMethod<[ProfileCreate], Result_3>;
+    createProfile: ActorMethod<[ProfileCreateV2], Result_3>;
     deleteInvite: ActorMethod<[ID], Result_2>;
     deleteInvoice: ActorMethod<[], undefined>;
     deleteProfile: ActorMethod<[], Result_1>;
@@ -142,7 +142,7 @@ export interface _SERVICE {
     getInvoice: ActorMethod<[], [] | [Invoice]>;
     getJournalBucket: ActorMethod<[], [] | [BucketId__1]>;
     getKey: ActorMethod<[PublicKey], EncryptedKey>;
-    getProfile: ActorMethod<[], [] | [ProfileInfo]>;
+    getProfile: ActorMethod<[], [] | [ProfileInfoV2]>;
     getRegistrationMode: ActorMethod<[], RegistrationMode>;
     installCode: ActorMethod<
         [
@@ -157,7 +157,7 @@ export interface _SERVICE {
     >;
     listBuckets: ActorMethod<[string], Array<[Principal, BucketId__1]>>;
     listProfiles: ActorMethod<[], Array<Profile>>;
-    putProfile: ActorMethod<[ProfileUpdate], Result_1>;
+    putProfile: ActorMethod<[ProfileUpdateV2], Result_1>;
     redeemInvite: ActorMethod<[ID], Result>;
     setRegistrationMode: ActorMethod<[RegistrationMode], undefined>;
     shareFile: ActorMethod<[ID, SharedFile], undefined>;

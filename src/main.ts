@@ -6,7 +6,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NoPreloading, TitleStrategy, provideRouter, withComponentInputBinding, withPreloading } from '@angular/router';
-import { provideServiceWorker } from '@angular/service-worker';
+// import { provideServiceWorker } from '@angular/service-worker';
 import { AuthClient } from '@dfinity/auth-client';
 import { TRANSLOCO_LOADING_TEMPLATE, TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
@@ -18,9 +18,8 @@ import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
 import { TranslocoRootModule } from './app/transloco-root.module';
-import { environment } from './environments/environment';
 
-if (environment.production) {
+if (!isDevMode()) {
     enableProdMode();
 }
 
@@ -60,10 +59,10 @@ bootstrapApplication(AppComponent, {
             },
             deps: [CoreService]
         },
-        { provide: TitleStrategy, useClass: PageTitleStrategy },
-        provideServiceWorker('ngsw-worker.js', {
+        { provide: TitleStrategy, useClass: PageTitleStrategy }
+        /* provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWhenStable:30000'
-        })
+        }) */
     ]
 }).catch(err => console.error(err));

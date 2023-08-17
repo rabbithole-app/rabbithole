@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, isDevMode, Signal, signal, WritableSignal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { CMCCanister } from '@dfinity/cmc';
@@ -36,8 +36,7 @@ import { LEDGER_CANISTER_ID } from '@core/constants';
 import { mapLedgerError } from '@core/operators';
 import { BucketsService, NotificationService, ProfileService } from '@core/services';
 import { AUTH_RX_STATE } from '@core/stores';
-import { InviteError, ProfileCreate, UsernameError } from '@declarations/rabbithole/rabbithole.did';
-import { environment } from 'environments/environment';
+import { InviteError, ProfileCreateV2, UsernameError } from '@declarations/rabbithole/rabbithole.did';
 import { Invoice, InvoiceStage } from '../models';
 import { prepareInvoice } from '../utils';
 
@@ -116,7 +115,7 @@ export class RegisterService extends RxState<State> {
             this.authState.select('identity').pipe(
                 combineLatestWith(accountIdentifier$),
                 switchMap(([identity, accountIdentifier]) =>
-                    from(createAgent({ identity, fetchRootKey: !environment.production })).pipe(
+                    from(createAgent({ identity, fetchRootKey: isDevMode() })).pipe(
                         map(agent => LedgerCanister.create({ agent, canisterId: Principal.fromText(LEDGER_CANISTER_ID) })),
                         connect(shared =>
                             merge(
@@ -192,7 +191,7 @@ export class RegisterService extends RxState<State> {
         }
     }
 
-    createProfile(profile: ProfileCreate) {
+    createProfile(profile: ProfileCreateV2) {
         this.profileStatus.set(ProfileStatus.Creating);
         this.authState
             .select('actor')

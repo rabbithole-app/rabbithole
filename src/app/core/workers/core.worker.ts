@@ -9,7 +9,7 @@ import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
 import { defaults, get, has, isNull, isUndefined, omit, partition, pick } from 'lodash';
 import { CropperPosition } from 'ngx-image-cropper';
-import { EMPTY, Observable, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, throwError, timer } from 'rxjs';
+import { EMPTY, Observable, ObservableInput, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, throwError, timer } from 'rxjs';
 import {
     catchError,
     combineLatestWith,
@@ -20,24 +20,24 @@ import {
     filter,
     first,
     ignoreElements,
-    last,
     map,
     mergeMap,
+    reduce,
+    scan,
     skip,
     switchMap,
     takeUntil,
     tap,
-    throttleTime,
     toArray,
     withLatestFrom
 } from 'rxjs/operators';
+import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
 
-import { createActor, decryptArrayBuffer, encryptArrayBuffer, initVetAesGcmKey, loadIdentity, loadWasm } from '@core/utils';
+import { createActor, decryptArrayBuffer, initVetAesGcmKey, loadIdentity, loadWasm } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
-import { FileInfoExtended } from '@features/file-list/models';
-import { DownloadComplete, DownloadFailed, DownloadProgress, DownloadStatus, download } from '@features/file-list/operators';
-import { toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
+import { FileInfoExtended, DownloadComplete, DownloadProgress, DownloadStatus, DownloadRetrieveKey } from '@features/file-list/models';
+import { concatUint8Arrays, toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SharedFileExtended } from '@features/shared-with-me/models';
 import { toSharedFileExtended } from '@features/shared-with-me/utils';
 import { CHUNK_SIZE, CONCURRENT_CHUNKS_COUNT, CONCURRENT_FILES_COUNT } from '@features/upload/constants';
@@ -48,7 +48,7 @@ import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
-import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
+import { AssetEncoding, _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 
 interface State {
     identity: Identity;
@@ -140,18 +140,25 @@ addEventListener('message', ({ data }) => {
             const [encryptedItems, decryptedItems] = partition(userFiles, 'encrypted');
             const sharedEncrypted$ = sharedFiles.length
                 ? from(sharedFiles).pipe(
-                      mergeMap(({ id, name, owner, journalId, downloadUrl }) =>
-                          downloadEncryptedFile({ id, owner: Principal.fromText(owner), journalId, downloadUrl, name }).pipe(onErrorResumeNextWith())
+                      mergeMap(({ id, name, owner, journalId, downloadUrl, storageId }) =>
+                          downloadEncryptedFile({ id, owner: Principal.fromText(owner), journalId, downloadUrl, name, storageId }).pipe(onErrorResumeNextWith())
                       )
                   )
                 : EMPTY;
             const encrypted$ = encryptedItems.length
                 ? from(encryptedItems).pipe(
-                      mergeMap(({ id, downloadUrl, name }) =>
+                      mergeMap(({ id, downloadUrl, name, storageId }) =>
                           state.select(selectSlice(['journalId', 'identity'])).pipe(
                               first(),
                               switchMap(({ journalId, identity }) =>
-                                  downloadEncryptedFile({ id, downloadUrl, name, owner: identity.getPrincipal(), journalId })
+                                  downloadEncryptedFile({
+                                      id,
+                                      downloadUrl,
+                                      name,
+                                      owner: identity.getPrincipal(),
+                                      journalId,
+                                      storageId: Principal.fromText(storageId)
+                                  })
                               ),
                               onErrorResumeNextWith()
                           )
@@ -159,7 +166,9 @@ addEventListener('message', ({ data }) => {
                   )
                 : EMPTY;
             const decrypted$ = decryptedItems.length
-                ? from(decryptedItems).pipe(mergeMap(({ id, downloadUrl, name }) => downloadFile({ id, downloadUrl, name })))
+                ? from(decryptedItems).pipe(
+                      mergeMap(({ id, downloadUrl, name, storageId }) => downloadFile({ id, downloadUrl, name, storageId: Principal.fromText(storageId) }))
+                  )
                 : EMPTY;
             merge(sharedEncrypted$, encrypted$, decrypted$).subscribe();
             break;
@@ -305,7 +314,7 @@ state.connect(
             )
         ),
         catchError(err => {
-            if (err.message.includes('Failed to authenticate request')) {
+            if (err.message.includes('Failed to authenticate request') || err.message.includes('Internal Server Error')) {
                 postMessage({ action: 'rabbitholeSignOutAuthTimer' });
             }
 
@@ -410,13 +419,13 @@ const fileUpload$ = files.asObservable().pipe(
                             ? state.select(selectSlice(['journal', 'identity'])).pipe(
                                   first(),
                                   switchMap(({ journal, identity }) => initVetAesGcmKey(item.id, identity.getPrincipal(), journal, false)),
-                                  switchMap(aesKey => encryptArrayBuffer(aesKey, item.data)),
+                                  // switchMap(aesKey => encryptArrayBuffer(aesKey, item.data)),
                                   catchError(err => {
-                                      console.log(err);
+                                      console.error(err);
                                       return EMPTY;
                                   })
                               )
-                            : of(undefined)
+                            : of(null)
                     ),
                     defer(() => {
                         if (options && typeof options.thumbnail === 'boolean' && !options.thumbnail) {
@@ -455,20 +464,15 @@ const fileUpload$ = files.asObservable().pipe(
                         catchError(() => of(undefined))
                     )
                 ]).pipe(
-                    switchMap(([sha256, storage, encryptedData, thumbnail]) => {
+                    switchMap(([sha256, storage, aesKey, thumbnail]) => {
                         const itemData = { ...item, sha256, thumbnail: thumbnail?.id };
-                        if (encryptedData) {
-                            itemData.data = encryptedData;
-                            itemData.fileSize = encryptedData.byteLength;
-                        }
-
                         const uploadFile$ = uploadFile({
                             storage,
                             item: itemData,
                             options: {
                                 concurrentChunksCount: CONCURRENT_CHUNKS_COUNT,
                                 chunkSize: CHUNK_SIZE,
-                                encrypted: encryptedData !== undefined
+                                aesKey
                             },
                             state: uploadState
                         }).pipe(
@@ -586,35 +590,75 @@ sharedWithMe
     )
     .subscribe(payload => postMessage({ action: 'sharedWithMeDone', payload }));
 
-type DownloadRetrieveKey = { status: DownloadStatus.RetrieveKey };
-type DownloadDecryption = { status: DownloadStatus.Decryption };
-type DownloadCompleteExt = DownloadComplete & { file: File };
+function download(
+    { id, downloadUrl, name, storageId }: { id: string; downloadUrl: string; name: string; storageId: Principal },
+    selector: (response: Response) => ObservableInput<any>
+) {
+    return createStorageActor(storageId).pipe(
+        switchMap(({ actor }) =>
+            from(actor.getChunks(id)).pipe(
+                map(result => {
+                    if (has(result, 'err')) {
+                        const key = Object.keys(get(result, 'err') as unknown as { notFound: null })[0];
+                        throw new Error('File not found');
+                    }
 
-function downloadFile({ id, downloadUrl, name }: { id: string; downloadUrl: string; name: string }) {
-    return download(downloadUrl).pipe(
-        connect(shared =>
-            merge(
-                shared.pipe(
-                    filter(({ status }) => status === DownloadStatus.Progress),
-                    throttleTime(250),
-                    map(v => v as DownloadProgress)
+                    return get(result, 'ok') as unknown as AssetEncoding;
+                })
+            )
+        ),
+        switchMap(encoding =>
+            from(encoding.chunkIds).pipe(
+                mergeMap((chunkId, index) =>
+                    fromFetch<{ size: number; buffer: ArrayBuffer; contentType?: string }>(`${downloadUrl}/${chunkId}`, { selector }).pipe(
+                        map(data => ({ ...data, index }))
+                    )
                 ),
-                shared.pipe(
-                    last(),
-                    filter(({ status }) => status === DownloadStatus.Complete),
-                    map(v => v as DownloadComplete),
-                    map(
-                        ({ status, result, contentType }) =>
-                            ({
-                                status,
-                                file: new File([result.buffer], name, { type: contentType })
-                            }) as DownloadCompleteExt
+                connect(shared =>
+                    merge(
+                        shared.pipe(
+                            scan(
+                                (acc, { size }) => {
+                                    acc.loaded += size;
+                                    return acc;
+                                },
+                                <DownloadProgress>{
+                                    loaded: 0,
+                                    total: Number(encoding.totalLength),
+                                    status: DownloadStatus.Progress
+                                }
+                            )
+                        ),
+                        shared.pipe(
+                            reduce(
+                                (acc, { index, buffer, contentType }) => {
+                                    acc.result[index] = arrayBufferToUint8Array(buffer);
+                                    return { ...acc, contentType };
+                                },
+                                <{ result: Uint8Array[]; contentType?: string }>{ result: [] }
+                            ),
+                            map(
+                                ({ result, contentType }) =>
+                                    <DownloadComplete>{
+                                        file: new File([concatUint8Arrays(result)], name, { type: contentType }),
+                                        status: DownloadStatus.Complete
+                                    }
+                            )
+                        )
                     )
                 )
             )
-        ),
+        )
+    );
+}
+
+function downloadFile(params: { id: string; downloadUrl: string; name: string; storageId: Principal }) {
+    return download(params, response => {
+        const contentType = response.headers.get('content-type') ?? undefined;
+        return from(response.arrayBuffer()).pipe(map(buffer => ({ buffer, contentType, size: buffer.byteLength })));
+    }).pipe(
         tap(progress => {
-            postMessage({ action: 'downloadProgress', id, progress: omit(progress, 'file') });
+            postMessage({ action: 'downloadProgress', id: params.id, progress: omit(progress, 'file') });
             if (progress.status === DownloadStatus.Complete) {
                 postMessage({ action: 'download', file: progress.file });
             }
@@ -627,13 +671,15 @@ function downloadEncryptedFile({
     journalId,
     owner,
     downloadUrl,
-    name
+    name,
+    storageId
 }: {
     id: string;
     journalId: Principal;
     owner: Principal;
     downloadUrl: string;
     name: string;
+    storageId: Principal;
 }) {
     return createJournalActor(journalId).pipe(
         connect(shared =>
@@ -642,44 +688,13 @@ function downloadEncryptedFile({
                 shared.pipe(
                     switchMap(journalActor => initVetAesGcmKey(id, owner, journalActor)),
                     switchMap(aesKey =>
-                        download(downloadUrl).pipe(
-                            connect(shared =>
-                                merge(
-                                    shared.pipe(
-                                        filter(({ status }) => status === DownloadStatus.Progress),
-                                        throttleTime(250),
-                                        map(v => v as DownloadProgress)
-                                    ),
-                                    shared.pipe(
-                                        last(),
-                                        map(() => ({ status: DownloadStatus.Decryption }) as DownloadDecryption)
-                                    ),
-                                    shared.pipe(
-                                        last(),
-                                        filter(({ status }) => status === DownloadStatus.Complete),
-                                        map(v => v as DownloadComplete),
-                                        switchMap(({ status, result, contentType }) =>
-                                            from(decryptArrayBuffer(aesKey, result.buffer)).pipe(
-                                                map(
-                                                    decodedBuffer =>
-                                                        ({
-                                                            status,
-                                                            file: new File([decodedBuffer], name, { type: contentType })
-                                                        }) as DownloadCompleteExt
-                                                ),
-                                                catchError(err => {
-                                                    console.error(err);
-                                                    return concat(
-                                                        of({ status: DownloadStatus.Failed } as DownloadFailed),
-                                                        throwError(() => err)
-                                                    );
-                                                })
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
+                        download({ id, name, downloadUrl, storageId }, response => {
+                            const contentType = response.headers.get('content-type') ?? undefined;
+                            return from(response.arrayBuffer()).pipe(
+                                map(encryptedBuffer => ({ buffer: encryptedBuffer, contentType, size: encryptedBuffer.byteLength })),
+                                switchMap(data => from(decryptArrayBuffer(aesKey, data.buffer)).pipe(map(buffer => ({ ...data, buffer }))))
+                            );
+                        })
                     )
                 )
             )
@@ -693,6 +708,6 @@ function downloadEncryptedFile({
     );
 }
 
-state.connect('wasmLoaded', from(loadWasm()).pipe(map(() => true)));
+state.connect('wasmLoaded', loadWasm().pipe(map(() => true)));
 state.hold(keepAlive$);
 state.hold(fileUpload$);

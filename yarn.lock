@@ -1478,10 +1478,10 @@
   resolved "https://registry.yarnpkg.com/@dfinity/candid/-/candid-0.18.1.tgz#06970138791395b2709f35e460aa038f64ba1d85"
   integrity sha512-/PC3wDnrGcWhaF/veYKevcAAn5A5jK0mRkVKcz0YxK/a78Ai9wMJg0fUk7aoyZryCOz8JPVgR4nK1/zTmvEBHg==
 
-"@dfinity/cmc@^0.0.14":
-  version "0.0.14"
-  resolved "https://registry.yarnpkg.com/@dfinity/cmc/-/cmc-0.0.14.tgz#b4103b6e7b27801c61944fabcc47dab4652c04f9"
-  integrity sha512-QLVqAGu/onnox4FbGjt8JVIQfktuO8xkh7ztzlLEL74hcU9ASccSpJov8dt92n4PId5M1IX3RbERAGv74fidrA==
+"@dfinity/cmc@^0.0.15":
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/@dfinity/cmc/-/cmc-0.0.15.tgz#55789227a820b216daf602fda1019a1fd454e19a"
+  integrity sha512-FiAc0g2SGP5uKlZIja3m2SLY8agzJw3tTemeElWjvg87CQ3Vc4fhDdZjMbnN6GyFDVAk0uHBPjCkHK0UJSqxbQ==
 
 "@dfinity/identity-secp256k1@^0.18.1":
   version "0.18.1"
@@ -1502,17 +1502,17 @@
     js-sha256 "^0.9.0"
     tweetnacl "^1.0.1"
 
-"@dfinity/nns-proto@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@dfinity/nns-proto/-/nns-proto-0.0.4.tgz#922f22ab88cacf0f4cf522d992cfd305801232b6"
-  integrity sha512-jvbMbckjkchoru8eKhTM0Ivm0XVagLBRxaC5zQFVN+6It4NcUbOZaX1KN/OsT8rjKtxYcUTb4DnFB0rEIjAHXA==
+"@dfinity/nns-proto@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@dfinity/nns-proto/-/nns-proto-0.0.5.tgz#2c08860251d5e86c055f8e226dad5c4b2381655b"
+  integrity sha512-uMV96yGd4MfBGtG7XV9M+eu8hWpdmdns8Vcslw1qQL3Zt5FQVijZh7MpblbibhfJak2qMtmy4VwNJT+eNfqbjg==
   dependencies:
     google-protobuf "^3.21.2"
 
-"@dfinity/nns@^0.16.3":
-  version "0.16.3"
-  resolved "https://registry.yarnpkg.com/@dfinity/nns/-/nns-0.16.3.tgz#952fddb3aeb6294998d08b5d2057399101317400"
-  integrity sha512-+VCefTBlFhCe0Td+K2ivDHK3KhOaoCUIBA0CaKe5VxQKODqiBnsrpxXTGSkF1c9pCya/2vN0z6VwhAU0k0YxgA==
+"@dfinity/nns@^0.16.4":
+  version "0.16.4"
+  resolved "https://registry.yarnpkg.com/@dfinity/nns/-/nns-0.16.4.tgz#64eeeab5993741d605e95426b7021cc825c81541"
+  integrity sha512-m3RBCPaUDn4Hn1itaAsepZfRxZeX7CgaV1ZjoR0nBlKII4KWMKcuGSkEOOQ9FjuUwEReTxi8tin0ENTEKJe4WA==
   dependencies:
     js-sha256 "^0.9.0"
     randombytes "^2.1.0"
@@ -1524,10 +1524,10 @@
   dependencies:
     js-sha256 "^0.9.0"
 
-"@dfinity/utils@^0.0.18":
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/@dfinity/utils/-/utils-0.0.18.tgz#9a3718c4a4d14cf92c05fb9882eaa0954b9bad8f"
-  integrity sha512-e6LC25GXofWEtdmKTd5HdnSNcZYcy3M4JuPWXiiK18nB+U3WE8SVExvUdU0YxEqPhkUh8+E5ECwfVBovt9Qr6g==
+"@dfinity/utils@^0.0.19":
+  version "0.0.19"
+  resolved "https://registry.yarnpkg.com/@dfinity/utils/-/utils-0.0.19.tgz#9bca386400c29e4b92f93eea1fbac285ca3581e3"
+  integrity sha512-NrVrq5qBwm8NaDWhdT13Qxo9o6nblpCLrGVrOUgJFD5YdnEN+b57d/5McMcJDQgejjyHKk6eIYmpFj/FDKNcSQ==
 
 "@discoveryjs/json-ext@0.5.7":
   version "0.5.7"
@@ -7789,10 +7789,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier-plugin-motoko@^0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-motoko/-/prettier-plugin-motoko-0.7.1.tgz#95fac12fd0adfb9c2d095baa15aa0081b83b5384"
-  integrity sha512-9GuILLlop4Gjx94NRuGej5ihZ8rSebv0W+sY7bmDVA2GCe3A9iMk2tzW0OdoUprWAIsmxbJZCyYXF6aqZPaN5Q==
+prettier-plugin-motoko@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-motoko/-/prettier-plugin-motoko-0.8.0.tgz#7077a49ccdad953708d16cffd5629ed0e4a787d3"
+  integrity sha512-XJXjJbJ+hrjvEtfcvEcX1BMKC9iB8QH/lSEg2IlLjjTi29JyFBXVTZApjOuKPpLvju3QvZkyIMhjh85xyuVoHw==
   dependencies:
     out-of-character "^1.2.1"
 
@@ -7806,10 +7806,10 @@ prettier@^2.5.1:
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.8.8.tgz#e8c5d7e98a4305ffe3de2e1fc4aca1a71c28b1da"
   integrity sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==
 
-prettier@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.0.tgz#e7b19f691245a21d618c68bc54dc06122f6105ae"
-  integrity sha512-zBf5eHpwHOGPC47h0zrPyNn+eAEIdEzfywMoYn2XPi0P44Zp0tSq64rq0xAREh4auw2cJZHo9QUob+NqCQky4g==
+prettier@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.2.tgz#78fcecd6d870551aa5547437cdae39d4701dca5b"
+  integrity sha512-o2YR9qtniXvwEZlOKbveKfDQVyqxbEIWn48Z8m3ZJjBjcCmUy3xZGIv+7AkaeuaTr6yPXJjwv07ZWlsWbEy1rQ==
 
 pretty-bytes@^5.3.0:
   version "5.6.0"

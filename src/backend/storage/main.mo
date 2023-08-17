@@ -37,6 +37,13 @@ import CanisterSigs "mo:ic-certification/CanisterSigs";
 import MerkleTree "mo:ic-certification/MerkleTree";
 import CertifiedData "mo:base/CertifiedData";
 import Hex "mo:encoding/Hex";
+import Memory "mo:stableBTree/memory";
+import MemoryManager "mo:stableBTree/memoryManager";
+import StableBTree "mo:stableBTree/btreemap";
+import StableBTreeTypes "mo:stableBTree/types";
+import BytesConverter "mo:stableBTree/bytesConverter";
+import { nat32ToBytes; bytesToNat32; boolToBytes; bytesToBool } = "mo:stableBTree/conversion";
+import Vector "mo:vector";
 
 shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     type ID = Types.ID;
@@ -44,6 +51,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     type AssetKey = StorageTypes.AssetKey;
     type AssetEncoding = StorageTypes.AssetEncoding;
     type Chunk = StorageTypes.Chunk;
+    type ChunkV2 = StorageTypes.ChunkV2;
     type Batch = StorageTypes.Batch;
     type CommitBatch = StorageTypes.CommitBatch;
     type UploadChunk = StorageTypes.UploadChunk;
@@ -61,7 +69,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     // let CLEAR_EXPIRED_BATCHES_INTERVAL_SECONDS : Nat = 3600; // 1 hour
 
     var nextBatchID : Nat = 0;
-    var nextChunkID : Nat = 0;
+    var nextChunkID : Nat32 = 0;
 
     let { nhash; thash } = Map;
     stable var assets : Trie.Trie<ID, Asset> = Trie.empty();
@@ -69,6 +77,31 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     var chunks : Map.Map<Nat, Chunk> = Map.new<Nat, Chunk>(nhash);
     let journal : JournalTypes.Self = actor (Principal.toText(installer));
     // let hashesQueue : Queue.Queue<{ chunkId : Nat }> = Queue.Queue<{}>();
+
+    let CHUNK_MAX_SIZE : Nat = 1024 * 1536; // 1.5mb
+    let chunksV2 = StableBTree.init<Nat32, ChunkV2>(
+		Memory.STABLE_MEMORY,
+		BytesConverter.NAT32_CONVERTER,
+		{
+            fromBytes = func (arr : [Nat8]) {
+                let buffers = Buffer.fromArray<Nat8>(arr) |> Buffer.split(_, 9);
+                let batchId = Buffer.subBuffer(buffers.0, 0, 4) |> Buffer.toArray _ |> bytesToNat32 _ |> Nat32.toNat _;
+                let size = Buffer.subBuffer(buffers.0, 4, 4) |> Buffer.toArray _ |> bytesToNat32 _ |> Nat32.toNat _;
+                let encrypted = buffers.0.get(8) |> bytesToBool([_ : Nat8]);
+                let content = Buffer.toArray(buffers.1) |> Blob.fromArray _;
+                { batchId; size; content; encrypted };
+            };
+            toBytes = func ({ batchId; size; content; encrypted } : ChunkV2) {
+                let buffer = Buffer.Buffer<Nat8>(4 + 4 + 1 + size);
+                buffer.insertBuffer(0, Buffer.fromArray(nat32ToBytes(Nat32.fromNat(batchId))));
+                buffer.insertBuffer(4, Buffer.fromArray(nat32ToBytes(Nat32.fromNat(size))));
+                buffer.insert(8, if encrypted 1:Nat8 else 0:Nat8);
+                buffer.insertBuffer(9, Buffer.fromArray<Nat8>(Blob.toArray(content)));
+                Buffer.toArray(buffer);
+            };
+            maxSize = func () : Nat32 { Nat32.fromNat(CHUNK_MAX_SIZE); };
+        }
+	);
 
     stable let certStore : CertTree.Store = CertTree.newStore();
     let ct = CertTree.Ops(certStore);
@@ -95,19 +128,46 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
                 };
             };
 
-            let #ok(asset) = getAssetByURL(url) else return {
+            let #ok((asset, _chunkId)) = getAssetByURL(url) else return {
                 body = Text.encodeUtf8("Permission denied. Could not perform this operation.");
                 headers = getHeaders(null);
                 status_code = 403;
                 streaming_strategy = null;
             };
-
-            {
-                body = asset.encoding.contentChunks[0];
-                headers = getHeaders(?asset);
-                status_code = 200;
-                streaming_strategy = createStrategy(asset);
+            let chunkId = Option.get(_chunkId, asset.encoding.chunkIds[0]);
+            let ?{ content; encrypted; size } : ?ChunkV2 = chunksV2.get(chunkId) else return {
+                body = Text.encodeUtf8("Chunk not found.");
+                headers = getHeaders(null);
+                status_code = 404;
+                streaming_strategy = null;
             };
+
+            switch (_chunkId, encrypted) {
+                case (?id, _) {
+                    {
+                        body = content;
+                        headers = getHeaders(?{ asset with encoding = { asset.encoding with totalLength = size } });
+                        status_code = 200;
+                        streaming_strategy = null;
+                    };
+                };
+                case (null, true) {
+                    {
+                        body = Text.encodeUtf8("Chunks are encrypted. Merging of encrypted data is not possible.");
+                        headers = getHeaders(null);
+                        status_code = 412;
+                        streaming_strategy = null;
+                    };
+                };
+                case (null, _) {
+                    {
+                        body = content;
+                        headers = getHeaders(?asset);
+                        status_code = 200;
+                        streaming_strategy = createStrategy(asset);
+                    };
+                };
+            }
         } catch (err) {
             return {
                 body = Text.encodeUtf8("Unexpected error: " # Error.message(err));
@@ -120,17 +180,39 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
     public query ({ caller }) func http_request_streaming_callback(streamingToken : StreamingCallbackToken) : async StreamingCallbackHttpResponse {
         let #ok(asset) = getAsset(streamingToken.id) else throw Error.reject("Streamed asset not found");
+        let chunkId = asset.encoding.chunkIds[streamingToken.index];
+        let ?{ content } = chunksV2.get(chunkId) else throw Error.reject("Chunk not found");
         let token : ?StreamingCallbackToken = createToken(asset, streamingToken.index);
-        { token; body = asset.encoding.contentChunks[streamingToken.index] };
+        { token; body = content };
     };
 
-    func getAssetByURL(url : Text) : Result.Result<Asset, { #noUrl; #notFound }> {
+    public query func getChunks(id : ID) : async Result.Result<AssetEncoding, { #notFound }> {
+        let #ok(asset) = getAsset(id) else return #err(#notFound);
+        #ok(asset.encoding);
+    };
+
+    public query func listChunks() : async [Nat32] {
+        let buffer = Buffer.Buffer<Nat32>(0);
+        for ((chunkId, _) in chunksV2.iter()) {
+            buffer.add(chunkId);
+        };
+        Buffer.toArray(buffer);
+    };
+
+    public query func list() : async [(ID, Asset)] {
+        Trie.iter(assets) |> Iter.toArray _;
+    };
+
+    func getAssetByURL(url : Text) : Result.Result<(Asset, ?Nat32), { #noUrl; #notFound }> {
         if (Text.size(url) == 0) {
             return #err(#noUrl);
         };
 
-        let id = Text.trimStart(url, #char '/');
-        getAsset(id);
+        let segments = Text.trimStart(url, #char '/') |> Text.split(_, #char '/') |> Iter.toArray _;
+        var chunkId : ?Nat32 = null;
+        if (segments.size() > 1) chunkId := Option.map<Nat, Nat32>(Nat.fromText(segments[1]), Nat32.fromNat);
+        let #ok(asset) = getAsset(segments[0]) else return #err(#notFound);
+        #ok((asset, chunkId));
     };
 
     func getAsset(id : ID) : Result.Result<Asset, { #notFound }> {
@@ -164,7 +246,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
     func createToken({ id; key; encoding; headers } : Asset, chunkIndex : Nat) : ?StreamingCallbackToken {
         let index = chunkIndex + 1;
-        if (index >= encoding.contentChunks.size()) {
+        if (index >= encoding.chunkIds.size()) {
             return null;
         };
 
@@ -202,7 +284,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         nextBatchID := Nat.add(nextBatchID, 1);
         let now : Time.Time = Time.now();
         clearExpiredBatches();
-        ignore Map.put(batches, nhash, nextBatchID, { key; expiresAt = now + BATCH_EXPIRY_NANOS });
+        Map.set(batches, nhash, nextBatchID, { key; expiresAt = now + BATCH_EXPIRY_NANOS; chunkIds = [] });
         { batchId = nextBatchID };
     };
 
@@ -222,9 +304,23 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
         let ?batch : ?Batch = Map.get(batches, nhash, chunk.batchId) else throw Error.reject("Batch not found.");
         nextChunkID := nextChunkID + 1;
-        ignore Map.put(batches, nhash, chunk.batchId, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
-        ignore Map.put(chunks, nhash, nextChunkID, chunk);
-        { chunkId = nextChunkID };
+        let result = chunksV2.insert(nextChunkID, { chunk and { size = chunk.content.size() } } );
+        Debug.print(debug_show(result));
+        switch (result) {
+            case (#err(#KeyTooLarge { given; max })) throw Error.reject("Insert error: key too large, given " # Nat.toText(given) # ", max " # Nat.toText(max));
+            case (#err(#ValueTooLarge { given; max })) throw Error.reject("Insert error: value too large, given " # Nat.toText(given) # ", max " # Nat.toText(max));
+            case _ {
+                // let chunkId = Nat32.toNat(nextChunkID);
+                let chunkIds = do {
+                    let buffer = Buffer.fromArray<Nat32>(batch.chunkIds);
+                    buffer.add(nextChunkID);
+                    Buffer.toArray(buffer);
+                };
+                let updatedBatch : Batch = { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS; chunkIds };
+                ignore Map.put(batches, nhash, chunk.batchId, updatedBatch);
+                { chunkId = nextChunkID };
+            };
+        };
     };
 
     public shared ({ caller }) func commitUpload({ batchId; chunkIds; headers } : CommitBatch, notifyJournal : Bool) : async Result.Result<(), CommitUploadError> {
@@ -240,24 +336,19 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             return #err(#batchExpired);
         };
 
-        let contentChunks : Buffer.Buffer<Blob> = Buffer.Buffer(1);
+        var totalLength = 0;
         for (chunkId in chunkIds.vals()) {
-            let ?chunk : ?Chunk = Map.get(chunks, nhash, chunkId) else return #err(#chunkNotFound chunkId);
+            let ?chunk : ?ChunkV2 = chunksV2.get(chunkId) else return #err(#chunkNotFound chunkId);
 
             if (Nat.notEqual(batchId, chunk.batchId)) {
                 return #err(#chunkWrongBatch chunkId);
             };
 
-            contentChunks.add(chunk.content);
+            totalLength += chunk.size;
         };
 
-        if (contentChunks.size() <= 0) {
+        if (Nat.equal(totalLength, 0)) {
             return #err(#empty);
-        };
-
-        var totalLength = 0;
-        for (chunk in contentChunks.vals()) {
-            totalLength += chunk.size();
         };
 
         let id : ID = batch.key.id;
@@ -267,11 +358,11 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             headers;
             encoding = {
                 modified = Time.now();
-                contentChunks = Buffer.toArray(contentChunks);
+                chunkIds;
                 totalLength;
             };
         };
-        contentChunks.clear();
+
         if (notifyJournal) {
             let file = { { batch.key with id } and { bucketId = Principal.fromActor(this) } };
             switch (await journal.addFile(file)) {
@@ -285,13 +376,13 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         switch (batch.key.sha256) {
             case (?v) {
                 // insert into CertTree
-                ct.put(["http_assets", Text.encodeUtf8("/" # id)], Blob.fromArray(v));
+                ct.put(["http_assets", Text.encodeUtf8("/" # id)], v);
                 ct.setCertifiedData();
             };
             case _ {};
         };
         assets := Trie.put<ID, Asset>(assets, Utils.keyText(id), Text.equal, asset).0;
-        clearBatch({ batchId; chunkIds });
+        Map.delete(batches, nhash, batchId);
         #ok();
     };
 
@@ -301,24 +392,12 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             batches,
             nhash,
             func(batchId : Nat, batch : Batch) : ?Batch {
-                if (now > batch.expiresAt) null else ?batch;
+                if (now > batch.expiresAt) {
+                    deleteChunks(batch.chunkIds);
+                    null;
+                } else ?batch;
             }
         );
-        chunks := Map.mapFilter<Nat, Chunk, Chunk>(
-            chunks,
-            nhash,
-            func(chunkId : Nat, chunk : Chunk) : ?Chunk {
-                if (Map.has(batches, nhash, chunk.batchId)) ?chunk else null;
-            }
-        );
-    };
-
-    func clearBatch({ batchId; chunkIds } : { batchId : Nat; chunkIds : [Nat] }) : () {
-        for (chunkId in chunkIds.vals()) {
-            Map.delete(chunks, nhash, chunkId);
-        };
-
-        Map.delete(batches, nhash, batchId);
     };
 
     public shared ({ caller }) func getUsedMemorySize() : async Nat {
@@ -328,15 +407,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
 
         let stableVarInfo = StableMemory.stableVarQuery();
         let { size } = await stableVarInfo();
-        let reservedMemory : Nat = do {
-            var sum : Nat = 0;
-            for ({ key } in Map.vals(batches)) {
-                sum += key.fileSize;
-            };
-            sum;
-        };
-
-        Nat64.toNat(size) + reservedMemory;
+        Nat64.toNat(size);
     };
 
     // func startBatchMonitor() : () {
@@ -353,6 +424,12 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     //     };
     // };
 
+    func deleteChunks(chunkIds : [Nat32]) : () {
+        for (chunkId in chunkIds.vals()) {
+            ignore chunksV2.remove(chunkId);
+        };
+    };
+
     public shared ({ caller }) func delete(id : ID) : async () {
         if (Principal.notEqual(caller, installer)) {
             throw Error.reject("User does not have the permission to delete an asset.");
@@ -361,7 +438,12 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         // remove from CertTree
         ct.delete(["http_assets", Text.encodeUtf8("/" # id)]);
         ct.setCertifiedData();
-        assets := Trie.remove<ID, Asset>(assets, Utils.keyText(id), Text.equal).0;
+        let (newAssets, asset) = Trie.remove<ID, Asset>(assets, Utils.keyText(id), Text.equal);
+        assets := newAssets;
+        switch (asset) {
+            case (?{ encoding }) deleteChunks(encoding.chunkIds);
+            case null {};
+        };
     };
 
     // Source: NNS-dapp
@@ -386,12 +468,12 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         defaultHeadersBuffer.clear();
         switch (asset) {
             case null buffer.add(certificationHeader("/"));
-            case (?{ id; headers; key }) {
+            case (?{ id; headers; key; encoding }) {
                 let headersBuffer = Buffer.fromArray<HeaderField>(headers);
                 buffer.append(headersBuffer);
                 headersBuffer.clear();
                 buffer.add(certificationHeader("/" # id));
-                buffer.add(("Content-Length", Nat.toText(key.fileSize)));
+                buffer.add(("Content-Length", Nat.toText(encoding.totalLength)));
                 buffer.add(("Content-Disposition", "attachment; filename=\"" # key.name # "\""));
                 buffer.add(("Cache-Control", "private, max-age=0"));
             };

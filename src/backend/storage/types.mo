@@ -1,5 +1,6 @@
 import Time "mo:base/Time";
-import TrieSet "mo:base/TrieSet";
+// import TrieSet "mo:base/TrieSet";
+import Vector "mo:vector";
 import Types "../types/types";
 import HTTPTypes "../types/http";
 import JournalTypes "../journal/types";
@@ -11,11 +12,19 @@ module {
     public type Chunk = {
         batchId : Nat;
         content : Blob;
+        encrypted : Bool;
+    };
+
+    public type ChunkV2 = {
+        batchId : Nat;
+        size : Nat;
+        content : Blob;
+        encrypted : Bool;
     };
 
     public type AssetEncoding = {
         modified : Time.Time;
-        contentChunks : [Blob];
+        chunkIds : [Nat32];
         totalLength : Nat;
     };
 
@@ -27,7 +36,7 @@ module {
         encrypted : Bool;
         // A sha256 representation of the raw content calculated on the frontend side.
         // used for duplicate detection and certification
-        sha256 : ?[Nat8];
+        sha256 : ?Blob;
     } and Thumbnail;
 
     public type Asset = {
@@ -39,20 +48,21 @@ module {
 
     public type Batch = {
         key : AssetKey;
+        chunkIds : [Nat32];
         expiresAt : Int;
     };
 
     public type CommitBatch = {
         batchId : Nat;
         headers : [HTTPTypes.HeaderField];
-        chunkIds : [Nat];
+        chunkIds : [Nat32];
     };
 
     public type CommitUploadError = {
         #batchNotFound;
         #batchExpired;
-        #chunkWrongBatch : Nat;
-        #chunkNotFound : Nat;
+        #chunkWrongBatch : Nat32;
+        #chunkNotFound : Nat32;
         #empty;
         #addFile : JournalTypes.FileCreateError;
     };
@@ -62,6 +72,6 @@ module {
     };
 
     public type UploadChunk = {
-        chunkId : Nat;
+        chunkId : Nat32;
     };
 };

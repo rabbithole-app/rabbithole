@@ -76,7 +76,7 @@ export const idlFactory = ({ IDL }) => {
             transfer: TransferError
         })
     });
-    const ProfileCreate = IDL.Record({
+    const ProfileCreateV2 = IDL.Record({
         username: IDL.Text,
         displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
@@ -120,7 +120,7 @@ export const idlFactory = ({ IDL }) => {
     const BucketId__1 = IDL.Principal;
     const PublicKey = IDL.Text;
     const EncryptedKey = IDL.Text;
-    const ProfileInfo = IDL.Record({
+    const ProfileInfoV2 = IDL.Record({
         id: IDL.Principal,
         username: IDL.Text,
         displayName: IDL.Text,
@@ -139,7 +139,7 @@ export const idlFactory = ({ IDL }) => {
         displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
     });
-    const ProfileUpdate = IDL.Record({
+    const ProfileUpdateV2 = IDL.Record({
         displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
     });
@@ -175,7 +175,7 @@ export const idlFactory = ({ IDL }) => {
         createInvite: IDL.Func([InviteCreate], [], []),
         createInvoice: IDL.Func([], [Invoice], []),
         createJournal: IDL.Func([ID], [Result_4], []),
-        createProfile: IDL.Func([ProfileCreate], [Result_3], []),
+        createProfile: IDL.Func([ProfileCreateV2], [Result_3], []),
         deleteInvite: IDL.Func([ID], [Result_2], []),
         deleteInvoice: IDL.Func([], [], []),
         deleteProfile: IDL.Func([], [Result_1], []),
@@ -183,7 +183,7 @@ export const idlFactory = ({ IDL }) => {
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
         getJournalBucket: IDL.Func([], [IDL.Opt(BucketId__1)], []),
         getKey: IDL.Func([PublicKey], [EncryptedKey], ['query']),
-        getProfile: IDL.Func([], [IDL.Opt(ProfileInfo)], ['query']),
+        getProfile: IDL.Func([], [IDL.Opt(ProfileInfoV2)], ['query']),
         getRegistrationMode: IDL.Func([], [RegistrationMode], ['query']),
         installCode: IDL.Func(
             [
@@ -203,7 +203,7 @@ export const idlFactory = ({ IDL }) => {
         ),
         listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId__1))], []),
         listProfiles: IDL.Func([], [IDL.Vec(Profile)], ['query']),
-        putProfile: IDL.Func([ProfileUpdate], [Result_1], []),
+        putProfile: IDL.Func([ProfileUpdateV2], [Result_1], []),
         redeemInvite: IDL.Func([ID], [Result], []),
         setRegistrationMode: IDL.Func([RegistrationMode], [], []),
         shareFile: IDL.Func([ID, SharedFile], [], []),

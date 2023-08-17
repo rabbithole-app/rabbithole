@@ -1,14 +1,14 @@
 import { fromNullable } from '@dfinity/utils';
 import { pick } from 'lodash';
 
+import { isDevMode } from '@angular/core';
 import { fromTimestamp } from '@core/utils';
 import { SharedFileExtended as SharedFileExtendedRaw } from '@declarations/journal/journal.did';
-import { environment } from 'environments/environment';
 import { SharedFileExtended } from '../models';
 
 export function toSharedFileExtended(sharedFile: SharedFileExtendedRaw): SharedFileExtended {
     const storageId = sharedFile.storageId.toText();
-    const host: string = environment.production ? `https://${storageId}.raw.ic0.app` : `http://${storageId}.localhost:8080`;
+    const host: string = isDevMode() ? `http://${storageId}.localhost:8080` : `https://${storageId}.raw.ic0.app`;
     const downloadUrl = `${host}/${sharedFile.id}`;
     const thumbnail = fromNullable(sharedFile.thumbnail);
     const thumbnailUrl = thumbnail ? `${host}/${thumbnail}` : undefined;

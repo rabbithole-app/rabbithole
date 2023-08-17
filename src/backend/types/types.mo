@@ -7,6 +7,10 @@ module {
     public type ID = Text;
 
     public type ProfileUpdate = {
+        displayName : Text;
+    };
+
+    public type ProfileUpdateV2 = {
         avatarUrl : ?Text;
         displayName : Text;
     };
@@ -14,14 +18,20 @@ module {
     public type ProfileCreate = ProfileUpdate and {
         username : Text;
     };
+    public type ProfileCreateV2 = ProfileUpdateV2 and {
+        username : Text;
+    };
 
-    public type ProfileInfo = ProfileUpdate and {
+    type ProfileCommon = {
         id : Principal;
         createdAt : Time.Time;
         updatedAt : Time.Time;
         inviter : ?Principal;
         username : Text;
     };
+
+    public type ProfileInfo = ProfileUpdate and ProfileCommon;
+    public type ProfileInfoV2 = ProfileUpdateV2 and ProfileCommon;
 
     public type ProfileCreateError = {
         #journalNotFound;
