@@ -6,7 +6,6 @@ export type BlockIndex = bigint;
 export type BlockIndex__1 = bigint;
 export type BucketId = Principal;
 export type BucketId__1 = Principal;
-export type EncryptedKey = string;
 export type ID = string;
 export type ID__1 = string;
 export type ID__2 = string;
@@ -81,7 +80,6 @@ export interface ProfileUpdateV2 {
     displayName: string;
     avatarUrl: [] | [string];
 }
-export type PublicKey = string;
 export type RegistrationMode = { prepaid: null } | { invite: null };
 export type Result = { ok: null } | { err: InviteError };
 export type Result_1 = { ok: null } | { err: { notFound: null } };
@@ -141,7 +139,6 @@ export interface _SERVICE {
     getInvites: ActorMethod<[], Array<Invite>>;
     getInvoice: ActorMethod<[], [] | [Invoice]>;
     getJournalBucket: ActorMethod<[], [] | [BucketId__1]>;
-    getKey: ActorMethod<[PublicKey], EncryptedKey>;
     getProfile: ActorMethod<[], [] | [ProfileInfoV2]>;
     getRegistrationMode: ActorMethod<[], RegistrationMode>;
     installCode: ActorMethod<

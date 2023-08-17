@@ -16,7 +16,7 @@
     </div>
     <!-- <app-empty icon="locked-files"></app-empty> -->
     <ng-template #withInvoice>
-        <mat-stepper orientation="horizontal" labelPosition="bottom" [linear]="true" [selectedIndex]="selectedIndex$ | push" #stepper>
+        <mat-stepper orientation="horizontal" labelPosition="bottom" [linear]="true" [selectedIndex]="selectedIndex$ | async" #stepper>
             <mat-step [editable]="false" [state]="createInvoiceStateIcon()" [completed]="createInvoiceStep()">
                 <ng-template matStepLabel>{{ t('steps.createInvoice.title') }}</ng-template>
                 <ng-template matStepContent>

@@ -2,7 +2,7 @@
     <mat-card class="mat-typography invoice">
         <mat-card-content>
             <app-wallet-item
-                [loading]="loadingBalance$ | push"
+                [loading]="loadingBalance()"
                 (refresh)="registerService.checkBalance()"
                 [tokenAmount]="balance$ | push"
                 [actionsEnabled]="false"></app-wallet-item>

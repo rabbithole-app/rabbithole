@@ -1,5 +1,5 @@
 import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
-import { formatNumber } from '@angular/common';
+import { AsyncPipe, formatNumber } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Signal, computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,10 +9,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepperModule } from '@angular/material/stepper';
 import { TRANSLOCO_SCOPE, TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
-import { RxPush } from '@rx-angular/template/push';
-import { isNull } from 'lodash';
 import { Observable, asapScheduler } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
+import { isNull } from 'lodash';
 
 import { JOURNAL_CYCLES_SHARE } from '@core/constants';
 import { BucketsService, ProfileService } from '@core/services';
@@ -30,12 +29,12 @@ import { RedeemInviteDialogComponent } from './components/redeem-invite-dialog/r
     imports: [
         TranslocoModule,
         MatStepperModule,
-        RxPush,
         MatButtonModule,
         MatProgressSpinnerModule,
         MatIconModule,
         InvoiceComponent,
         RxIf,
+        AsyncPipe,
         RedeemInviteDialogComponent,
         MatDialogModule
     ],

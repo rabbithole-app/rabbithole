@@ -8,29 +8,9 @@ import { createAgent, fromNullable, ICPToken, Token, TokenAmount } from '@dfinit
 import { TranslocoService } from '@ngneat/transloco';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { get, has, isNull } from 'lodash';
-import {
-    catchError,
-    combineLatestWith,
-    concat,
-    connect,
-    delayWhen,
-    EMPTY,
-    filter,
-    first,
-    from,
-    map,
-    merge,
-    of,
-    repeat,
-    share,
-    shareReplay,
-    switchMap,
-    takeUntil,
-    tap,
-    throwError,
-    timer
-} from 'rxjs';
+import { get, has, isEqual, isNull } from 'lodash';
+import { concat, EMPTY, from, merge, of, throwError, timer } from 'rxjs';
+import { catchError, combineLatestWith, connect, delayWhen, filter, first, map, repeat, share, shareReplay, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { LEDGER_CANISTER_ID } from '@core/constants';
 import { mapLedgerError } from '@core/operators';
@@ -79,7 +59,7 @@ export class RegisterService extends RxState<State> {
     private router = inject(Router);
     private readonly invoicePollingInterval = 1000;
 
-    invoice: WritableSignal<Invoice | null> = signal(null);
+    invoice: WritableSignal<Invoice | null> = signal(null, { equal: isEqual });
     loadingCreateInvoice: WritableSignal<boolean> = signal(false);
     invoiceActive: Signal<boolean> = computed(() => {
         const invoice = this.invoice();
@@ -137,8 +117,7 @@ export class RegisterService extends RxState<State> {
             )
         );
         const invoice$ = toObservable(this.invoice).pipe(
-            filter(v => !isNull(v)),
-            map(v => v as NonNullable<typeof v>),
+            filter((v): v is NonNullable<typeof v> => !isNull(v)),
             share()
         );
         const active$ = invoice$.pipe(
@@ -200,13 +179,13 @@ export class RegisterService extends RxState<State> {
                 switchMap(actor => actor.createProfile(profile)),
                 map(result => {
                     if (has(result, 'err.alreadyExists')) {
-                        throw Error(this.translocoService.translate('createProfile.answers.alreadyExists'));
+                        throw Error(this.translocoService.translate('profile.create.messages.alreadyExists'));
                     } else if (has(result, 'err.username')) {
                         const key = Object.keys(get(result, 'err.username') as unknown as UsernameError)[0]
                             .replace('illegalCharacters', 'pattern')
                             .replace('maxLength', 'maxlength')
                             .replace('minLength', 'minlength');
-                        throw Error(this.translocoService.translate(`createProfile.username.errors.${key}`));
+                        throw Error(this.translocoService.translate(`profile.create.username.errors.${key}`));
                     }
 
                     return null;
@@ -219,7 +198,7 @@ export class RegisterService extends RxState<State> {
                     error: () => this.profileStatus.set(ProfileStatus.Unregistered),
                     complete: () => {
                         this.profileStatus.set(ProfileStatus.Registered);
-                        this.notificationService.success(this.translocoService.translate('createProfile.messages.successfullyCreated'));
+                        this.notificationService.success(this.translocoService.translate('profile.create.messages.successfullyCreated'));
                         this.profileService.refresh();
                     }
                 }),

@@ -118,8 +118,6 @@ export const idlFactory = ({ IDL }) => {
         canisterId: IDL.Principal
     });
     const BucketId__1 = IDL.Principal;
-    const PublicKey = IDL.Text;
-    const EncryptedKey = IDL.Text;
     const ProfileInfoV2 = IDL.Record({
         id: IDL.Principal,
         username: IDL.Text,
@@ -182,7 +180,6 @@ export const idlFactory = ({ IDL }) => {
         getInvites: IDL.Func([], [IDL.Vec(Invite)], ['query']),
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
         getJournalBucket: IDL.Func([], [IDL.Opt(BucketId__1)], []),
-        getKey: IDL.Func([PublicKey], [EncryptedKey], ['query']),
         getProfile: IDL.Func([], [IDL.Opt(ProfileInfoV2)], ['query']),
         getRegistrationMode: IDL.Func([], [RegistrationMode], ['query']),
         installCode: IDL.Func(

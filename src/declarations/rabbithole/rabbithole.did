@@ -84,7 +84,6 @@ type RegistrationMode =
    invite;
    prepaid;
  };
-type PublicKey = text;
 type ProfileUpdateV2 = 
  record {
    avatarUrl: opt text;
@@ -195,7 +194,6 @@ type Invite =
 type ID__2 = text;
 type ID__1 = text;
 type ID = text;
-type EncryptedKey = text;
 type BucketId__1 = principal;
 type BucketId = principal;
 type BlockIndex__1 = nat64;
@@ -219,7 +217,6 @@ service : {
   getInvites: () -> (vec Invite) query;
   getInvoice: () -> (opt Invoice) query;
   getJournalBucket: () -> (opt BucketId__1);
-  getKey: (PublicKey) -> (EncryptedKey) query;
   getProfile: () -> (opt ProfileInfoV2) query;
   getRegistrationMode: () -> (RegistrationMode) query;
   installCode:

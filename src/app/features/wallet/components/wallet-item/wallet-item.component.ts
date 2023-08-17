@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostBinding, inject, Input, Output } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, EventEmitter, HostBinding, inject, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -21,7 +21,7 @@ import { addFASvgIcons } from '@core/utils';
 })
 export class WalletItemComponent {
     @Input() tokenAmount: TokenAmount = TokenAmount.fromE8s({ amount: 0n, token: ICPToken });
-    @Input() loading = false;
+    @Input({ transform: booleanAttribute }) loading = false;
     @HostBinding('class.actions')
     @Input()
     actionsEnabled = true;
