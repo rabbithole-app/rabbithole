@@ -7,5 +7,5 @@ export enum DownloadStatus {
 
 export type DownloadProgress = { status: DownloadStatus.Progress; total: number; loaded: number };
 export type DownloadComplete = { status: DownloadStatus.Complete; file: File };
-export type DownloadFailed = { status: DownloadStatus.Failed };
+export type DownloadFailed = { status: DownloadStatus.Failed; errorMessage: string };
 export type DownloadRetrieveKey = { status: DownloadStatus.RetrieveKey };

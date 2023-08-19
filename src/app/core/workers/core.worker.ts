@@ -2,20 +2,19 @@
 
 import { ActorSubclass, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { arrayBufferToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
+import { arrayBufferToUint8Array, arrayOfNumberToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
-import { defaults, get, has, isNull, isUndefined, omit, partition, pick } from 'lodash';
+import { defaults, get, has, isNull, isUndefined, omit, partition, pick, sortBy } from 'lodash';
 import { CropperPosition } from 'ngx-image-cropper';
-import { EMPTY, Observable, ObservableInput, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, throwError, timer } from 'rxjs';
+import { EMPTY, MonoTypeOperatorFunction, Observable, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, pipe, timer } from 'rxjs';
 import {
     catchError,
     combineLatestWith,
     concatWith,
     connect,
-    delayWhen,
     exhaustMap,
     filter,
     first,
@@ -23,6 +22,7 @@ import {
     map,
     mergeMap,
     reduce,
+    repeat,
     scan,
     skip,
     switchMap,
@@ -31,12 +31,11 @@ import {
     toArray,
     withLatestFrom
 } from 'rxjs/operators';
-import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
 
 import { createActor, decryptArrayBuffer, initVetAesGcmKey, loadIdentity, loadWasm } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
-import { FileInfoExtended, DownloadComplete, DownloadProgress, DownloadStatus, DownloadRetrieveKey } from '@features/file-list/models';
+import { FileInfoExtended, DownloadComplete, DownloadProgress, DownloadStatus, DownloadRetrieveKey, DownloadFailed } from '@features/file-list/models';
 import { concatUint8Arrays, toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SharedFileExtended } from '@features/shared-with-me/models';
 import { toSharedFileExtended } from '@features/shared-with-me/utils';
@@ -48,7 +47,7 @@ import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
-import { AssetEncoding, _SERVICE as StorageActor } from 'declarations/storage/storage.did';
+import { AssetInfo, _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 
 interface State {
     identity: Identity;
@@ -68,7 +67,7 @@ function isSharedFile(item: FileInfoExtended | SharedFileExtended): item is Shar
 const state = new RxState<State>();
 const updateJournal: Subject<string | undefined> = new Subject();
 const listFiles: Subject<string | undefined> = new Subject();
-state.set({ progress: {}, files: {} });
+state.set({ progress: {}, files: {}, wasmLoaded: false });
 const files: Subject<{
     item: FileUpload;
     uploadState: FileUploadState;
@@ -87,11 +86,13 @@ const cropImage: Subject<{
     maxWidth?: number;
     maxHeight?: number;
 }> = new Subject();
-const sharedWithMe: Subject<void> = new Subject();
+const sharedTimer: Subject<boolean> = new Subject();
+const sharedTimerOn$ = sharedTimer.asObservable().pipe(filter(v => v));
+const sharedTimerOff$ = sharedTimer.asObservable().pipe(filter(v => !v));
+const SHARED_WITH_ME_INTERVAL = 10000;
 
 addEventListener('message', ({ data }) => {
-    const { action, item, id, uploadState } = data;
-    switch (action) {
+    switch (data.action) {
         case 'getJournal': {
             updateJournal.next(data.path);
             break;
@@ -101,10 +102,10 @@ addEventListener('message', ({ data }) => {
             break;
         }
         case 'addUpload': {
-            state.set('files', state => ({ ...state.files, [item.id]: item }));
+            state.set('files', state => ({ ...state.files, [data.item.id]: data.item }));
             files.next({
-                item,
-                uploadState,
+                item: data.item,
+                uploadState: data.uploadState,
                 options: defaults(data.options, {
                     silent: false,
                     thumbnail: true,
@@ -114,25 +115,25 @@ addEventListener('message', ({ data }) => {
             break;
         }
         case 'pauseUpload': {
-            updateProgress(id, { status: UPLOAD_STATUS.Paused });
-            const canisterId = state.get('progress', id, 'canisterId');
+            updateProgress(data.id, { status: UPLOAD_STATUS.Paused });
+            const canisterId = state.get('progress', data.id, 'canisterId');
             if (canisterId) {
-                keepAlive.next({ id, canisterId });
+                keepAlive.next({ id: data.id, canisterId });
             }
             break;
         }
         case 'resumeUpload':
         case 'retryUpload': {
-            const item = state.get('files', id);
-            const previousState = state.get('progress', id);
+            const item = state.get('files', data.id);
+            const previousState = state.get('progress', data.id);
             if (item) {
-                updateProgress(id, { status: UPLOAD_STATUS.Queue });
+                updateProgress(data.id, { status: UPLOAD_STATUS.Queue });
                 files.next({ item, uploadState: previousState });
             }
             break;
         }
         case 'cancelUpload': {
-            updateProgress(id, { status: UPLOAD_STATUS.Cancelled });
+            updateProgress(data.id, { status: UPLOAD_STATUS.Cancelled });
             break;
         }
         case 'download': {
@@ -140,20 +141,25 @@ addEventListener('message', ({ data }) => {
             const [encryptedItems, decryptedItems] = partition(userFiles, 'encrypted');
             const sharedEncrypted$ = sharedFiles.length
                 ? from(sharedFiles).pipe(
-                      mergeMap(({ id, name, owner, journalId, downloadUrl, storageId }) =>
-                          downloadEncryptedFile({ id, owner: Principal.fromText(owner), journalId, downloadUrl, name, storageId }).pipe(onErrorResumeNextWith())
+                      mergeMap(({ id, name, owner, journalId, storageId }) =>
+                          downloadEncryptedFile({
+                              id,
+                              owner: Principal.fromText(owner),
+                              journalId: Principal.fromText(journalId),
+                              name,
+                              storageId: Principal.fromText(storageId)
+                          }).pipe(onErrorResumeNextWith())
                       )
                   )
                 : EMPTY;
             const encrypted$ = encryptedItems.length
                 ? from(encryptedItems).pipe(
-                      mergeMap(({ id, downloadUrl, name, storageId }) =>
+                      mergeMap(({ id, name, storageId }) =>
                           state.select(selectSlice(['journalId', 'identity'])).pipe(
                               first(),
                               switchMap(({ journalId, identity }) =>
                                   downloadEncryptedFile({
                                       id,
-                                      downloadUrl,
                                       name,
                                       owner: identity.getPrincipal(),
                                       journalId,
@@ -166,9 +172,7 @@ addEventListener('message', ({ data }) => {
                   )
                 : EMPTY;
             const decrypted$ = decryptedItems.length
-                ? from(decryptedItems).pipe(
-                      mergeMap(({ id, downloadUrl, name, storageId }) => downloadFile({ id, downloadUrl, name, storageId: Principal.fromText(storageId) }))
-                  )
+                ? from(decryptedItems).pipe(mergeMap(({ id, name, storageId }) => downloadFile({ id, name, storageId: Principal.fromText(storageId) })))
                 : EMPTY;
             merge(sharedEncrypted$, encrypted$, decrypted$).subscribe();
             break;
@@ -177,14 +181,17 @@ addEventListener('message', ({ data }) => {
             cropImage.next({ ...pick(data, ['id', 'image', 'cropper', 'canvas']), maxWidth: MAX_AVATAR_WIDTH, maxHeight: MAX_AVATAR_HEIGHT });
             break;
         }
-        case 'sharedWithMe': {
-            sharedWithMe.next();
+        case 'startSharedTimer':
+            sharedTimer.next(true);
             break;
-        }
+        case 'stopSharedTimer':
+            sharedTimer.next(false);
+            break;
         default:
             break;
     }
 });
+postMessage({ action: 'init' });
 
 function createRabbitholeActor(): Observable<ActorSubclass<RabbitholeActor>> {
     return state.select('identity').pipe(
@@ -496,7 +503,7 @@ const fileUpload$ = files.asObservable().pipe(
                         ).pipe(
                             catchError(err => {
                                 console.error(err);
-                                return throwError(() => err);
+                                return EMPTY;
                             })
                         );
                     })
@@ -559,21 +566,16 @@ cropImage
         postMessage({ action: 'cropImageDone', id, data, type });
     });
 
-sharedWithMe
-    .asObservable()
+sharedTimerOn$
     .pipe(
-        delayWhen(() => state.select('wasmLoaded').pipe(filter(v => v))),
-        switchMap(() =>
-            state.select('actor').pipe(
-                first(),
-                switchMap(actor => actor.sharedWithMe())
-            )
-        ),
+        switchMap(() => state.select('actor').pipe(first())),
+        switchMap(actor => timer(0, SHARED_WITH_ME_INTERVAL).pipe(exhaustMap(() => actor.sharedWithMe()))),
         switchMap(shares =>
             from(shares).pipe(
                 mergeMap(({ profile, bucketId }) =>
                     createJournalActor(bucketId).pipe(
                         switchMap(actor => actor.sharedWithMe()),
+                        filter(items => items.length > 0),
                         map(items => ({
                             user: { ...profile, principal: profile.principal.toText(), avatarUrl: fromNullable(profile.avatarUrl) },
                             items: items.map(toSharedFileExtended)
@@ -583,80 +585,84 @@ sharedWithMe
                 toArray()
             )
         ),
+        map(value => sortBy(value, ({ user }) => user.username)),
         catchError(err => {
             console.error(err);
             return EMPTY;
-        })
+        }),
+        takeUntil(sharedTimerOff$),
+        repeat()
     )
     .subscribe(payload => postMessage({ action: 'sharedWithMeDone', payload }));
 
 function download(
-    { id, downloadUrl, name, storageId }: { id: string; downloadUrl: string; name: string; storageId: Principal },
-    selector: (response: Response) => ObservableInput<any>
+    { id, name, storageId }: { id: string; name: string; storageId: Principal },
+    operator: () => MonoTypeOperatorFunction<{ buffer: ArrayBuffer; size: number; index: number }> = pipe
 ) {
     return createStorageActor(storageId).pipe(
         switchMap(({ actor }) =>
             from(actor.getChunks(id)).pipe(
                 map(result => {
                     if (has(result, 'err')) {
-                        const key = Object.keys(get(result, 'err') as unknown as { notFound: null })[0];
                         throw new Error('File not found');
                     }
 
-                    return get(result, 'ok') as unknown as AssetEncoding;
-                })
-            )
-        ),
-        switchMap(encoding =>
-            from(encoding.chunkIds).pipe(
-                mergeMap((chunkId, index) =>
-                    fromFetch<{ size: number; buffer: ArrayBuffer; contentType?: string }>(`${downloadUrl}/${chunkId}`, { selector }).pipe(
-                        map(data => ({ ...data, index }))
-                    )
-                ),
-                connect(shared =>
-                    merge(
-                        shared.pipe(
-                            scan(
-                                (acc, { size }) => {
-                                    acc.loaded += size;
-                                    return acc;
-                                },
-                                <DownloadProgress>{
-                                    loaded: 0,
-                                    total: Number(encoding.totalLength),
-                                    status: DownloadStatus.Progress
-                                }
+                    return get(result, 'ok') as unknown as AssetInfo;
+                }),
+                switchMap(asset =>
+                    from(asset.chunkIds).pipe(
+                        mergeMap((chunkId, index) =>
+                            from(actor.getChunk(chunkId)).pipe(
+                                map(data => {
+                                    const content = arrayOfNumberToUint8Array(data as number[]);
+                                    return { buffer: content.buffer, size: content.byteLength, index };
+                                }),
+                                operator()
                             )
                         ),
-                        shared.pipe(
-                            reduce(
-                                (acc, { index, buffer, contentType }) => {
-                                    acc.result[index] = arrayBufferToUint8Array(buffer);
-                                    return { ...acc, contentType };
-                                },
-                                <{ result: Uint8Array[]; contentType?: string }>{ result: [] }
-                            ),
-                            map(
-                                ({ result, contentType }) =>
-                                    <DownloadComplete>{
-                                        file: new File([concatUint8Arrays(result)], name, { type: contentType }),
-                                        status: DownloadStatus.Complete
-                                    }
+                        connect(shared =>
+                            merge(
+                                shared.pipe(
+                                    scan(
+                                        (acc, { size }) => {
+                                            acc.loaded += size;
+                                            return acc;
+                                        },
+                                        <DownloadProgress>{
+                                            loaded: 0,
+                                            total: Number(asset.totalLength),
+                                            status: DownloadStatus.Progress
+                                        }
+                                    )
+                                ),
+                                shared.pipe(
+                                    reduce(
+                                        (acc, { index, buffer }) => {
+                                            acc.result[index] = arrayBufferToUint8Array(buffer);
+                                            return acc;
+                                        },
+                                        <{ result: Uint8Array[]; contentType?: string }>{ result: [], contentType: fromNullable(asset.contentType) }
+                                    ),
+                                    map(
+                                        ({ result, contentType }) =>
+                                            <DownloadComplete>{
+                                                file: new File([concatUint8Arrays(result)], name, { type: contentType }),
+                                                status: DownloadStatus.Complete
+                                            }
+                                    )
+                                )
                             )
                         )
                     )
                 )
             )
-        )
+        ),
+        catchError(err => of<DownloadFailed>({ status: DownloadStatus.Failed, errorMessage: err.message }))
     );
 }
 
-function downloadFile(params: { id: string; downloadUrl: string; name: string; storageId: Principal }) {
-    return download(params, response => {
-        const contentType = response.headers.get('content-type') ?? undefined;
-        return from(response.arrayBuffer()).pipe(map(buffer => ({ buffer, contentType, size: buffer.byteLength })));
-    }).pipe(
+function downloadFile(params: { id: string; name: string; storageId: Principal }) {
+    return download(params).pipe(
         tap(progress => {
             postMessage({ action: 'downloadProgress', id: params.id, progress: omit(progress, 'file') });
             if (progress.status === DownloadStatus.Complete) {
@@ -670,14 +676,12 @@ function downloadEncryptedFile({
     id,
     journalId,
     owner,
-    downloadUrl,
     name,
     storageId
 }: {
     id: string;
     journalId: Principal;
     owner: Principal;
-    downloadUrl: string;
     name: string;
     storageId: Principal;
 }) {
@@ -688,13 +692,9 @@ function downloadEncryptedFile({
                 shared.pipe(
                     switchMap(journalActor => initVetAesGcmKey(id, owner, journalActor)),
                     switchMap(aesKey =>
-                        download({ id, name, downloadUrl, storageId }, response => {
-                            const contentType = response.headers.get('content-type') ?? undefined;
-                            return from(response.arrayBuffer()).pipe(
-                                map(encryptedBuffer => ({ buffer: encryptedBuffer, contentType, size: encryptedBuffer.byteLength })),
-                                switchMap(data => from(decryptArrayBuffer(aesKey, data.buffer)).pipe(map(buffer => ({ ...data, buffer }))))
-                            );
-                        })
+                        download({ id, name, storageId }, () =>
+                            pipe(switchMap(data => from(decryptArrayBuffer(aesKey, data.buffer)).pipe(map(buffer => ({ ...data, buffer })))))
+                        )
                     )
                 )
             )

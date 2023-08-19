@@ -75,7 +75,7 @@ export class CreateProfileComponent {
     get usernameErrorMessage() {
         if (this.username?.errors) {
             const [key, value] = Object.entries(this.username.errors)[0];
-            return this.translocoService.translate(`createProfile.username.errors.${key}`, { ...value });
+            return this.translocoService.translate(`profile.create.username.errors.${key}`, { ...value });
         }
 
         return '';

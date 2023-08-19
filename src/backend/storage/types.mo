@@ -15,11 +15,10 @@ module {
         encrypted : Bool;
     };
 
-    public type ChunkV2 = {
-        batchId : Nat;
-        size : Nat;
-        content : Blob;
-        encrypted : Bool;
+    public type AssetInfo = {
+        chunkIds : [Nat32];
+        totalLength : Nat;
+        contentType : ?Text;
     };
 
     public type AssetEncoding = {

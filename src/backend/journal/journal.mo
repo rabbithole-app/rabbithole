@@ -771,7 +771,7 @@ module {
                 case (?v) {
                     switch (v.sharedWith) {
                         case (#everyone) {};
-                        case (#users(users)) assert Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal);
+                        case (#users(users)) assert Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal) or Principal.equal(caller, owner);
                     };
                 };
                 case null assert Principal.equal(caller, owner);

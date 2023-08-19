@@ -15,13 +15,15 @@ export function toSharedFileExtended(sharedFile: SharedFileExtendedRaw): SharedF
     const timelock = fromNullable(sharedFile.timelock);
 
     return {
-        ...pick(sharedFile, ['id', 'name', 'fileSize', 'encrypted', 'sharedWith', 'downloads', 'storageId', 'journalId']),
+        ...pick(sharedFile, ['id', 'name', 'fileSize', 'encrypted', 'sharedWith', 'downloads']),
         thumbnailUrl,
         downloadUrl,
         createdAt: fromTimestamp(sharedFile.createdAt),
         updatedAt: fromTimestamp(sharedFile.updatedAt),
         timelock: timelock ? fromTimestamp(timelock) : undefined,
         limitDownloads: fromNullable(sharedFile.limitDownloads),
-        owner: sharedFile.owner.toText()
+        owner: sharedFile.owner.toText(),
+        storageId: sharedFile.storageId.toText(),
+        journalId: sharedFile.journalId.toText()
     };
 }

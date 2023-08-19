@@ -17,19 +17,24 @@ type UploadParams = {
 };
 
 export async function simpleUploadFile(item: Omit<FileUpload, 'sha256' | 'thumbnail' | 'canvas'>, storage: Bucket<StorageActor>) {
-    const hash = await crypto.subtle.digest('SHA-256', arrayBufferToUint8Array(item.data));
+    const content = arrayBufferToUint8Array(item.data);
+    const hash = await crypto.subtle.digest('SHA-256', content);
+    const sha256 = arrayBufferToUint8Array(hash);
     const assetKey: AssetKey = {
         id: item.id,
         name: item.name,
         parentId: toNullable<string>(item.parentId),
         fileSize: BigInt(item.fileSize),
-        sha256: toNullable(arrayBufferToUint8Array(hash)),
+        sha256: toNullable(sha256),
         thumbnail: toNullable(),
         encrypted: false
     };
     const { batchId } = await storage.actor.initUpload(assetKey);
-    const content = arrayBufferToUint8Array(item.data);
-    const { chunkId } = await storage.actor.uploadChunk({ batchId, content, encrypted: false });
+    const { chunkId } = await storage.actor.uploadChunk({
+        batchId,
+        content,
+        encrypted: false
+    });
     const commitBatch: CommitBatch = {
         batchId,
         chunkIds: [chunkId],
@@ -89,7 +94,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                             ? { ...pick(state, ['chunkIds', 'batch']), status: UPLOAD_STATUS.Processing }
                             : {
                                   batch,
-                                  chunkIds: Array.from<bigint | null>({ length: chunkCount }).fill(null),
+                                  chunkIds: Array.from<number | null>({ length: chunkCount }).fill(null),
                                   status: UPLOAD_STATUS.Processing
                               }
                     ) as WithRequiredProperty<Pick<FileUploadState, 'chunkIds' | 'batch' | 'status'>, 'chunkIds' | 'batch'>;
@@ -114,10 +119,11 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                                                     })
                                                 ),
                                                 defer(() => encryptArrayBuffer(options.aesKey, chunk)).pipe(
-                                                    switchMap(encryptedChunkContent =>
+                                                    map(arrayBufferToUint8Array),
+                                                    switchMap(content =>
                                                         storage.actor.uploadChunk({
                                                             batchId: batch.id,
-                                                            content: arrayBufferToUint8Array(encryptedChunkContent),
+                                                            content,
                                                             encrypted: true
                                                         })
                                                     )

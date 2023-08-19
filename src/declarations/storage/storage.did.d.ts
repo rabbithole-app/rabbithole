@@ -1,39 +1,19 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export interface Asset {
-    id: ID__1;
-    key: AssetKey;
-    encoding: AssetEncoding;
-    headers: Array<HeaderField>;
-}
-export interface AssetEncoding {
-    modified: Time;
-    totalLength: bigint;
-    chunkIds: Uint32Array | number[];
-}
-export interface AssetEncoding__1 {
-    modified: Time;
+export interface AssetInfo {
+    contentType: [] | [string];
     totalLength: bigint;
     chunkIds: Uint32Array | number[];
 }
 export interface AssetKey {
-    id: ID__1;
+    id: ID;
     sha256: [] | [Uint8Array | number[]];
-    thumbnail: [] | [ID__2];
+    thumbnail: [] | [ID__1];
     name: string;
     fileSize: bigint;
     encrypted: boolean;
-    parentId: [] | [ID__1];
-}
-export interface AssetKey__1 {
-    id: ID__1;
-    sha256: [] | [Uint8Array | number[]];
-    thumbnail: [] | [ID__2];
-    name: string;
-    fileSize: bigint;
-    encrypted: boolean;
-    parentId: [] | [ID__1];
+    parentId: [] | [ID];
 }
 export type BucketId = Principal;
 export interface Chunk {
@@ -54,8 +34,8 @@ export type CommitUploadError =
     | { chunkNotFound: number }
     | { batchExpired: null };
 export interface File {
-    id: ID__2;
-    thumbnail: [] | [ID__2];
+    id: ID__1;
+    thumbnail: [] | [ID__1];
     name: string;
     createdAt: Time;
     path: string;
@@ -63,7 +43,7 @@ export interface File {
     fileSize: bigint;
     encrypted: boolean;
     updatedAt: Time;
-    parentId: [] | [ID__2];
+    parentId: [] | [ID__1];
 }
 export type FileCreateError = { illegalCharacters: null } | { alreadyExists: File } | { parentNotFound: null };
 export type HeaderField = [string, string];
@@ -88,15 +68,16 @@ export interface InitUpload {
 }
 export type Key = Uint8Array | number[];
 export type RawTree = { subtree: Array<[Key, RawTree]> } | { value: Uint8Array | number[] };
-export type Result = { ok: AssetEncoding__1 } | { err: { notFound: null } };
+export type Result = { ok: AssetInfo } | { err: { notFound: null } };
 export type Result_1 = { ok: null } | { err: CommitUploadError };
 export interface Storage {
     batchAlive: ActorMethod<[bigint], undefined>;
     commitUpload: ActorMethod<[CommitBatch, boolean], Result_1>;
-    delete: ActorMethod<[ID], undefined>;
+    delete: ActorMethod<[ID__3], undefined>;
     getAssetsTotalSize: ActorMethod<[], bigint>;
     getCertTree: ActorMethod<[], RawTree>;
-    getChunks: ActorMethod<[ID], Result>;
+    getChunk: ActorMethod<[number], Uint8Array | number[]>;
+    getChunks: ActorMethod<[ID__3], Result>;
     getHeapSize: ActorMethod<[], bigint>;
     getMaxLiveSize: ActorMethod<[], bigint>;
     getMemorySize: ActorMethod<[], bigint>;
@@ -104,9 +85,7 @@ export interface Storage {
     getUsedMemorySize: ActorMethod<[], bigint>;
     http_request: ActorMethod<[HttpRequest], HttpResponse>;
     http_request_streaming_callback: ActorMethod<[StreamingCallbackToken], StreamingCallbackHttpResponse>;
-    initUpload: ActorMethod<[AssetKey__1], InitUpload>;
-    list: ActorMethod<[], Array<[ID, Asset]>>;
-    listChunks: ActorMethod<[], Uint32Array | number[]>;
+    initUpload: ActorMethod<[AssetKey], InitUpload>;
     uploadChunk: ActorMethod<[Chunk], UploadChunk>;
     version: ActorMethod<[], bigint>;
 }
@@ -119,13 +98,13 @@ export interface StreamingCallbackHttpResponse__1 {
     body: Uint8Array | number[];
 }
 export interface StreamingCallbackToken {
-    id: ID__3;
+    id: ID__2;
     sha256: [] | [Uint8Array | number[]];
     headers: Array<HeaderField>;
     index: bigint;
 }
 export interface StreamingCallbackToken__1 {
-    id: ID__3;
+    id: ID__2;
     sha256: [] | [Uint8Array | number[]];
     headers: Array<HeaderField>;
     index: bigint;

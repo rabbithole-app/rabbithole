@@ -5,7 +5,7 @@ DEV_PRINCIPAL=$(dfx identity get-principal)
 
 dfx stop
 dfx start --background --clean
-dfx extension nns install
+dfx extension install nns
 dfx nns install
 
 # dfx canister create vetkd_system_api --specified-id s55qq-oqaaa-aaaaa-aaakq-canister

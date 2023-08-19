@@ -1,3 +1,10 @@
+:host {
+    display: grid;
+    height: 100%;
+    grid-template-rows: auto 1fr;
+}
+
+
 .mat-typography {
     padding-left: 0.75rem;
 }
@@ -6,4 +13,10 @@
     display: grid;
     grid-row-gap: 1rem;
     justify-items: flex-start;
+}
+
+.container {
+    display: grid;
+    align-content: start;
+    row-gap: 1rem;
 }

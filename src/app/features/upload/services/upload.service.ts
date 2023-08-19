@@ -27,8 +27,8 @@ import {
     withLatestFrom
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-
 import { DOCUMENT } from '@angular/common';
+
 import { BucketsService, CoreService, NotificationService } from '@core/services';
 import { JournalService } from '@features/file-list/services';
 import { FileListService } from '@features/file-list/services/file-list.service';
@@ -72,6 +72,7 @@ export class UploadService extends RxState<State> {
 
     progress$: Observable<FileUploadState[]> = this.select('progress').pipe(
         map(value => values(value)),
+        filter(value => value.length > 0),
         shareReplay(1)
     );
     uploading$: Observable<FileUploadState[]> = this.progress$.pipe(map(items => items.filter(({ status }) => status !== UPLOAD_STATUS.Done)));
@@ -92,7 +93,8 @@ export class UploadService extends RxState<State> {
             .subscribe(path => this.#fileListService.getJournal(path));
         this.set({
             items: [],
-            summary: this.summaryInitValue
+            summary: this.summaryInitValue,
+            progress: {}
         });
         this.connect(this.files.asObservable(), (state, item) => {
             const chunkCount = Math.ceil(item.fileSize / this.chunkSize);
@@ -321,27 +323,31 @@ export class UploadService extends RxState<State> {
     }
 
     async add(files: FileSystemFileHandle[]) {
-        const worker = this.#coreService.worker();
-        for (let i = 0; i < files.length; i++) {
-            const file = await files[i].getFile();
-            const buffer = await file.arrayBuffer();
-            const parent = this.#fileListService.parent();
-            const canvas = this.#document.createElement('canvas');
-            const offscreen = canvas?.transferControlToOffscreen();
-            const item = {
-                id: uuidv4(),
-                name: file.name,
-                fileSize: file.size,
-                contentType: file.type,
-                parentId: parent?.id,
-                data: buffer,
-                canvas: offscreen
-            };
-            this.addItem(item);
-            if (worker) {
-                const uploadState = this.get('progress', item.id);
-                worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data, item.canvas]);
+        try {
+            const worker = this.#coreService.worker();
+            for (let i = 0; i < files.length; i++) {
+                const file = await files[i].getFile();
+                const buffer = await file.arrayBuffer();
+                const parent = this.#fileListService.parent();
+                const canvas = this.#document.createElement('canvas');
+                const offscreen = canvas?.transferControlToOffscreen();
+                const item = {
+                    id: uuidv4(),
+                    name: file.name,
+                    fileSize: file.size,
+                    contentType: file.type,
+                    parentId: parent?.id,
+                    data: buffer,
+                    canvas: offscreen
+                };
+                this.addItem(item);
+                if (worker) {
+                    const uploadState = this.get('progress', item.id);
+                    worker.postMessage({ action: 'addUpload', item, uploadState }, [item.data, item.canvas]);
+                }
             }
+        } catch (err) {
+            this.#notificationService.error((<DOMException>err).message);
         }
     }
 

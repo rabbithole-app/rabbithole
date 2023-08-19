@@ -11,14 +11,14 @@ type StreamingStrategy = variant {
 type StreamingCallbackToken__1 = 
  record {
    headers: vec HeaderField;
-   id: ID__3;
+   id: ID__2;
    index: nat;
    sha256: opt blob;
  };
 type StreamingCallbackToken = 
  record {
    headers: vec HeaderField;
-   id: ID__3;
+   id: ID__2;
    index: nat;
    sha256: opt blob;
  };
@@ -36,10 +36,11 @@ type Storage =
  service {
    batchAlive: (nat) -> ();
    commitUpload: (CommitBatch, bool) -> (Result_1);
-   delete: (ID) -> ();
+   delete: (ID__3) -> ();
    getAssetsTotalSize: () -> (nat) query;
    getCertTree: () -> (RawTree) query;
-   getChunks: (ID) -> (Result) query;
+   getChunk: (nat32) -> (blob) query;
+   getChunks: (ID__3) -> (Result) query;
    getHeapSize: () -> (nat) query;
    getMaxLiveSize: () -> (nat) query;
    getMemorySize: () -> (nat) query;
@@ -48,12 +49,7 @@ type Storage =
    http_request: (HttpRequest) -> (HttpResponse) query;
    http_request_streaming_callback: (StreamingCallbackToken) ->
     (StreamingCallbackHttpResponse) query;
-   initUpload: (AssetKey__1) -> (InitUpload);
-   list: () -> (vec record {
-                      ID;
-                      Asset;
-                    }) query;
-   listChunks: () -> (vec nat32) query;
+   initUpload: (AssetKey) -> (InitUpload);
    uploadChunk: (Chunk) -> (UploadChunk);
    version: () -> (nat) query;
  };
@@ -65,7 +61,7 @@ type Result_1 =
 type Result = 
  variant {
    err: variant {notFound;};
-   ok: AssetEncoding__1;
+   ok: AssetInfo;
  };
 type RawTree = 
  variant {
@@ -112,11 +108,11 @@ type File =
    createdAt: Time;
    encrypted: bool;
    fileSize: nat;
-   id: ID__2;
+   id: ID__1;
    name: text;
-   parentId: opt ID__2;
+   parentId: opt ID__1;
    path: text;
-   thumbnail: opt ID__2;
+   thumbnail: opt ID__1;
    updatedAt: Time;
  };
 type CommitUploadError = 
@@ -141,43 +137,20 @@ type Chunk =
    encrypted: bool;
  };
 type BucketId = principal;
-type AssetKey__1 = 
- record {
-   encrypted: bool;
-   fileSize: nat;
-   id: ID__1;
-   name: text;
-   parentId: opt ID__1;
-   sha256: opt blob;
-   thumbnail: opt ID__2;
- };
 type AssetKey = 
  record {
    encrypted: bool;
    fileSize: nat;
-   id: ID__1;
+   id: ID;
    name: text;
-   parentId: opt ID__1;
+   parentId: opt ID;
    sha256: opt blob;
-   thumbnail: opt ID__2;
+   thumbnail: opt ID__1;
  };
-type AssetEncoding__1 = 
+type AssetInfo = 
  record {
    chunkIds: vec nat32;
-   modified: Time;
+   contentType: opt text;
    totalLength: nat;
- };
-type AssetEncoding = 
- record {
-   chunkIds: vec nat32;
-   modified: Time;
-   totalLength: nat;
- };
-type Asset = 
- record {
-   encoding: AssetEncoding;
-   headers: vec HeaderField;
-   id: ID__1;
-   key: AssetKey;
  };
 service : (principal) -> Storage

@@ -112,7 +112,8 @@ function uploadFile(actor, item) {
         parentId: toNullable(item.parentId),
         fileSize: BigInt(item.fileSize),
         sha256: toNullable(item.sha256),
-        ecrypted: false
+        thumbnail: toNullable(),
+        encrypted: false
     };
     const chunkCount = Math.ceil(item.fileSize / CHUNK_SIZE);
     return from(actor.initUpload(assetKey)).pipe(
@@ -122,11 +123,12 @@ function uploadFile(actor, item) {
                     const startByte = index * CHUNK_SIZE;
                     const endByte = Math.min(item.fileSize, startByte + CHUNK_SIZE);
                     const chunk = item.data.slice(startByte, endByte);
+                    const content = arrayBufferToUint8Array(chunk);
                     return from(
                         actor.uploadChunk({
                             batchId,
-                            content: arrayBufferToUint8Array(chunk),
-                            sha256: createHash('sha256').update(chunk).digest()
+                            content,
+                            encrypted: false
                         })
                     ).pipe(map(({ chunkId }) => ({ chunkSize: chunk.byteLength, chunkId, index })));
                 }, CONCURRENT_CHUNKS_COUNT),
@@ -204,7 +206,7 @@ async function main() {
     ]);
     let index = 0;
     const upload$ = defer(() => {
-        const data = readFileSync('./scripts/test.pdf', { flag: 'r' });
+        const data = readFileSync('./tmp/test.pdf', { flag: 'r' });
         const sha256 = createHash('sha256').update(data).digest();
         const item = {
             id: uuidv4(),
