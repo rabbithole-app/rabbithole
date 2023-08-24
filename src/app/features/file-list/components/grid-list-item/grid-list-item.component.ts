@@ -29,9 +29,11 @@ import { MiddleEllipsisComponent } from '@core/components/middle-ellipsis/middle
 import { addFASvgIcons } from '@core/utils';
 import { AnimatedFolderComponent } from '@features/file-list/components/animated-folder/animated-folder.component';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { JournalItem } from '@features/file-list/models';
+import { FileInfoExtended, JournalItem } from '@features/file-list/models';
 import { DownloadService, JournalService } from '@features/file-list/services';
 import { getIconByFilename } from '@features/file-list/utils';
+import { has } from 'lodash';
+import { FileShare } from '@declarations/journal/journal.did';
 
 @Component({
     selector: 'app-grid-list-item',
@@ -65,6 +67,10 @@ export class GridListItemComponent implements Highlightable, OnInit {
     status: WritableSignal<string> = signal('');
     showStatus: Signal<boolean> = computed(() => this.status().length > 0);
 
+    get isSharedPublic(): boolean {
+        return has(this.data, 'share.sharedWith.everyone');
+    }
+
     @HostBinding('class.active') get isActive() {
         return this._isActive;
     }
@@ -85,7 +91,7 @@ export class GridListItemComponent implements Highlightable, OnInit {
     }*/
 
     constructor() {
-        addFASvgIcons(['users', 'lock', 'share-nodes'], 'far');
+        addFASvgIcons(['users', 'lock', 'share-nodes', 'link'], 'far');
     }
 
     ngOnInit(): void {

@@ -131,6 +131,27 @@ export const idlFactory = ({ IDL }) => {
         prepaid: IDL.Null,
         invite: IDL.Null
     });
+    const ID__1 = IDL.Text;
+    const BucketId = IDL.Principal;
+    const SharedFileExtended = IDL.Record({
+        id: ID__1,
+        thumbnail: IDL.Opt(ID__1),
+        owner: IDL.Principal,
+        name: IDL.Text,
+        createdAt: Time,
+        journalId: BucketId,
+        limitDownloads: IDL.Opt(IDL.Nat),
+        fileSize: IDL.Nat,
+        storageId: BucketId,
+        encrypted: IDL.Bool,
+        sharedWith: IDL.Variant({
+            everyone: IDL.Null,
+            users: IDL.Vec(IDL.Principal)
+        }),
+        updatedAt: Time,
+        downloads: IDL.Nat,
+        timelock: IDL.Opt(Time)
+    });
     const Profile = IDL.Record({
         principal: IDL.Principal,
         username: IDL.Text,
@@ -141,8 +162,6 @@ export const idlFactory = ({ IDL }) => {
         displayName: IDL.Text,
         avatarUrl: IDL.Opt(IDL.Text)
     });
-    const ID__1 = IDL.Text;
-    const BucketId = IDL.Principal;
     const SharedFile = IDL.Record({
         id: ID__1,
         owner: IDL.Principal,
@@ -182,6 +201,7 @@ export const idlFactory = ({ IDL }) => {
         getJournalBucket: IDL.Func([], [IDL.Opt(BucketId__1)], []),
         getProfile: IDL.Func([], [IDL.Opt(ProfileInfoV2)], ['query']),
         getRegistrationMode: IDL.Func([], [RegistrationMode], ['query']),
+        getSharedFile: IDL.Func([ID], [IDL.Opt(SharedFileExtended)], ['composite_query']),
         installCode: IDL.Func(
             [
                 IDL.Record({

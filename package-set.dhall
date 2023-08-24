@@ -11,11 +11,11 @@ let additions =
     , version = "moc-0.9.7"
     , dependencies = [] : List Text
     },
-    { name = "stableBTree"
-    , repo = "https://github.com/sardariuss/MotokoStableBTree"
-    , version = "main"
-    , dependencies = ["base", "matchers"]
-    },
+    -- { name = "stableBTree"
+    -- , repo = "https://github.com/sardariuss/MotokoStableBTree"
+    -- , version = "main"
+    -- , dependencies = ["base", "matchers"]
+    -- },
     { name = "hashmap"
     , repo = "https://github.com/ZhenyaUsenko/motoko-hash-map"
     , version = "master"

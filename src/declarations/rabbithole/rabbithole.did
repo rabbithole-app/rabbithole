@@ -27,6 +27,26 @@ type TransferError =
  };
 type Tokens = record {e8s: nat64;};
 type Time = int;
+type SharedFileExtended = 
+ record {
+   createdAt: Time;
+   downloads: nat;
+   encrypted: bool;
+   fileSize: nat;
+   id: ID__1;
+   journalId: BucketId;
+   limitDownloads: opt nat;
+   name: text;
+   owner: principal;
+   sharedWith: variant {
+                 everyone;
+                 users: vec principal;
+               };
+   storageId: BucketId;
+   thumbnail: opt ID__1;
+   timelock: opt Time;
+   updatedAt: Time;
+ };
 type SharedFile = 
  record {
    createdAt: Time;
@@ -219,6 +239,7 @@ service : {
   getJournalBucket: () -> (opt BucketId__1);
   getProfile: () -> (opt ProfileInfoV2) query;
   getRegistrationMode: () -> (RegistrationMode) query;
+  getSharedFile: (ID) -> (opt SharedFileExtended) composite_query;
   installCode:
    (record {
       arg: blob;

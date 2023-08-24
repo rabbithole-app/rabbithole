@@ -10,7 +10,10 @@
                 <ng-container [ngTemplateOutlet]="statusBadge"></ng-container>
             </ng-template>
             <div class="badge" *rxIf="data.share">
-                <mat-icon svgIcon="far:share-nodes"></mat-icon>
+                <mat-icon *rxIf="isSharedPublic; else sharedWithUsers" svgIcon="far:link"></mat-icon>
+                <ng-template #sharedWithUsers>
+                    <mat-icon svgIcon="far:share-nodes"></mat-icon>
+                </ng-template>
             </div>
         </ng-container>
         <ng-template #folderTemplate>
@@ -32,9 +35,9 @@
         <!--<div class="spinner-wrapper spinner-wrapper&#45;&#45;success" *ngIf="statusIcon$ | async" [@zoomInOnEnter]="statusAnimationParams" [@zoomOutOnLeave]="statusAnimationParams">
             <fa-icon icon="check"></fa-icon>
         </div>-->
-        <div class="progress-wrapper" *rxIf="loading" @fadeOutDownOnLeave>
+        <!-- <div class="progress-wrapper" *rxIf="loading" @fadeOutDownOnLeave>
             <mat-progress-bar mode="indeterminate" class="folder"></mat-progress-bar>
-        </div>
+        </div> -->
     </div>
     <div class="info">
         <div class="title">{{ data.name }}</div>

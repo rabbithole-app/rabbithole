@@ -2,46 +2,51 @@
     <h1 mat-dialog-title [innerHTML]="t('title', { name: data.item.name })"></h1>
     <mat-dialog-content class="mat-typography">
         <!-- <mat-slide-toggle color="primary" [formControl]="shareControl">Share</mat-slide-toggle> -->
-        <ng-container>
-            <!-- <div>
-                <label>Share with: </label>
-                <mat-radio-group color="primary" [formControl]="sharedWithControl">
-                    <mat-radio-button value="public" disabled>Everyone</mat-radio-button>
+        <form [formGroup]="form">
+            <div>
+                <label>Share with </label>
+                <mat-radio-group color="primary" formControlName="with">
+                    <mat-radio-button value="public">Everyone</mat-radio-button>
                     <mat-radio-button value="users">Users</mat-radio-button>
                 </mat-radio-group>
-            </div> -->
-            <!-- <mat-form-field class="form-field" *rxIf="sharedWithControl.value === 'public'">
+            </div>
+            <mat-form-field class="form-field" *rxIf="form.get('with')?.value === 'public'">
                 <mat-label>Link</mat-label>
-                <input matInput type="text" [formControl]="publicLinkControl" />
+                <input matInput type="text" formControlName="publicLink" />
                 <button matSuffix mat-icon-button aria-label="Clear" (click)="copy($event)">
                     <mat-icon svgIcon="far:copy"></mat-icon>
                 </button>
-            </mat-form-field> -->
+            </mat-form-field>
             <app-select-users
-                *rxIf="sharedWithControl.value === 'users'"
-                [formControl]="usersControl"
+                *rxIf="form.get('with')?.value === 'users'"
+                formControlName="users"
                 [label]="t('shareWith')"
                 [exceptList]="exceptList$ | push"></app-select-users>
-            <!-- <mat-slide-toggle color="primary" [formControl]="timelockControl">Timelock</mat-slide-toggle>
-            <mat-form-field *rxIf="timelockControl.value">
-                <mat-label>{{ t('expires.label') }}</mat-label>
-                <input matInput [matDatepicker]="picker" [min]="minDate" [formControl]="dateControl" required />
-                <mat-hint>{{ getDateFormatString() }}</mat-hint>
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-                <mat-error *rxIf="dateControl.invalid">{{ t('expires.errors.required') }}</mat-error>
-            </mat-form-field> -->
-        </ng-container>
+            <div class="timelock">
+                <mat-slide-toggle color="primary" formControlName="timelock">{{ t('timelock') }}</mat-slide-toggle>
+                <mat-form-field *rxIf="timelockControl?.value">
+                    <mat-label>{{ t('timelockDate.label') }}</mat-label>
+                    <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="timelockDate" required />
+                    <!-- <mat-hint>{{ getDateFormatString() }}</mat-hint> -->
+                    <mat-hint>{{ t('timelockDate.hint') }}</mat-hint>
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                    <mat-error *rxIf="timelockDateControl?.invalid">{{ t('timelockDate.errors.required') }}</mat-error>
+                </mat-form-field>
+            </div>
+        </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <button mat-button mat-dialog-close>{{ t('actions.cancel') }}</button>
-        <button *rxIf="usersControl.invalid && isShared; else shareButton; suspense: shareButton" mat-raised-button color="primary" [mat-dialog-close]="{ share: null }">
+        <!-- <button
+            *rxIf="form.invalid && isShared; else shareButton; suspense: shareButton"
+            mat-raised-button
+            color="primary"
+            [mat-dialog-close]="{ share: null }">
             {{ t('actions.unshare') }}
+        </button> -->
+        <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="handleShare()">
+            {{ t('actions.share') }}
         </button>
-        <ng-template #shareButton>
-            <button mat-raised-button color="primary" [disabled]="usersControl.invalid" (click)="handleShare($event)">
-                {{ t('actions.share') }}
-            </button>
-        </ng-template>
     </mat-dialog-actions>
 </ng-container>

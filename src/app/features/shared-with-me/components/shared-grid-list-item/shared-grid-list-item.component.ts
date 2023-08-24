@@ -20,7 +20,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProfileItem } from '@core/models/profile';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { DownloadService } from '@features/file-list/services';
 import { formatBytes, getIconByFilename } from '@features/file-list/utils';
@@ -51,7 +50,6 @@ import { formatDistanceToNow } from 'date-fns';
 })
 export class SharedGridListItemComponent implements OnInit {
     @Input({ required: true }) data!: SharedFileExtended;
-    @Input({ required: true }) user!: ProfileItem;
     @Output() download: EventEmitter<void> = new EventEmitter();
     iconsConfig = inject(FILE_LIST_ICONS_CONFIG);
     getIconByExt = (filename: string) => getIconByFilename(this.iconsConfig, filename);

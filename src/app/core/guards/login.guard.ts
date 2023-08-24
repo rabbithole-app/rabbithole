@@ -12,7 +12,7 @@ export const loginGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnaps
     return authState.select('isAuthenticated').pipe(
         map(isAuthenticated => {
             if (isAuthenticated) {
-                const url = state.url.split('?')[0];
+                const url = state.url?.split('?')[0];
                 const redirect = url === '/' ? undefined : url;
                 const queryParams = { ...pick(next.queryParams, ['internetIdentityUrl', 'canisterId']), redirect };
                 return router.createUrlTree(['/drive'], { queryParams });

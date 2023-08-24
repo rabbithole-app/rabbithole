@@ -11,7 +11,7 @@ import { CoreService, NotificationService } from '@core/services';
 import { SharedFileExtended } from '@features/shared-with-me/models';
 import { JournalItem, DownloadStatus } from '../models';
 
-type FileDownloadState = {
+export type FileDownloadState = {
     loaded: number;
     total: number;
     status: DownloadStatus;

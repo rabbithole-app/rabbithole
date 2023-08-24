@@ -1,0 +1,48 @@
+<ng-container *transloco="let t; read: 'shared'">
+    <mat-card class="mat-typography file-card">
+        <div class="icon-container">
+            <ng-container *rxIf="!data.thumbnailUrl; else thumbTemplate">
+                <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
+            </ng-container>
+        </div>
+        <ng-template #thumbTemplate>
+            <img mat-card-lg-image [src]="$any(data.thumbnailUrl)" alt="" />
+        </ng-template>
+        <div class="card-content-wrapper">
+            <mat-card-header>
+                <mat-card-title>{{ data.name }}</mat-card-title>
+                <mat-card-subtitle>{{ formatBytes(data.fileSize) }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content *rxIf="timelocked()">
+                <p>{{ t('timelock.description') }}</p>
+                <div class="countdown">
+                    <div>{{ durationDays() }}</div>
+                    <div>{{ t('countdown.days', { days: durationDays() }) }}</div>
+                    <div>{{ durationHours() }}</div>
+                    <div>{{ t('countdown.hours', { hours: durationHoursRaw() }) }}</div>
+                    <div>{{ durationMinutes() }}</div>
+                    <div>{{ t('countdown.minutes', { minutes: durationMinutesRaw() }) }}</div>
+                    <div>{{ durationSeconds() }}</div>
+                    <div>{{ t('countdown.seconds', { seconds: durationSecondsRaw() }) }}</div>
+                </div>
+            </mat-card-content>
+            <mat-card-actions>
+                <ng-container *rxIf="loading(); else downloadButton">
+                    <ng-container *rxIf="retrievingKey(); else loadingButton" [ngTemplateOutlet]="retrieveKeyButton"></ng-container>
+                </ng-container>
+                <ng-template #downloadButton>
+                    <button mat-button (click)="handleDownload()" [disabled]="timelocked()">{{ t('actions.download', { count: 1 }) }}</button>
+                </ng-template>
+                <ng-template #retrieveKeyButton>
+                    <button mat-button disabled>{{ t('actions.download.retrievingKey') }}</button>
+                </ng-template>
+                <ng-template #loadingButton>
+                    <button mat-button disabled>{{ t('actions.download.progress', { percent: progressBarValue() }) }}</button>
+                </ng-template>
+            </mat-card-actions>
+        </div>
+        <mat-card-footer>
+            <mat-progress-bar *rxIf="loading()" [mode]="progressBarMode()" [value]="progressBarValue()"></mat-progress-bar>
+        </mat-card-footer>
+    </mat-card>
+</ng-container>

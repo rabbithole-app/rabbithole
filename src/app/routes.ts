@@ -12,6 +12,7 @@ import { RegisterService } from '@features/register/services/register.service';
 import { UploadService } from '@features/upload/services';
 import { WalletService } from '@features/wallet/services';
 import { SidebarService } from './layout/dashboard/services/sidebar.service';
+import { sharedFileResolver } from './layout/shared/resolvers/shared-file.resolver';
 
 export const appRoutes: Route[] = [
     {
@@ -106,17 +107,23 @@ export const appRoutes: Route[] = [
                 canActivate: [registerGuard],
                 loadComponent: () => import('./features/register/register.component').then(m => m.RegisterComponent)
             }
-            // {
-            //     path: '',
-            //     loadComponent: () => import('./features/register/components/sidebar-content/sidebar-content.component').then(m => m.SidebarContentComponent),
-            //     outlet: 'sidebar'
-            // }
         ]
     },
     {
         path: 'login',
         loadComponent: () => import('./layout/login/login.component').then(m => m.LoginComponent),
         canActivate: [loginGuard]
+    },
+    {
+        path: 'public/:id',
+        resolve: { data: sharedFileResolver },
+        loadComponent: () => import('./layout/shared/shared.component').then(m => m.SharedComponent),
+        providers: [
+            {
+                provide: FILE_LIST_ICONS_CONFIG,
+                useValue: GRAY_ICONS_CONFIG
+            }
+        ]
     },
     { path: '404', loadComponent: () => import('./core/components/not-found/not-found.component').then(m => m.NotFoundComponent) },
     { path: '**', redirectTo: '' }

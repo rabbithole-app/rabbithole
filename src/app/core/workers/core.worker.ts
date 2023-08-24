@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { ActorSubclass, Identity } from '@dfinity/agent';
+import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { arrayBufferToUint8Array, arrayOfNumberToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
@@ -289,8 +289,13 @@ function updateProgress(id: string, value: Partial<FileUploadState> & { chunkSiz
 }
 
 const identity$ = from(loadIdentity()).pipe(
-    filter(identity => !isUndefined(identity)),
-    map(identity => identity as NonNullable<typeof identity>)
+    map(identity => {
+        if (isUndefined(identity)) {
+            return new AnonymousIdentity();
+        }
+
+        return identity;
+    })
 );
 state.connect('identity', identity$);
 

@@ -65,15 +65,10 @@ type SharedFileExtended =
  };
 type Result_9 = 
  variant {
-   err: FileCreateError;
-   ok;
- };
-type Result_8 = 
- variant {
    err: DirectoryCreateError;
    ok: Directory;
  };
-type Result_7 = 
+type Result_8 = 
  variant {
    err:
     variant {
@@ -83,15 +78,23 @@ type Result_7 =
     };
    ok;
  };
-type Result_6 = 
+type Result_7 = 
  variant {
    err: NotFoundError;
    ok;
  };
-type Result_5 = 
+type Result_6 = 
  variant {
    err: DirectoryStateError;
    ok: DirectoryState;
+ };
+type Result_5 = 
+ variant {
+   err: variant {
+          noPermission;
+          notFound;
+        };
+   ok: SharedFileExtended;
  };
 type Result_4 = 
  variant {
@@ -112,14 +115,19 @@ type Result_2 =
         };
    ok: File__1;
  };
-type Result_11 = 
+type Result_12 = 
  variant {
    err: FileCreateError;
    ok: File__1;
  };
-type Result_10 = 
+type Result_11 = 
  variant {
    err: DirectoryCreateError;
+   ok;
+ };
+type Result_10 = 
+ variant {
+   err: FileCreateError;
    ok;
  };
 type Result_1 = 
@@ -153,30 +161,31 @@ type NotFoundError = variant {notFound;};
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
-   addFile: (FileCreate) -> (Result_11);
+   addFile: (FileCreate) -> (Result_12);
    canisterStatus: (principal) ->
     (record {
        freezingThresholdInCycles: nat;
        id: principal;
        status: canister_status_response;
      });
-   checkDirname: (EntryCreate) -> (Result_10) query;
-   checkFilename: (EntryCreate) -> (Result_9) query;
-   createDirectory: (EntryCreate) -> (Result_8);
-   createInvite: (Time) -> (Result_7);
+   checkDirname: (EntryCreate) -> (Result_11) query;
+   checkFilename: (EntryCreate) -> (Result_10) query;
+   createDirectory: (EntryCreate) -> (Result_9);
+   createInvite: (Time) -> (Result_8);
    createPaths: (vec text, vec ID__1, opt ID__1) ->
     (vec record {
            text;
            ID__1;
          });
-   deleteDirectory: (text) -> (Result_6);
-   deleteFile: (text) -> (Result_6);
+   deleteDirectory: (text) -> (Result_7);
+   deleteFile: (text) -> (Result_7);
    deleteStorage: (BucketId__1) -> ();
    fileVetkdPublicKey: (ID__1, vec blob) -> (text);
    getCanisters: () -> (vec Canister) query;
    getChildrenDirs: (opt ID__1) -> (vec Directory) query;
    getFileEncryptedSymmetricKey: (ID__1, blob) -> (text);
-   getJournal: (opt text) -> (Result_5) query;
+   getJournal: (opt text) -> (Result_6) query;
+   getSharedFile: (principal, ID__1) -> (Result_5) query;
    getStorage: (nat) -> (opt BucketId__1);
    listFiles: (opt ID__1) -> (vec FileExtended) query;
    listStorages: () -> (vec BucketId__1) query;

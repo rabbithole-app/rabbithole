@@ -103,6 +103,22 @@ export interface SharedFile {
     downloads: bigint;
     timelock: [] | [Time];
 }
+export interface SharedFileExtended {
+    id: ID__1;
+    thumbnail: [] | [ID__1];
+    owner: Principal;
+    name: string;
+    createdAt: Time;
+    journalId: BucketId;
+    limitDownloads: [] | [bigint];
+    fileSize: bigint;
+    storageId: BucketId;
+    encrypted: boolean;
+    sharedWith: { everyone: null } | { users: Array<Principal> };
+    updatedAt: Time;
+    downloads: bigint;
+    timelock: [] | [Time];
+}
 export type Time = bigint;
 export interface Tokens {
     e8s: bigint;
@@ -141,6 +157,7 @@ export interface _SERVICE {
     getJournalBucket: ActorMethod<[], [] | [BucketId__1]>;
     getProfile: ActorMethod<[], [] | [ProfileInfoV2]>;
     getRegistrationMode: ActorMethod<[], RegistrationMode>;
+    getSharedFile: ActorMethod<[ID], [] | [SharedFileExtended]>;
     installCode: ActorMethod<
         [
             {

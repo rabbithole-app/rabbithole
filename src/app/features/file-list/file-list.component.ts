@@ -1,4 +1,5 @@
-import { Location, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
+import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, NgTemplateOutlet } from '@angular/common';
+import { ClipboardModule, Clipboard } from '@angular/cdk/clipboard';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -28,6 +29,7 @@ import { RxLet } from '@rx-angular/template/let';
 import { RxPush } from '@rx-angular/template/push';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { has } from 'lodash';
 
 import { EmptyComponent } from '@core/components/empty/empty.component';
 import { addFASvgIcons } from '@core/utils';
@@ -42,6 +44,7 @@ import { MoveDialogComponent } from './components/move-dialog/move-dialog.compon
 import { RenameDialogComponent } from './components/rename-dialog/rename-dialog.component';
 import { ShareFileDialogComponent } from './components/share-file-dialog/share-file-dialog.component';
 import { FileListService } from './services/file-list.service';
+import { NotificationService } from '@core/services';
 
 interface State {
     emptyRef: ElementRef;
@@ -71,7 +74,8 @@ interface State {
         RxFor,
         NgIf,
         RxIf,
-        RenameDialogComponent
+        RenameDialogComponent,
+        ClipboardModule
     ],
     providers: [RxState, SnackbarProgressService, ContextMenuService],
     standalone: true
@@ -79,6 +83,8 @@ interface State {
 export class FileListComponent {
     #translocoService = inject(TranslocoService);
     #downloadService = inject(DownloadService);
+    #notificationService = inject(NotificationService);
+    #clipboard = inject(Clipboard);
 
     title: WritableSignal<string> = signal('');
     @Input('title') set _title(value: string) {
@@ -120,11 +126,10 @@ export class FileListComponent {
 
     constructor(
         private dialog: MatDialog,
-        private location: Location,
         private contextMenuService: ContextMenuService,
         private state: RxState<State>
     ) {
-        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree', 'users', 'users-slash'], 'far');
+        addFASvgIcons(['plus', 'trash-can', 'download', 'pen-to-square', 'folder-tree', 'users', 'users-slash', 'link'], 'far');
         this.route.data
             .pipe(
                 map(({ fileList }) => fileList),
@@ -223,10 +228,19 @@ export class FileListComponent {
         });
     }
 
-    async openShareDialog(event: MouseEvent, item: FileInfoExtended) {
+    isSharedPublic(item: FileInfoExtended): boolean {
+        return has(item, 'share.sharedWith.everyone');
+    }
+
+    copyLink(item: FileInfoExtended) {
+        this.#clipboard.copy(`${location.origin}/public/${item.id}`);
+        this.#notificationService.success(this.#translocoService.translate('shared.messages.copied'));
+    }
+
+    async openShareDialog(event: MouseEvent, item: FileInfoExtended, shareWith: 'users' | 'public') {
         const dialogRef = this.dialog.open<
             ShareFileDialogComponent,
-            { item: FileInfoExtended },
+            { item: FileInfoExtended; shareWith: 'users' | 'public' },
             {
                 share: {
                     sharedWith: { everyone: null } | { users: Principal[] };
@@ -237,12 +251,11 @@ export class FileListComponent {
         >(ShareFileDialogComponent, {
             width: '450px',
             autoFocus: false,
-            data: { item }
+            data: { item, shareWith }
         });
 
         dialogRef.afterClosed().subscribe(data => {
             if (data?.share) {
-                console.log(data);
                 this.journalService.shareFile(item, data.share);
             } else if (data) {
                 this.journalService.unshareFile([item]);

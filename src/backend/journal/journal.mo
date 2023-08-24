@@ -77,6 +77,7 @@ module {
         shareFile : (ID, SharedFileParams, Principal) -> async Result.Result<FileExtended, { #notFound }>;
         unshareFile : ID -> async Result.Result<FileExtended, { #notFound }>;
         sharedWithMe : Principal -> [SharedFileExtended];
+        getSharedFile : (Principal, ID) -> Result.Result<SharedFileExtended, { #notFound; #noPermission }>;
         setFileEncryptedSymmetricKey : (ID, Blob) -> async Text;
         getFileEncryptedSymmetricKey : (Principal, ID, Blob) -> async Text;
         fileVetkdPublicKey : (ID, [Blob]) -> async Text;
@@ -722,10 +723,10 @@ module {
                     };
                     break exit value;
                 };
-                { { v with fields } with updatedAt = now };
+                { v with sharedWith = fields.sharedWith; timelock = fields.timelock; limitDownloads = fields.limitDownloads; downloads = 0; updatedAt = now };
             };
             let rabbithole : actor { shareFile : shared (ID, SharedFile) -> async () } = actor (Principal.toText(installer));
-            await rabbithole.shareFile(id, value);
+            await rabbithole.shareFile(value.id, value);
             Map.set(sharedFiles, thash, id, value);
             let share = { journalId = value.journalId; sharedWith = value.sharedWith; timelock = value.timelock; limitDownloads = value.limitDownloads };
             #ok({ file and { share = ?share } });
@@ -761,6 +762,22 @@ module {
             Iter.toArray(Map.vals(extendedMap));
         };
 
+        public func getSharedFile(caller : Principal, id : ID) : Result.Result<SharedFileExtended, { #notFound; #noPermission }> {
+            let ?(path, { name; fileSize; thumbnail; encrypted }) = findFileEntry(id) else return #err(#notFound);
+            switch(Map.get(sharedFiles, thash, id)) {
+                case (?v) {
+                    let value = { v and { name; fileSize; thumbnail; encrypted } };
+                    switch (v.sharedWith) {
+                        case (#everyone) #ok value;
+                        case (#users(users)) {
+                            if (Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal) or Principal.equal(caller, owner)) #ok value else #err(#noPermission);
+                        };
+                    };
+                };
+                case null #err(#noPermission);
+            };
+        };
+
         public func setFileEncryptedSymmetricKey(id : ID, tpk : Blob) : async Text {
             await vetkdEncryptedKey(tpk, [Text.encodeUtf8("symmetric_key" # id)]);
         };
@@ -772,6 +789,26 @@ module {
                     switch (v.sharedWith) {
                         case (#everyone) {};
                         case (#users(users)) assert Buffer.contains(Buffer.fromArray<Principal>(users), caller, Principal.equal) or Principal.equal(caller, owner);
+                    };
+                    
+                    if (Principal.notEqual(caller, owner)) {
+                        switch(v.timelock) {
+                            case (?t) {
+                                if (Time.now() < t) {
+                                    throw Error.reject("The specified access date for the decryption key has not arrived");
+                                };
+                            };
+                            case null {};
+                        };
+                        switch(v.limitDownloads) {
+                            case (?limit) {
+                                if (Nat.greaterOrEqual(limit, v.downloads)) {
+                                    throw Error.reject("The download limit for this file has been reached");
+                                };
+                            };
+                            case null {};
+                        };
+                        Map.set(sharedFiles, thash, id, { v with downloads = Nat.add(v.downloads, 1) })
                     };
                 };
                 case null assert Principal.equal(caller, owner);

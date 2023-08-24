@@ -122,7 +122,9 @@
             "remove": "Remove {count, plural, =0 {} =1 {} other { (# items)}}",
             "rename": "Rename",
             "move": "Move{count, plural, =0 {} =1 {} other { (# items)}}",
-            "share": "Share",
+            "share-with": "Share with",
+            "share-link": "Share link",
+            "copy-public-link": "Copy public link",
             "unshare": "Unshare"
         },
         "move": {
@@ -179,6 +181,14 @@
                     "cancel": "Cancel",
                     "share": "Share",
                     "unshare": "Unshare"
+                },
+                "timelock": "Time-lock encryption",
+                "timelockDate": {
+                    "label": "Time-lock date",
+                    "hint": "The file can not be decrypted until a specified date",
+                    "errors": {
+                        "required": "Select a time-lock date"
+                    }
                 },
                 "messages": {
                     "err": {
@@ -400,8 +410,22 @@
     },
     "shared": {
         "title": "Shared with me",
+        "timelock": {
+            "description": "This file is encrypted and time-locked. The decryption key will be available for download:"
+        },
+        "countdown": {
+            "days": "day{days, plural, =0{} =1{} other {s}}",
+            "hours": "hour{hours, plural, =0{} =1{} other {s}}",
+            "minutes": "minute{minutes, plural, =0{} =1{} other {s}}",
+            "seconds": "second{seconds, plural, =0{} =1{} other {s}}"
+        },
         "actions": {
-            "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}"
+            "download": "Download {count, plural, =0 {} =1 {} other { (# items)}}",
+            "download.retrievingKey": "Retrieving key...",
+            "download.progress": "Downloading {{ percent }}%"
+        },
+        "messages": {
+            "copied": "Public link copied to clipboard"
         }
     }
 }

@@ -25,7 +25,9 @@ import { concatStringStream } from '@core/utils';
                 display: flex;
                 justify-content: center;
                 min-height: 100%;
-                background-color: var(--body-bg);
+                background-image: radial-gradient(73% 147%, #eadfdf 59%, #ece2df 100%),
+                    radial-gradient(91% 146%, rgba(255, 255, 255, 0.5) 47%, rgba(0, 0, 0, 0.5) 100%);
+                background-blend-mode: screen;
             }
 
             .mat-mdc-progress-spinner {

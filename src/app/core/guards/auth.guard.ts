@@ -13,7 +13,7 @@ export const authGuard = (next: ActivatedRouteSnapshot, state: RouterStateSnapsh
         map(isAuthenticated => {
             if (!isAuthenticated) {
                 // Redirect to the login page
-                const url = state.url.split('?')[0];
+                const url = state.url?.split('?')[0];
                 const redirect = url === '/' ? undefined : url;
                 const queryParams = { ...pick(next.queryParams, ['internetIdentityUrl', 'canisterId']), redirect };
                 return router.createUrlTree(['/login'], { queryParams });

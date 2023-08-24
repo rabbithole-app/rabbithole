@@ -84,7 +84,7 @@ actor Rabbithole {
     /* -------------------------------------------------------------------------- */
 
     var profiles = TrieMap.TrieMap<Principal, ProfileInfo>(Principal.equal, Principal.hash);
-    let { phash } = Map;
+    let { phash; thash } = Map;
     stable var profilesV2 : Map.Map<Principal, ProfileInfoV2> = Map.new(phash);
     let usernameAllowedSymbols : Text = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_";
 
@@ -331,6 +331,26 @@ actor Rabbithole {
     public shared ({ caller }) func deleteInvoice() : async () {
         assert not Principal.isAnonymous(caller);
         invoices.delete(caller);
+
+        // let account : A.AccountIdentifier = accountIdentifier_(caller);
+        // let balance = await Ledger.account_balance({ account });
+        // if (Nat64.greater(balance.e8s, FEE)) {
+        //     let self = Principal.fromActor(Rabbithole);
+        //     let subaccount : A.Subaccount = A.principalToSubaccount(caller);
+        //     let account : A.AccountIdentifier = do {
+        //         let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
+        //         A.accountIdentifier(self, defaultSubaccount);
+        //     };
+        //     let result = await Ledger.transfer({
+        //         to = account;
+        //         fee = { e8s = FEE };
+        //         memo = 0;
+        //         from_subaccount = ?subaccount;
+        //         amount = { e8s = Nat64.sub(balance.e8s, FEE) };
+        //         created_at_time = ?{ timestamp_nanos = Nat64.fromNat(Int.abs(Time.now())) };
+        //     });
+        //     let #Ok(height) = result else throw Error.reject("Transfer error");
+        // };
     };
 
     func startMonitorInvoices() : () {
@@ -791,6 +811,7 @@ actor Rabbithole {
 
     // <user, fileId, [user]>
     type SharedFile = JournalTypes.SharedFile;
+    type SharedFileExtended = JournalTypes.SharedFileExtended;
     stable var sharedFiles : Trie.Trie2D<Principal, ID, SharedFile> = Trie.empty();
 
     public shared ({ caller }) func shareFile(fileId : ID, sharedFile : SharedFile) : async () {
@@ -816,6 +837,32 @@ actor Rabbithole {
             Utils.keyText(fileId),
             Text.equal
         ).0;
+    };
+
+    public composite query ({ caller }) func getSharedFile(id : ID) : async ?SharedFileExtended {
+        let bucketId = label exit : ?Principal {
+            label forLoop for ((owner, trie) in Trie.iter(sharedFiles)) {
+                switch (Trie.get<ID, SharedFile>(trie, Utils.keyText id, Text.equal)) {
+                    case null {};
+                    case _ {
+                        let ?journalBucketId : ?Principal = Trie.get<Principal, BucketId>(journals, Utils.keyPrincipal(owner), Principal.equal) else continue forLoop;
+                        break exit(?journalBucketId);
+                    };
+                };
+            };
+            null;
+        };
+        switch (bucketId) {
+            case (?v) {
+                let journalActor : actor { getSharedFile : query (Principal, ID) -> async Result.Result<SharedFileExtended, { #notFound; #noPermission }> } = actor (Principal.toText v);
+                let result = await journalActor.getSharedFile(caller, id);
+                switch (result) {
+                    case (#ok file) ?file;
+                    case (#err _) null;
+                };
+            };
+            case null null;
+        };
     };
 
     type UserShare = {
@@ -857,4 +904,9 @@ actor Rabbithole {
             null;
         };
     };
+
+    // public query ({ caller }) func getPublicID(id : ID) : async ?ID {
+
+    //     publicIds.getByRight(id);
+    // };
 };

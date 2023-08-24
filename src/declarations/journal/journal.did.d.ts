@@ -128,7 +128,7 @@ export type ID = string;
 export type ID__1 = string;
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
-    addFile: ActorMethod<[FileCreate], Result_11>;
+    addFile: ActorMethod<[FileCreate], Result_12>;
     canisterStatus: ActorMethod<
         [Principal],
         {
@@ -137,19 +137,20 @@ export interface JournalBucket {
             freezingThresholdInCycles: bigint;
         }
     >;
-    checkDirname: ActorMethod<[EntryCreate], Result_10>;
-    checkFilename: ActorMethod<[EntryCreate], Result_9>;
-    createDirectory: ActorMethod<[EntryCreate], Result_8>;
-    createInvite: ActorMethod<[Time], Result_7>;
+    checkDirname: ActorMethod<[EntryCreate], Result_11>;
+    checkFilename: ActorMethod<[EntryCreate], Result_10>;
+    createDirectory: ActorMethod<[EntryCreate], Result_9>;
+    createInvite: ActorMethod<[Time], Result_8>;
     createPaths: ActorMethod<[Array<string>, Array<ID__1>, [] | [ID__1]], Array<[string, ID__1]>>;
-    deleteDirectory: ActorMethod<[string], Result_6>;
-    deleteFile: ActorMethod<[string], Result_6>;
+    deleteDirectory: ActorMethod<[string], Result_7>;
+    deleteFile: ActorMethod<[string], Result_7>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
     fileVetkdPublicKey: ActorMethod<[ID__1, Array<Uint8Array | number[]>], string>;
     getCanisters: ActorMethod<[], Array<Canister>>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getFileEncryptedSymmetricKey: ActorMethod<[ID__1, Uint8Array | number[]], string>;
-    getJournal: ActorMethod<[[] | [string]], Result_5>;
+    getJournal: ActorMethod<[[] | [string]], Result_6>;
+    getSharedFile: ActorMethod<[Principal, ID__1], Result_5>;
     getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
     listFiles: ActorMethod<[[] | [ID__1]], Array<FileExtended>>;
     listStorages: ActorMethod<[], Array<BucketId__1>>;
@@ -180,8 +181,9 @@ export type NotifyError =
     | { TransactionTooOld: BlockIndex__1 };
 export type Result = { ok: Directory } | { err: { alreadyExists: Directory } | { notFound: null } };
 export type Result_1 = { ok: FileExtended } | { err: { notFound: null } };
-export type Result_10 = { ok: null } | { err: DirectoryCreateError };
-export type Result_11 = { ok: File__1 } | { err: FileCreateError };
+export type Result_10 = { ok: null } | { err: FileCreateError };
+export type Result_11 = { ok: null } | { err: DirectoryCreateError };
+export type Result_12 = { ok: File__1 } | { err: FileCreateError };
 export type Result_2 =
     | { ok: File__1 }
     | {
@@ -189,15 +191,15 @@ export type Result_2 =
       };
 export type Result_3 = { ok: null } | { err: FileMoveError };
 export type Result_4 = { ok: null } | { err: DirectoryMoveError };
-export type Result_5 = { ok: DirectoryState } | { err: DirectoryStateError };
-export type Result_6 = { ok: null } | { err: NotFoundError };
-export type Result_7 =
+export type Result_5 = { ok: SharedFileExtended } | { err: { noPermission: null } | { notFound: null } };
+export type Result_6 = { ok: DirectoryState } | { err: DirectoryStateError };
+export type Result_7 = { ok: null } | { err: NotFoundError };
+export type Result_8 =
     | { ok: null }
     | {
           err: { notify: NotifyError } | { insufficientFunds: { balance: Tokens__1 } } | { transfer: TransferError };
       };
-export type Result_8 = { ok: Directory } | { err: DirectoryCreateError };
-export type Result_9 = { ok: null } | { err: FileCreateError };
+export type Result_9 = { ok: Directory } | { err: DirectoryCreateError };
 export interface SharedFileExtended {
     id: ID;
     thumbnail: [] | [ID];

@@ -828,4 +828,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         assert not Principal.isAnonymous(caller);
         journal.sharedWithMe(caller);
     };
+
+    public query func getSharedFile(caller : Principal, id : ID) : async Result.Result<SharedFileExtended, { #notFound; #noPermission }> {
+        journal.getSharedFile(caller, id);
+    };
 };

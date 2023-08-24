@@ -82,10 +82,20 @@
             <span>Open</span>
         </button>-->
         <ng-container *rxIf="everyFile && items.length === 1">
-            <button mat-menu-item (click)="openShareDialog($event, items[0])">
+            <button mat-menu-item (click)="openShareDialog($event, items[0], 'users')">
                 <mat-icon svgIcon="far:users"></mat-icon>
-                <span>{{ t('actions.share') }}</span>
+                <span>{{ t('actions.share-with') }}</span>
             </button>
+            <button *rxIf="isSharedPublic(items[0]); else sharePublicMenuItem" mat-menu-item (click)="copyLink(items[0])">
+                <mat-icon svgIcon="far:link"></mat-icon>
+                <span>{{ t('actions.copy-public-link') }}</span>
+            </button>
+            <ng-template #sharePublicMenuItem>
+                <button mat-menu-item (click)="openShareDialog($event, items[0], 'public')">
+                    <mat-icon svgIcon="far:link"></mat-icon>
+                    <span>{{ t('actions.share-link') }}</span>
+                </button>
+            </ng-template>
             <button *rxIf="items[0].share" mat-menu-item (click)="handleItemsAction('unshare', items)">
                 <mat-icon svgIcon="far:users-slash"></mat-icon>
                 <span>{{ t('actions.unshare') }}</span>
