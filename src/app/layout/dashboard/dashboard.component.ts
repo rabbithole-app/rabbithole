@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild, WritableSignal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild, WritableSignal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -11,6 +11,7 @@ import { has } from 'lodash';
 import { WINDOW } from 'ngx-window-token';
 import { fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 import { routeAnimations } from '@core/animations';
 import { EmptyComponent } from '@core/components/empty/empty.component';
@@ -18,6 +19,8 @@ import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SidebarService } from './services/sidebar.service';
+import { DisclaimerDialogComponent } from '@core/components/disclaimer-dialog/disclaimer-dialog.component';
+import { SETTINGS_RX_STATE } from '@core/stores';
 
 @Component({
     selector: 'app-dashboard',
@@ -40,10 +43,13 @@ import { SidebarService } from './services/sidebar.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
     animations: [routeAnimations]
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
     private outlet = inject(RouterOutlet);
     private sidebarService = inject(SidebarService);
     private router = inject(Router);
+    readonly #dialog = inject(MatDialog);
+    settingsState = inject(SETTINGS_RX_STATE);
+
     @ViewChild(MatDrawer) set drawer(value: MatDrawer) {
         this.sidebarService.setDrawer(value);
     }
@@ -71,5 +77,21 @@ export class DashboardComponent {
                 .pipe(takeUntilDestroyed())
                 .subscribe(online => this.online.set(online));
         }
+    }
+
+    ngOnInit(): void {
+        if (this.settingsState.get('showDisclaimer')) {
+            this.#disclaimerDialog();
+        }
+    }
+
+    #disclaimerDialog() {
+        const dialogRef = this.#dialog.open<DisclaimerDialogComponent, unknown, boolean>(DisclaimerDialogComponent, {
+            width: '450px'
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            this.settingsState.set({ showDisclaimer: !result });
+        });
     }
 }

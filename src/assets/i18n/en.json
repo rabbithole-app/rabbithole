@@ -16,6 +16,14 @@
             "description": "A new version of the client is available, updating requires a page reload",
             "cancel": "Cancel",
             "reload": "Reload"
+        },
+        "disclaimer": {
+            "title": "Disclaimer",
+            "description": "The app is currently at an early stage of development. We <strong>do not recommend</strong> using the app to store sensitive data until further notice. We reserve the right to update user's canisters in any mode (upgrade or reinstall). Use this application only to test the capabilities of the <a href=\"https://internetcomputer.org/\" target=\"_blank\">Internet Computer</a>.",
+            "checkbox": "Don't show again",
+            "actions": {
+                "close": "Close"
+            }
         }
     },
     "breadcrumbs": {
