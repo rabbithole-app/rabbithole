@@ -152,7 +152,7 @@ export const idlFactory = ({ IDL }) => {
         downloads: IDL.Nat,
         timelock: IDL.Opt(Time)
     });
-    const Profile = IDL.Record({
+    const Profile__1 = IDL.Record({
         principal: IDL.Principal,
         username: IDL.Text,
         displayName: IDL.Text,
@@ -176,6 +176,12 @@ export const idlFactory = ({ IDL }) => {
         updatedAt: Time,
         downloads: IDL.Nat,
         timelock: IDL.Opt(Time)
+    });
+    const Profile = IDL.Record({
+        principal: IDL.Principal,
+        username: IDL.Text,
+        displayName: IDL.Text,
+        avatarUrl: IDL.Opt(IDL.Text)
     });
     const UserShare = IDL.Record({
         bucketId: IDL.Principal,
@@ -219,7 +225,7 @@ export const idlFactory = ({ IDL }) => {
             []
         ),
         listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId__1))], []),
-        listProfiles: IDL.Func([], [IDL.Vec(Profile)], ['query']),
+        listProfiles: IDL.Func([], [IDL.Vec(Profile__1)], ['query']),
         putProfile: IDL.Func([ProfileUpdateV2], [Result_1], []),
         redeemInvite: IDL.Func([ID], [Result], []),
         setRegistrationMode: IDL.Func([RegistrationMode], [], []),

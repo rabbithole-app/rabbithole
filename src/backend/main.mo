@@ -45,6 +45,8 @@ actor Rabbithole {
     type ProfileUpdate = Types.ProfileUpdate;
     type ProfileUpdateV2 = Types.ProfileUpdateV2;
     type ProfileCreateError = Types.ProfileCreateError;
+    type Profile = Types.Profile;
+    type UserShare = Types.UserShare;
     type UsernameError = Types.UsernameError;
     type Invite = Types.Invite;
     type InviteCreate = Types.InviteCreate;
@@ -143,8 +145,6 @@ actor Rabbithole {
         // await canisterUtils.deleteCanister(bucketId);
         #ok();
     };
-
-    type Profile = { username : Text; displayName : Text; principal : Principal; avatarUrl : ?Text };
 
     public query func listProfiles() : async [Profile] {
         Map.mapFilter<Principal, ProfileInfoV2, Profile>(
@@ -792,22 +792,15 @@ actor Rabbithole {
         stableInvites := [];
         setTimers();
         profiles := TrieMap.fromEntries<Principal, ProfileInfo>(stableProfiles.vals(), Principal.equal, Principal.hash);
-        profilesV2 := Map.fromIterMap<Principal, ProfileInfoV2, (Principal, ProfileInfo)>(stableProfiles.vals(), phash, func ((key, value)) {
-            ?(key, { value and { avatarUrl = null } });
-        });
+        // profilesV2 := Map.fromIterMap<Principal, ProfileInfoV2, (Principal, ProfileInfo)>(stableProfiles.vals(), phash, func ((key, value)) {
+        //     ?(key, { value and { avatarUrl = null } });
+        // });
         stableProfiles := [];
     };
 
     /* -------------------------------------------------------------------------- */
     /*                                File sharing                                */
     /* -------------------------------------------------------------------------- */
-
-    // type SharedFile = {
-    //     owner : Principal;
-    //     journalId : Principal;
-    //     sharedWith : [Principal];
-    //     createdAt : Time.Time;
-    // };
 
     // <user, fileId, [user]>
     type SharedFile = JournalTypes.SharedFile;
@@ -865,10 +858,7 @@ actor Rabbithole {
         };
     };
 
-    type UserShare = {
-        profile : Profile;
-        bucketId : Principal;
-    };
+    
 
     public query ({ caller }) func sharedWithMe() : async [UserShare] {
         assert not Principal.isAnonymous(caller);
@@ -904,9 +894,4 @@ actor Rabbithole {
             null;
         };
     };
-
-    // public query ({ caller }) func getPublicID(id : ID) : async ?ID {
-
-    //     publicIds.getByRight(id);
-    // };
 };

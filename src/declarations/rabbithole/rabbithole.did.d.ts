@@ -80,6 +80,12 @@ export interface ProfileUpdateV2 {
     displayName: string;
     avatarUrl: [] | [string];
 }
+export interface Profile__1 {
+    principal: Principal;
+    username: string;
+    displayName: string;
+    avatarUrl: [] | [string];
+}
 export type RegistrationMode = { prepaid: null } | { invite: null };
 export type Result = { ok: null } | { err: InviteError };
 export type Result_1 = { ok: null } | { err: { notFound: null } };
@@ -170,7 +176,7 @@ export interface _SERVICE {
         undefined
     >;
     listBuckets: ActorMethod<[string], Array<[Principal, BucketId__1]>>;
-    listProfiles: ActorMethod<[], Array<Profile>>;
+    listProfiles: ActorMethod<[], Array<Profile__1>>;
     putProfile: ActorMethod<[ProfileUpdateV2], Result_1>;
     redeemInvite: ActorMethod<[ID], Result>;
     setRegistrationMode: ActorMethod<[RegistrationMode], undefined>;

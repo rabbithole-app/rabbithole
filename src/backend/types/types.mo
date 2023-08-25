@@ -40,6 +40,10 @@ module {
     };
 
     public type ProfileError = { #notFound; #notAuthorized };
+    
+    public type Profile = ProfileCreateV2 and {
+        principal : Principal;
+    };
 
     public type UsernameError = {
         #minLength;
@@ -122,5 +126,10 @@ module {
         expiredAt : Time.Time;
         stage : InvoiceStage;
         timerId : ?Nat;
+    };
+
+    public type UserShare = {
+        profile : Profile;
+        bucketId : Principal;
     };
 };

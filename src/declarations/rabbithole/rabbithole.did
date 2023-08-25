@@ -104,6 +104,13 @@ type RegistrationMode =
    invite;
    prepaid;
  };
+type Profile__1 = 
+ record {
+   avatarUrl: opt text;
+   displayName: text;
+   "principal": principal;
+   username: text;
+ };
 type ProfileUpdateV2 = 
  record {
    avatarUrl: opt text;
@@ -255,7 +262,7 @@ service : {
                                 principal;
                                 BucketId__1;
                               });
-  listProfiles: () -> (vec Profile) query;
+  listProfiles: () -> (vec Profile__1) query;
   putProfile: (ProfileUpdateV2) -> (Result_1);
   redeemInvite: (ID) -> (Result);
   setRegistrationMode: (RegistrationMode) -> ();
