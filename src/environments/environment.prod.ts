@@ -6,6 +6,8 @@ export const environment = {
     appName: 'The Rabbit Hole',
     envName: 'PROD',
     registrationEnabled: true,
+    // Point to icp-api for the mainnet. Leaving host undefined will work for localhost
+    httpAgentHost: 'https://icp-api.io',
     versions: {
         app: packageJson.version
     }

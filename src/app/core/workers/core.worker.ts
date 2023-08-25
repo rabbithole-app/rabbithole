@@ -48,6 +48,7 @@ import { DirectoryState, DirectoryStateError, _SERVICE as JournalActor } from 'd
 import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory } from 'declarations/rabbithole';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { AssetInfo, _SERVICE as StorageActor } from 'declarations/storage/storage.did';
+import { environment } from 'environments/environment';
 
 interface State {
     identity: Identity;
@@ -200,7 +201,7 @@ function createRabbitholeActor(): Observable<ActorSubclass<RabbitholeActor>> {
                 identity,
                 canisterId: rabbitholeCanisterId,
                 idlFactory: rabbitholeIdlFactory,
-                host: location.origin
+                host: environment.httpAgentHost
             })
         )
     );
@@ -214,7 +215,7 @@ function createJournalActor(canisterId: Principal): Observable<ActorSubclass<Jou
                 identity,
                 canisterId,
                 idlFactory: journalIdlFactory,
-                host: location.origin
+                host: environment.httpAgentHost
             })
         )
     );
@@ -228,7 +229,7 @@ function createStorageActor(canisterId: Principal): Observable<Bucket<StorageAct
                 canisterId,
                 idlFactory: storageIdlFactory,
                 identity,
-                host: location.origin
+                host: environment.httpAgentHost
             })
         ),
         map(actor => ({ actor, canisterId: canisterId.toText() }))
