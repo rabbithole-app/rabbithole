@@ -18,7 +18,6 @@ import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 import { AppComponent } from './app/app.component';
 import { appRoutes } from './app/routes';
 import { TranslocoRootModule } from './app/transloco-root.module';
-import { isCustomDomain } from '@core/utils';
 
 if (!isDevMode()) {
     enableProdMode();
