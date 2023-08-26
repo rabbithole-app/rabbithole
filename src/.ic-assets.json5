@@ -22,5 +22,22 @@
         "headers": {
             "Content-Encoding": "br"
         }
+    },
+    {
+        // ngsw-worker.js, safety-worker.js, worker-basic.min.js
+        "match": "*({ngsw,safety}-worker|worker-basic.min).js",
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/javascript"
+        },
+        "allow_raw_access": true
+    },
+    {
+        "match": "ngsw.json",
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json"
+        },
+        "allow_raw_access": true
     }
 ]

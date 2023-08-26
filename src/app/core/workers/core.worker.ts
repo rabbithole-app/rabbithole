@@ -201,7 +201,7 @@ function createRabbitholeActor(): Observable<ActorSubclass<RabbitholeActor>> {
                 identity,
                 canisterId: rabbitholeCanisterId,
                 idlFactory: rabbitholeIdlFactory,
-                host: environment.httpAgentHost
+                host: environment.httpAgentHost ?? location.origin
             })
         )
     );
@@ -215,7 +215,7 @@ function createJournalActor(canisterId: Principal): Observable<ActorSubclass<Jou
                 identity,
                 canisterId,
                 idlFactory: journalIdlFactory,
-                host: environment.httpAgentHost
+                host: environment.httpAgentHost ?? location.origin
             })
         )
     );
@@ -229,7 +229,7 @@ function createStorageActor(canisterId: Principal): Observable<Bucket<StorageAct
                 canisterId,
                 idlFactory: storageIdlFactory,
                 identity,
-                host: environment.httpAgentHost
+                host: environment.httpAgentHost ?? location.origin
             })
         ),
         map(actor => ({ actor, canisterId: canisterId.toText() }))
@@ -438,7 +438,7 @@ const fileUpload$ = files.asObservable().pipe(
                                       return EMPTY;
                                   })
                               )
-                            : of(null)
+                            : of(undefined)
                     ),
                     defer(() => {
                         if (options && typeof options.thumbnail === 'boolean' && !options.thumbnail) {
@@ -701,7 +701,11 @@ function downloadEncryptedFile({
                         download({ id, name, storageId }, () =>
                             pipe(switchMap(data => from(decryptArrayBuffer(aesKey, data.buffer)).pipe(map(buffer => ({ ...data, buffer })))))
                         )
-                    )
+                    ),
+                    catchError(err => {
+                        console.error(err);
+                        return of<DownloadFailed>({ status: DownloadStatus.Failed, errorMessage: err.message });
+                    })
                 )
             )
         ),

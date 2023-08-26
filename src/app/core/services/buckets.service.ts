@@ -1,4 +1,4 @@
-import { inject, Injectable, isDevMode } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ActorSubclass, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { fromNullable } from '@dfinity/utils';
@@ -15,7 +15,6 @@ import { idlFactory as journalIdlFactory } from 'declarations/journal';
 import { _SERVICE as JournalActor } from 'declarations/journal/journal.did';
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { _SERVICE as StorageActor } from 'declarations/storage/storage.did';
-import { environment } from 'environments/environment';
 
 type Bucket<T> = {
     actor: ActorSubclass<T>;
@@ -71,8 +70,7 @@ export class BucketsService extends RxState<State> {
         return createActor<JournalActor>({
             canisterId,
             idlFactory: journalIdlFactory,
-            identity,
-            host: environment.httpAgentHost
+            identity
         }).pipe(
             connect(shared =>
                 merge(
@@ -85,8 +83,7 @@ export class BucketsService extends RxState<State> {
                                     createActor<StorageActor>({
                                         canisterId: bucketId,
                                         idlFactory: storageIdlFactory,
-                                        identity,
-                                        host: environment.httpAgentHost
+                                        identity
                                     }).pipe(map(storageActor => ({ actor: storageActor, canisterId: bucketId.toText() })))
                                 ),
                                 toArray(),
@@ -111,7 +108,7 @@ export class BucketsService extends RxState<State> {
                 if (found) {
                     return of(found);
                 } else {
-                    return createActor<StorageActor>({ canisterId, idlFactory: storageIdlFactory, identity, host: environment.httpAgentHost }).pipe(
+                    return createActor<StorageActor>({ canisterId, idlFactory: storageIdlFactory, identity }).pipe(
                         map(actor => ({ actor, canisterId })),
                         tap(storage => this.set('storages', state => [...state.storages, storage]))
                     );

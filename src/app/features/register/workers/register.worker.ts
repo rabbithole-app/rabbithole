@@ -30,7 +30,7 @@ state.connect(
                         identity: identity as NonNullable<typeof identity>,
                         canisterId,
                         idlFactory,
-                        host: environment.httpAgentHost
+                        host: environment.httpAgentHost ?? location.origin
                     })
                 ),
                 EMPTY

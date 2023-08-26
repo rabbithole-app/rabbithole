@@ -11,7 +11,8 @@
                 "entrypoint": "dist/index.html"
             },
             "source": ["dist"],
-            "type": "assets"
+            "type": "assets",
+            "build": ["ng build -c production"]
         },
         "journal": {
             "dependencies": ["vetkd_system_api"],

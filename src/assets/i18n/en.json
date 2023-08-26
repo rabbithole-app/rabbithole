@@ -217,7 +217,8 @@
                 "decryption": "Decryption...",
                 "progress": "{{ percent }}%",
                 "failed": "Failed",
-                "failedMessage": "An error occurred while decrypting the file"
+                "failedMessage": "An error occurred while decrypting the file",
+                "complete": "File downloaded successfully"
             }
         },
         "notification": {

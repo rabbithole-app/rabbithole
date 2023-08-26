@@ -62,7 +62,7 @@ export type FileUploadState = {
 export type UploadFileOptions = {
     concurrentChunksCount: number;
     chunkSize: number;
-    aesKey: CryptoKey | null;
+    aesKey?: CryptoKey;
 };
 
 export type Summary = {

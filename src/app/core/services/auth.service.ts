@@ -10,11 +10,12 @@ import { firstValueFrom, from, merge, Observable, Subject, throwError } from 'rx
 import { catchError, delayWhen, filter, map, repeat, skip, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs/operators';
 
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
-import { APP_ALTERNATIVE_ORIGIN, APP_DERIVATION_ORIGIN, AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
+import { APP_DERIVATION_ORIGIN, AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
 import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
 import { environment } from 'environments/environment';
 import { AUTH_RX_STATE, AuthStatus } from '../stores';
 import { CoreService } from './core.service';
+import { isCustomDomain } from '@core/utils';
 
 interface State {
     signedOutSnackBarRef: MatSnackBarRef<ClosableSnackbarComponent>;
@@ -82,7 +83,7 @@ export class AuthService extends RxState<State> {
                     from(
                         client.login({
                             maxTimeToLive: AUTH_MAX_TIME_TO_LIVE,
-                            ...(location.origin === APP_ALTERNATIVE_ORIGIN && {
+                            ...(isCustomDomain() && {
                                 derivationOrigin: APP_DERIVATION_ORIGIN
                             }),
                             identityProvider: environment.identityUrl,

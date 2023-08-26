@@ -7,9 +7,16 @@
       "installMode": "prefetch",
       "resources": {
         "files": [
+          "/android-chrome-*.png",
+          "/apple-touch-icon.png",
+          "/favicon-16x16.png",
+          "/favicon-32x32.png",
           "/favicon.ico",
+          "/mstile-*.png",
+          "/safari-pinned-tab.png",
           "/index.html",
           "/manifest.webmanifest",
+          "/browserconfig.xml",
           "/*.css",
           "/*.js"
         ]

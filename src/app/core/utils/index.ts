@@ -7,3 +7,4 @@ export * from './date';
 export * from './enum';
 export * from './formatICP';
 export * from './identity';
+export * from './origin';

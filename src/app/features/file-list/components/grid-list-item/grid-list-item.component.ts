@@ -96,7 +96,7 @@ export class GridListItemComponent implements Highlightable, OnInit {
 
     ngOnInit(): void {
         this.#downloadService
-            .fileProgress(this.data.id)
+            .select('progressMessage', this.data.id)
             .pipe(takeUntilDestroyed(this.#destroyed))
             .subscribe(value => this.status.set(value));
     }

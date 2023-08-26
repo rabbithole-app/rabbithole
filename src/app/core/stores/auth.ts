@@ -9,7 +9,6 @@ import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { createActor } from '@core/utils';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
 import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.did';
-import { environment } from 'environments/environment';
 
 export enum AuthStatus {
     Anonymous,
@@ -49,8 +48,7 @@ export const authStateFactory = () => {
             return createActor<RabbitholeActor>({
                 identity,
                 canisterId: canisterId as string,
-                idlFactory,
-                host: environment.httpAgentHost
+                idlFactory
             }).pipe(
                 map(actor => ({
                     identity,
@@ -64,7 +62,7 @@ export const authStateFactory = () => {
         filter(status => status === AuthStatus.Initialized),
         switchMap(() => {
             const identity = state.get('client').getIdentity();
-            return createActor<RabbitholeActor>({ identity, canisterId: canisterId as string, idlFactory, host: environment.httpAgentHost }).pipe(
+            return createActor<RabbitholeActor>({ identity, canisterId: canisterId as string, idlFactory }).pipe(
                 map(actor => ({
                     identity,
                     actor,

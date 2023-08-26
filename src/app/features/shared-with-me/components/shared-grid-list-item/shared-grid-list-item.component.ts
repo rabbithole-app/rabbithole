@@ -20,14 +20,15 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
-import { DownloadService } from '@features/file-list/services';
-import { formatBytes, getIconByFilename } from '@features/file-list/utils';
-import { SharedFileExtended } from '@features/shared-with-me/models';
 import { TranslocoModule } from '@ngneat/transloco';
 import { RxIf } from '@rx-angular/template/if';
 import { RxPush } from '@rx-angular/template/push';
 import { formatDistanceToNow } from 'date-fns';
+
+import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
+import { DownloadService } from '@features/file-list/services';
+import { formatBytes, getIconByFilename } from '@features/file-list/utils';
+import { SharedFileExtended } from '@features/shared-with-me/models';
 
 @Component({
     selector: 'app-shared-grid-list-item',
@@ -64,7 +65,7 @@ export class SharedGridListItemComponent implements OnInit {
 
     ngOnInit(): void {
         this.#downloadService
-            .fileProgress(this.data.id)
+            .select('progressMessage', this.data.id)
             .pipe(takeUntilDestroyed(this.#destroyed))
             .subscribe(value => this.status.set(value));
     }

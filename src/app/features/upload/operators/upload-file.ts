@@ -1,6 +1,6 @@
 import { arrayBufferToUint8Array, toNullable } from '@dfinity/utils';
 import { addSeconds, differenceInSeconds } from 'date-fns';
-import { defaults, get, has, includes, isNull, pick } from 'lodash';
+import { defaults, get, has, includes, isNull, isUndefined, pick } from 'lodash';
 import { EMPTY, Observable, defer, from, iif, of, throwError } from 'rxjs';
 import { catchError, last, map, mergeScan, switchMap, tap } from 'rxjs/operators';
 
@@ -110,7 +110,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                                             const endByte = Math.min(item.fileSize, startByte + opts.chunkSize);
                                             const chunk = item.data.slice(startByte, endByte);
                                             return iif(
-                                                () => isNull(options.aesKey),
+                                                () => isUndefined(options.aesKey),
                                                 defer(() =>
                                                     storage.actor.uploadChunk({
                                                         batchId: batch.id,
@@ -118,7 +118,7 @@ export function uploadFile({ storage, item, options, state }: UploadParams): Obs
                                                         encrypted: false
                                                     })
                                                 ),
-                                                defer(() => encryptArrayBuffer(options.aesKey, chunk)).pipe(
+                                                defer(() => encryptArrayBuffer(options.aesKey as CryptoKey, chunk)).pipe(
                                                     map(arrayBufferToUint8Array),
                                                     switchMap(content =>
                                                         storage.actor.uploadChunk({

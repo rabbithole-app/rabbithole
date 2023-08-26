@@ -1,14 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, Inject } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, inject, Inject } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouteConfigLoadEnd, RouteConfigLoadStart, Router, RouterModule } from '@angular/router';
-// import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
+import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { FetchInterceptor } from '@mswjs/interceptors/fetch';
 import { RxIf } from '@rx-angular/template/if';
 import { WINDOW } from 'ngx-window-token';
-import { merge, Observable } from 'rxjs';
-import { distinctUntilChanged, filter, first, map, startWith } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
+import { interval, merge, Observable } from 'rxjs';
+import { distinctUntilChanged, exhaustMap, filter, first, map, startWith, switchMap } from 'rxjs/operators';
+import { MatIconRegistry } from '@angular/material/icon';
 
-// import { UpdateApplicationDialogComponent } from '@core/components/update-application-dialog/update-application-dialog.component';
+import { UpdateApplicationDialogComponent } from '@core/components/update-application-dialog/update-application-dialog.component';
 import { AuthService } from '@core/services';
 import { FETCH_INTERCEPTOR } from '@core/tokens';
 import { concatStringStream } from '@core/utils';
@@ -42,7 +45,7 @@ import { concatStringStream } from '@core/utils';
 export class AppComponent {
     private authService = inject(AuthService);
     private router = inject(Router);
-    // #appRef = inject(ApplicationRef);
+    #appRef = inject(ApplicationRef);
     loading$: Observable<boolean> = merge(
         this.router.events.pipe(
             filter(event => event instanceof RouteConfigLoadStart),
@@ -55,9 +58,10 @@ export class AppComponent {
             map(() => false)
         )
     ).pipe(distinctUntilChanged(), startWith(true));
-    // readonly #swUpdate = inject(SwUpdate);
-    // readonly #dialog = inject(MatDialog);
+    readonly #swUpdate = inject(SwUpdate);
+    readonly #dialog = inject(MatDialog);
     readonly window = inject(WINDOW);
+    readonly #iconRegistry = inject(MatIconRegistry);
 
     constructor(@Inject(FETCH_INTERCEPTOR) interceptor: FetchInterceptor) {
         interceptor.on('response', async ({ response }) => {
@@ -69,7 +73,7 @@ export class AppComponent {
             }
         });
 
-        /* if (this.#swUpdate.isEnabled) {
+        if (this.#swUpdate.isEnabled) {
             this.#swUpdate.versionUpdates
                 .pipe(
                     filter((event: VersionEvent): event is VersionReadyEvent => event.type === 'VERSION_READY'),
@@ -79,7 +83,6 @@ export class AppComponent {
                     console.info({ currentVersion, latestVersion });
                     this.#updateDialog();
                 });
-            this.#swUpdate.unrecoverable.pipe(takeUntilDestroyed()).subscribe(console.log);
             this.#appRef.isStable
                 .pipe(
                     first(stable => stable),
@@ -88,10 +91,12 @@ export class AppComponent {
                     takeUntilDestroyed()
                 )
                 .subscribe();
-        } */
+        }
+
+        // this.#initMaterialSymbols();
     }
 
-    /* #updateDialog() {
+    #updateDialog() {
         const dialogRef = this.#dialog.open(UpdateApplicationDialogComponent, {
             width: '450px'
         });
@@ -101,5 +106,11 @@ export class AppComponent {
                 this.window?.location.reload();
             }
         });
-    } */
+    }
+
+    #initMaterialSymbols() {
+        const defaultFontSetClasses = this.#iconRegistry.getDefaultFontSetClass();
+        const outlinedFontSetClasses = defaultFontSetClasses.filter(fontSetClass => fontSetClass !== 'material-icons').concat(['material-symbols-rounded']);
+        this.#iconRegistry.setDefaultFontSetClass(...outlinedFontSetClasses);
+    }
 }
