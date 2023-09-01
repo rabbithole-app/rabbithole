@@ -35,6 +35,7 @@ import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
 import Vector "mo:vector";
 import Map "mo:hashmap_v8/Map";
+import Map_V9 "mo:hashmap/Map";
 
 actor Rabbithole {
     type ID = Types.ID;
@@ -88,6 +89,7 @@ actor Rabbithole {
     var profiles = TrieMap.TrieMap<Principal, ProfileInfo>(Principal.equal, Principal.hash);
     let { phash; thash } = Map;
     stable var profilesV2 : Map.Map<Principal, ProfileInfoV2> = Map.new(phash);
+    stable var profilesV3 : Map_V9.Map<Principal, ProfileInfoV2> = Map_V9.new();
     let usernameAllowedSymbols : Text = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_";
 
     public shared ({ caller }) func createProfile({ displayName; username; avatarUrl } : ProfileCreateV2) : async Result.Result<(), ProfileCreateError> {
@@ -113,12 +115,12 @@ actor Rabbithole {
         switch (checkUsername_(username)) {
             case (#err e) return #err(#username e);
             case (#ok) {
-                if (Map.has(profilesV2, phash, caller)) {
+                if (Map_V9.has(profilesV3, Map_V9.phash, caller)) {
                     return #err(#alreadyExists);
                 };
                 let now : Time.Time = Time.now();
                 let userProfile : ProfileInfoV2 = { username; displayName; id = caller; createdAt = now; updatedAt = now; inviter; avatarUrl };
-                Map.set(profilesV2, phash, caller, userProfile);
+                Map_V9.set(profilesV3, Map_V9.phash, caller, userProfile);
                 #ok();
             };
         };
@@ -126,20 +128,20 @@ actor Rabbithole {
 
     public shared ({ caller }) func putProfile({ avatarUrl; displayName } : ProfileUpdateV2) : async Result.Result<(), { #notFound }> {
         assert not Principal.isAnonymous(caller);
-        let ?profile = Map.get(profilesV2, phash, caller) else return #err(#notFound);
+        let ?profile = Map_V9.get(profilesV3, Map_V9.phash, caller) else return #err(#notFound);
         let userProfile : ProfileInfoV2 = { profile with avatarUrl; displayName; updatedAt = Time.now() };
-        Map.set(profilesV2, phash, caller, userProfile);
+        Map_V9.set(profilesV3, Map_V9.phash, caller, userProfile);
         #ok();
     };
 
     //TODO - delete profile with journal and storages
     public shared ({ caller }) func deleteProfile() : async Result.Result<(), { #notFound }> {
         assert not Principal.isAnonymous(caller);
-        if (not Map.has(profilesV2, phash, caller)) {
+        if (not Map_V9.has(profilesV3, Map_V9.phash, caller)) {
             return #err(#notFound);
         };
 
-        Map.delete(profilesV2, phash, caller);
+        Map_V9.delete(profilesV3, Map_V9.phash, caller);
         let (newJournals, bucketId) = Trie.remove<Principal, BucketId>(journals, Utils.keyPrincipal(caller), Principal.equal);
         journals := newJournals;
         // await canisterUtils.deleteCanister(bucketId);
@@ -147,16 +149,16 @@ actor Rabbithole {
     };
 
     public query func listProfiles() : async [Profile] {
-        Map.mapFilter<Principal, ProfileInfoV2, Profile>(
-            profilesV2,
-            phash,
+        Map_V9.mapFilter<Principal, ProfileInfoV2, Profile>(
+            profilesV3,
+            Map_V9.phash,
             func (principal, { username; displayName; avatarUrl }) = ?{ username; displayName; principal; avatarUrl }
-        ) |> Map.vals _ |> Iter.toArray _;
+        ) |> Map_V9.vals _ |> Iter.toArray _;
     };
 
     public query ({ caller }) func getProfile() : async ?ProfileInfoV2 {
         assert not Principal.isAnonymous(caller);
-        Map.get(profilesV2, phash, caller);
+        Map_V9.get(profilesV3, Map_V9.phash, caller);
     };
 
     public query func checkUsername(username : Text) : async Result.Result<(), UsernameError> {
@@ -182,7 +184,7 @@ actor Rabbithole {
 
     public query func checkUsernameAvailability(username : Text) : async Bool {
         var available = true;
-        label usernames for (p in Map.vals(profilesV2)) {
+        label usernames for (p in Map_V9.vals(profilesV3)) {
             if (Text.equal(p.username, username)) {
                 available := false;
                 break usernames;
@@ -792,9 +794,7 @@ actor Rabbithole {
         stableInvites := [];
         setTimers();
         profiles := TrieMap.fromEntries<Principal, ProfileInfo>(stableProfiles.vals(), Principal.equal, Principal.hash);
-        // profilesV2 := Map.fromIterMap<Principal, ProfileInfoV2, (Principal, ProfileInfo)>(stableProfiles.vals(), phash, func ((key, value)) {
-        //     ?(key, { value and { avatarUrl = null } });
-        // });
+        profilesV3 := Map_V9.fromIter(Map.entries(profilesV2), Map_V9.phash);
         stableProfiles := [];
     };
 
@@ -884,7 +884,7 @@ actor Rabbithole {
                 }
             );
             let journalBucketId : ?Principal = Trie.get<Principal, BucketId>(journals, Utils.keyPrincipal(owner), Principal.equal);
-            let profile : ?ProfileInfoV2 = Map.get(profilesV2, phash, owner);
+            let profile : ?ProfileInfoV2 = Map_V9.get(profilesV3, Map_V9.phash, owner);
             switch (sharedMe, journalBucketId, profile) {
                 case (true, ?bucketId, ?{ id; username; displayName; avatarUrl }) {
                     let value = { profile = { principal = id; username; displayName; avatarUrl }; bucketId };

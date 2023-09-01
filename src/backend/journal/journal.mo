@@ -15,7 +15,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 
 import Hex "mo:encoding/Hex";
-import Map "mo:hashmap_v8/Map";
+import Map "mo:hashmap/Map";
 
 import JournalTypes "types";
 import Types "../types/types";
@@ -92,9 +92,9 @@ module {
 
     public class New({ owner; installer } : JournalArgs) : Journal {
         let { thash } = Map;
-        var directories : Map.Map<Text, Directory> = Map.new<Text, Directory>(thash);
-        var files : Map.Map<Text, File> = Map.new<Text, File>(thash);
-        var sharedFiles : Map.Map<ID, SharedFile> = Map.new<ID, SharedFile>(thash);
+        var directories : Map.Map<Text, Directory> = Map.new<Text, Directory>();
+        var files : Map.Map<Text, File> = Map.new<Text, File>();
+        var sharedFiles : Map.Map<ID, SharedFile> = Map.new<ID, SharedFile>();
 
         public func putDirs(iter : Iter.Iter<(Text, Directory)>) : () {
             directories := Map.fromIter<Text, Directory>(iter, thash);
@@ -859,9 +859,9 @@ module {
 
         public func preupgrade() : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) {
             (
-                Iter.toArray(Map.entries(directories)),
-                Iter.toArray(Map.entries(files)),
-                Iter.toArray(Map.entries(sharedFiles))
+                Map.entries(directories) |> Iter.toArray _,
+                Map.entries(files) |> Iter.toArray _,
+                Map.entries(sharedFiles) |> Iter.toArray _
             );
         };
     };

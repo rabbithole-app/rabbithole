@@ -11,7 +11,7 @@ if [[ ${PIPESTATUS[0]} == 0 ]]; then
     rm src/declarations/storage/index.js.bak
     DEV_PRINCIPAL="$(dfx identity get-principal)"
     dfx canister install storage --argument "principal \"$DEV_PRINCIPAL\"" $mode --yes
-    npx prettier "src/**/*.{js,ts,mo}" --write --loglevel silent
+    npx prettier "src/**/*.{js,ts,mo}" --write --log-level silent
     cp .dfx/local/canisters/storage/service.did.js .dfx/local/canisters/storage/service.did.mjs
     node ./scripts/ic.installcode.mjs $network --type storage --concurrent 10 $mode
 fi

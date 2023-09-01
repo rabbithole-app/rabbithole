@@ -11,7 +11,7 @@ if [[ ${PIPESTATUS[0]} == 0 ]]; then
     rm src/declarations/journal/index.js.bak
     DEV_PRINCIPAL=$(dfx identity get-principal)
     dfx canister install journal --argument "principal \"$DEV_PRINCIPAL\"" $mode --yes
-    npx prettier "src/**/*.{js,ts,mo}" --write --loglevel silent
+    npx prettier "src/**/*.{js,ts,mo}" --write --log-level silent
     cp .dfx/local/canisters/journal/service.did.js .dfx/local/canisters/journal/service.did.mjs
     cp .dfx/local/canisters/rabbithole/service.did.js .dfx/local/canisters/rabbithole/service.did.mjs
     node ./scripts/ic.installcode.mjs $network --type journal --concurrent 10
