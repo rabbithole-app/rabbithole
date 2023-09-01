@@ -62,7 +62,7 @@ export class ImageCropperDialogComponent {
                     first(({ data }) => ['cropImageDone', 'cropImageFailed'].includes(data.action) && data.id === id),
                     map(({ data }) => {
                         if (data.action === 'cropImageFailed') {
-                            throw Error(data.errMessage);
+                            throw Error(data.errorMessage);
                         }
                         return pick(data, ['data', 'type']);
                     }),

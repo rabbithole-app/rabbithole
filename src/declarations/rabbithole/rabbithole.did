@@ -34,7 +34,7 @@ type SharedFileExtended =
    encrypted: bool;
    fileSize: nat;
    id: ID__1;
-   journalId: BucketId;
+   journalId: BucketId__1;
    limitDownloads: opt nat;
    name: text;
    owner: principal;
@@ -42,7 +42,7 @@ type SharedFileExtended =
                  everyone;
                  users: vec principal;
                };
-   storageId: BucketId;
+   storageId: BucketId__1;
    thumbnail: opt ID__1;
    timelock: opt Time;
    updatedAt: Time;
@@ -52,14 +52,14 @@ type SharedFile =
    createdAt: Time;
    downloads: nat;
    id: ID__1;
-   journalId: BucketId;
+   journalId: BucketId__1;
    limitDownloads: opt nat;
    owner: principal;
    sharedWith: variant {
                  everyone;
                  users: vec principal;
                };
-   storageId: BucketId;
+   storageId: BucketId__1;
    timelock: opt Time;
    updatedAt: Time;
  };
@@ -243,7 +243,7 @@ service : {
   deleteProfile: () -> (Result_1);
   getInvites: () -> (vec Invite) query;
   getInvoice: () -> (opt Invoice) query;
-  getJournalBucket: () -> (opt BucketId__1);
+  getJournalBucket: () -> (opt BucketId);
   getProfile: () -> (opt ProfileInfoV2) query;
   getRegistrationMode: () -> (RegistrationMode) query;
   getSharedFile: (ID) -> (opt SharedFileExtended) composite_query;
@@ -260,7 +260,7 @@ service : {
     }) -> ();
   listBuckets: (text) -> (vec record {
                                 principal;
-                                BucketId__1;
+                                BucketId;
                               });
   listProfiles: () -> (vec Profile__1) query;
   putProfile: (ProfileUpdateV2) -> (Result_1);
@@ -269,5 +269,6 @@ service : {
   shareFile: (ID, SharedFile) -> ();
   sharedWithMe: () -> (vec UserShare) query;
   unshareFile: (ID) -> ();
+  unshareStorageFiles: (BucketId) -> ();
   upgradeJournalBuckets: () -> ();
 }

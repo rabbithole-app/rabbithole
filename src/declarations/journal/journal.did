@@ -25,8 +25,8 @@ type TransferResult =
  };
 type TransferError = 
  variant {
-   BadFee: record {expected_fee: Tokens;};
-   InsufficientFunds: record {balance: Tokens;};
+   BadFee: record {expected_fee: Tokens__1;};
+   InsufficientFunds: record {balance: Tokens__1;};
    TxCreatedInFuture;
    TxDuplicate: record {duplicate_of: BlockIndex;};
    TxTooOld: record {allowed_window_nanos: nat64;};
@@ -72,7 +72,7 @@ type Result_8 =
  variant {
    err:
     variant {
-      insufficientFunds: record {balance: Tokens__1;};
+      insufficientFunds: record {balance: Tokens;};
       notify: NotifyError;
       transfer: TransferError;
     };
@@ -158,6 +158,19 @@ type NotifyError =
    TransactionTooOld: BlockIndex__1;
  };
 type NotFoundError = variant {notFound;};
+type MonitorCanister = 
+ record {
+   canisterId: BucketId;
+   error: opt text;
+   lastChecked: Time;
+   monitoring: variant {
+                 running;
+                 stopped;
+               };
+   owner: principal;
+   status: opt canister_status_response;
+   timerId: opt nat;
+ };
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
@@ -181,13 +194,13 @@ type JournalBucket =
    deleteFile: (text) -> (Result_7);
    deleteStorage: (BucketId__1) -> ();
    fileVetkdPublicKey: (ID__1, vec blob) -> (text);
-   getCanisters: () -> (vec Canister) query;
    getChildrenDirs: (opt ID__1) -> (vec Directory) query;
    getFileEncryptedSymmetricKey: (ID__1, blob) -> (text);
    getJournal: (opt text) -> (Result_6) query;
    getSharedFile: (principal, ID__1) -> (Result_5) query;
    getStorage: (nat) -> (opt BucketId__1);
    listFiles: (opt ID__1) -> (vec FileExtended) query;
+   listMonitors: () -> (vec MonitorCanister) query;
    listStorages: () -> (vec BucketId__1) query;
    moveDirectory: (text, opt text) -> (Result_4);
    moveFile: (text, opt text) -> (Result_3);
@@ -196,8 +209,8 @@ type JournalBucket =
    shareFile: (ID__1, SharedFileParams) -> (Result_1);
    sharedWithMe: () -> (vec SharedFileExtended) query;
    showDirectoriesTree: (opt ID__1) -> (text) query;
-   startBucketMonitor: (BucketId__1) -> ();
-   stopBucketMonitor: (BucketId__1) -> ();
+   startMonitor: (BucketId__1) -> ();
+   stopMonitor: (BucketId__1) -> ();
    storageLoadWasm: (vec nat8) -> (record {
                                      chunks: nat;
                                      total: nat;
@@ -376,19 +389,6 @@ type Directory =
    path: text;
    size: opt nat;
    updatedAt: Time;
- };
-type Canister = 
- record {
-   canisterId: BucketId;
-   error: opt text;
-   lastChecked: Time;
-   monitoring: variant {
-                 running;
-                 stopped;
-               };
-   owner: principal;
-   status: opt canister_status_response;
-   timerId: opt nat;
  };
 type BucketId__1 = principal;
 type BucketId = principal;

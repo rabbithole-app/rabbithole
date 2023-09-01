@@ -6,7 +6,6 @@ import {
     Signal,
     WritableSignal,
     booleanAttribute,
-    computed,
     effect,
     forwardRef,
     inject,
@@ -96,7 +95,7 @@ export class AvatarEditorComponent implements ControlValueAccessor {
                 withLatestFrom(this.uploadId.asObservable()),
                 map(([{ data }, id]) => {
                     if (data.action === 'getFilesByParentIdFailed') {
-                        throw Error(data.errMessage);
+                        throw Error(data.errorMessage);
                     }
                     return data.payload.items.find(({ name }) => name === `avatar_${id}`);
                 }),

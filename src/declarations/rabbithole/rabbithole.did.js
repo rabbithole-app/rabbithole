@@ -117,7 +117,7 @@ export const idlFactory = ({ IDL }) => {
         cycles: IDL.Nat,
         canisterId: IDL.Principal
     });
-    const BucketId__1 = IDL.Principal;
+    const BucketId = IDL.Principal;
     const ProfileInfoV2 = IDL.Record({
         id: IDL.Principal,
         username: IDL.Text,
@@ -132,17 +132,17 @@ export const idlFactory = ({ IDL }) => {
         invite: IDL.Null
     });
     const ID__1 = IDL.Text;
-    const BucketId = IDL.Principal;
+    const BucketId__1 = IDL.Principal;
     const SharedFileExtended = IDL.Record({
         id: ID__1,
         thumbnail: IDL.Opt(ID__1),
         owner: IDL.Principal,
         name: IDL.Text,
         createdAt: Time,
-        journalId: BucketId,
+        journalId: BucketId__1,
         limitDownloads: IDL.Opt(IDL.Nat),
         fileSize: IDL.Nat,
-        storageId: BucketId,
+        storageId: BucketId__1,
         encrypted: IDL.Bool,
         sharedWith: IDL.Variant({
             everyone: IDL.Null,
@@ -166,9 +166,9 @@ export const idlFactory = ({ IDL }) => {
         id: ID__1,
         owner: IDL.Principal,
         createdAt: Time,
-        journalId: BucketId,
+        journalId: BucketId__1,
         limitDownloads: IDL.Opt(IDL.Nat),
-        storageId: BucketId,
+        storageId: BucketId__1,
         sharedWith: IDL.Variant({
             everyone: IDL.Null,
             users: IDL.Vec(IDL.Principal)
@@ -204,7 +204,7 @@ export const idlFactory = ({ IDL }) => {
         deleteProfile: IDL.Func([], [Result_1], []),
         getInvites: IDL.Func([], [IDL.Vec(Invite)], ['query']),
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
-        getJournalBucket: IDL.Func([], [IDL.Opt(BucketId__1)], []),
+        getJournalBucket: IDL.Func([], [IDL.Opt(BucketId)], []),
         getProfile: IDL.Func([], [IDL.Opt(ProfileInfoV2)], ['query']),
         getRegistrationMode: IDL.Func([], [RegistrationMode], ['query']),
         getSharedFile: IDL.Func([ID], [IDL.Opt(SharedFileExtended)], ['composite_query']),
@@ -224,7 +224,7 @@ export const idlFactory = ({ IDL }) => {
             [],
             []
         ),
-        listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId__1))], []),
+        listBuckets: IDL.Func([IDL.Text], [IDL.Vec(IDL.Tuple(IDL.Principal, BucketId))], []),
         listProfiles: IDL.Func([], [IDL.Vec(Profile__1)], ['query']),
         putProfile: IDL.Func([ProfileUpdateV2], [Result_1], []),
         redeemInvite: IDL.Func([ID], [Result], []),
@@ -232,6 +232,7 @@ export const idlFactory = ({ IDL }) => {
         shareFile: IDL.Func([ID, SharedFile], [], []),
         sharedWithMe: IDL.Func([], [IDL.Vec(UserShare)], ['query']),
         unshareFile: IDL.Func([ID], [], []),
+        unshareStorageFiles: IDL.Func([BucketId], [], []),
         upgradeJournalBuckets: IDL.Func([], [], [])
     });
 };

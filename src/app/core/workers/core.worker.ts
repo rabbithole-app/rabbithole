@@ -2,7 +2,7 @@
 
 import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { arrayBufferToUint8Array, arrayOfNumberToUint8Array, fromNullable, toNullable } from '@dfinity/utils';
+import { arrayBufferToUint8Array, arrayOfNumberToUint8Array, createAgent, fromNullable, toNullable } from '@dfinity/utils';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
@@ -15,6 +15,7 @@ import {
     combineLatestWith,
     concatWith,
     connect,
+    delayWhen,
     exhaustMap,
     filter,
     first,
@@ -35,7 +36,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { createActor, decryptArrayBuffer, initVetAesGcmKey, loadIdentity, loadWasm } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
-import { FileInfoExtended, DownloadComplete, DownloadProgress, DownloadStatus, DownloadRetrieveKey, DownloadFailed } from '@features/file-list/models';
+import { ICManagementCanister } from '@dfinity/ic-management';
+import { DownloadComplete, DownloadFailed, DownloadProgress, DownloadRetrieveKey, DownloadStatus, FileInfoExtended } from '@features/file-list/models';
 import { concatUint8Arrays, toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SharedFileExtended } from '@features/shared-with-me/models';
 import { toSharedFileExtended } from '@features/shared-with-me/utils';
@@ -91,6 +93,9 @@ const sharedTimer: Subject<boolean> = new Subject();
 const sharedTimerOn$ = sharedTimer.asObservable().pipe(filter(v => v));
 const sharedTimerOff$ = sharedTimer.asObservable().pipe(filter(v => !v));
 const SHARED_WITH_ME_INTERVAL = 10000;
+const canistersTimer: Subject<boolean> = new Subject();
+const canistersTimerOn$ = canistersTimer.asObservable().pipe(filter(v => v));
+const canistersTimerOff$ = canistersTimer.asObservable().pipe(filter(v => !v));
 
 addEventListener('message', ({ data }) => {
     switch (data.action) {
@@ -187,6 +192,12 @@ addEventListener('message', ({ data }) => {
             break;
         case 'stopSharedTimer':
             sharedTimer.next(false);
+            break;
+        case 'startCanistersTimer':
+            canistersTimer.next(true);
+            break;
+        case 'stopCanistersTimer':
+            canistersTimer.next(false);
             break;
         default:
             break;
@@ -380,7 +391,7 @@ listFiles
             from(actor.listFiles(toNullable(parentId || undefined))).pipe(map(items => ({ parentId, items: items.map(toFileExtended) })))
         ),
         catchError(err => {
-            postMessage({ action: 'getFilesByParentIdFailed', errorCode: err.message });
+            postMessage({ action: 'getFilesByParentIdFailed', errorMessage: err.message });
             return EMPTY;
         })
     )
@@ -562,7 +573,7 @@ cropImage
                     return of({ id, data, type: image.type });
                 }),
                 catchError(err => {
-                    postMessage({ action: 'cropImageFailed', id, errMessage: err.message });
+                    postMessage({ action: 'cropImageFailed', id, errorMessage: err.message });
                     return EMPTY;
                 })
             )
@@ -600,6 +611,28 @@ sharedTimerOn$
         repeat()
     )
     .subscribe(payload => postMessage({ action: 'sharedWithMeDone', payload }));
+
+/* canistersTimerOn$
+    .pipe(
+        switchMap(() =>
+            state.select('identity').pipe(
+                first(),
+                switchMap(identity => createAgent({ identity, fetchRootKey: !environment.production, host: environment.httpAgentHost ?? location.origin })),
+                map(agent => ICManagementCanister.create({ agent }))
+            )
+        ),
+        delayWhen(() => state.select('journalId')),
+        withLatestFrom(state.select('journalId')),
+        switchMap(([ic, canisterId]) => timer(0, SHARED_WITH_ME_INTERVAL).pipe(exhaustMap(() => ic.canisterStatus(canisterId)))),
+        catchError(err => {
+            console.error(err);
+            postMessage({ action: 'canisterStatusFailed', errorMessage: err.message });
+            return EMPTY;
+        }),
+        takeUntil(canistersTimerOff$),
+        repeat()
+    )
+    .subscribe(payload => postMessage({ action: 'canisterStatusDone', payload })); */
 
 function download(
     { id, name, storageId }: { id: string; name: string; storageId: Principal },

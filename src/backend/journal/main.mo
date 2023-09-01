@@ -1,15 +1,9 @@
-import Array "mo:base/Array";
-import AssocList "mo:base/AssocList";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
-import Char "mo:base/Char";
 import Cycles "mo:base/ExperimentalCycles";
 import Debug "mo:base/Debug";
-import Deque "mo:base/Deque";
 import Error "mo:base/Error";
 import Float "mo:base/Float";
-import Hash "mo:base/Hash";
-import HashMap "mo:base/HashMap";
 import Int "mo:base/Int";
 import Int64 "mo:base/Int64";
 import Iter "mo:base/Iter";
@@ -17,8 +11,6 @@ import List "mo:base/List";
 import Nat "mo:base/Nat";
 import Nat64 "mo:base/Nat64";
 import Option "mo:base/Option";
-import Prelude "mo:base/Prelude";
-import Prim "mo:prim";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
@@ -26,88 +18,47 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import TrieSet "mo:base/TrieSet";
 import { recurringTimer; cancelTimer } "mo:base/Timer";
-import VETKD_SYSTEM_API "canister:vetkd_system_api";
-import VetKDTypes "../types/vetkd_types";
-import Hex "mo:encoding/Hex";
-
-import BiHashMap "mo:bimap/BiHashMap";
-import BiMap "mo:bimap/BiMap";
 
 import A "../utils/Account";
-import IC "../types/ic";
 import CMCTypes "../types/cmc";
-import LedgerTypes "../types/ledger";
+import IC "../types/ic";
+import Journal "journal";
 import JournalTypes "types";
-// import Ledger "canister:ledger";
-import Logger "../utils/logger";
+import LedgerTypes "../types/ledger";
 import StorageBucket "../storage/main";
-import StorageTypes "../storage/types";
 import Types "../types/types";
 import Utils "../utils/utils";
-import { LEDGER_CANISTER_ID; CYCLE_MINTING_CANISTER_ID } = "../env";
 import Wallet "../utils/wallet";
-import TrieMap "mo:base/TrieMap";
-import Journal "journal";
+import { LEDGER_CANISTER_ID; CYCLE_MINTING_CANISTER_ID } = "../env";
 
 shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = this {
     type ID = Types.ID;
-    type JournalEntry = JournalTypes.Entry;
-    type File = JournalTypes.File;
+    type BucketId = Types.BucketId;
+
+    let ic : IC.Self = actor "aaaaa-aa";
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   JOURNAL                                  */
+    /* -------------------------------------------------------------------------- */
+
     type Directory = JournalTypes.Directory;
-    type DirectoryError = JournalTypes.DirectoryError;
-    type DirectoryMoveError = JournalTypes.DirectoryMoveError;
-    type EntryCreate = JournalTypes.EntryCreate;
     type DirectoryCreateError = JournalTypes.DirectoryCreateError;
+    type DirectoryMoveError = JournalTypes.DirectoryMoveError;
+    type DirectoryState = JournalTypes.DirectoryState;
+    type DirectoryStateError = JournalTypes.DirectoryStateError;
     type DirectoryAction = JournalTypes.DirectoryAction;
     type DirectoryUpdatableFields = JournalTypes.DirectoryUpdatableFields;
-    type DirectoryColor = JournalTypes.DirectoryColor;
-    type BucketId = Types.BucketId;
+    type Entry = JournalTypes.Entry;
+    type EntryCreate = JournalTypes.EntryCreate;
+    type File = JournalTypes.File;
+    type FileExtended = JournalTypes.FileExtended;
     type FileCreate = JournalTypes.FileCreate;
     type FileCreateError = JournalTypes.FileCreateError;
     type FileMoveError = JournalTypes.FileMoveError;
-    type Canister = JournalTypes.Canister;
-    type Topup = JournalTypes.Topup;
-    type DirectoryState = JournalTypes.DirectoryState;
-    type DirectoryStateError = JournalTypes.DirectoryStateError;
-    type Tokens = LedgerTypes.Tokens;
-    type InviteCreate = Types.InviteCreate;
-    type CreatePath = JournalTypes.CreatePath;
     type NotFoundError = JournalTypes.NotFoundError;
     type AlreadyExistsError<T> = JournalTypes.AlreadyExistsError<T>;
     type SharedFile = JournalTypes.SharedFile;
-    type SharedFileParams = JournalTypes.SharedFileParams;
-    type FileExtended = JournalTypes.FileExtended;
-    type VetKDKeyId = VetKDTypes.VetKDKeyId;
-    type VetKDPublicKeyRequest = VetKDTypes.VetKDPublicKeyRequest;
-    type VetKDPublicKeyReply = VetKDTypes.VetKDPublicKeyReply;
-    type VetKDEncryptedKeyRequest = VetKDTypes.VetKDEncryptedKeyRequest;
-    type VetKDEncryptedKeyReply = VetKDTypes.VetKDEncryptedKeyReply;
 
-    let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
-    let CYCLE_SHARE = 500_000_000_000;
-    let CHECK_INTERVAL_NANOS : Nat = 60_000_000_000; // 1 minute
-    // let UPGRADE_STORAGE_INTERVAL_NANOS = 60_000_000_000; // 60 seconds
-    let MIN_CYCLE_SHARE = 250_000_000_000;
-    let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
-    let INVITE_CYCLE_SHARE = 2_000_000_000_000;
-    let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
-    let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
-    let logger = Logger.new(10);
-    let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
-    let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
-    // var files : HashMap.HashMap<ID, [File]> = HashMap.HashMap<ID, [File]>(10, Text.equal, Text.hash);
-    func equal(a : JournalEntry, b : JournalEntry) : Bool { Text.equal(a.id, b.id) };
-    func hash({ id } : JournalEntry) : Hash.Hash { Text.hash(id) };
-    // var directories : BiMap.BiMap<Directory, Text> = BiMap.New(
-    //     BiHashMap.empty<Directory, Text>(0, equal, hash),
-    //     BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
-    //     Text.equal
-    // );
-    // var files : BiMap.BiMap<File, Text> = BiMap.New(
-    //     BiHashMap.empty<File, Text>(0, equal, hash),
-    //     BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
-    //     Text.equal
-    // );
     var journal = Journal.New({ owner; installer });
 
     public shared ({ caller }) func createDirectory(directory : EntryCreate) : async Result.Result<Directory, DirectoryCreateError> {
@@ -194,60 +145,13 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         journal.listFilesExtend(id);
     };
 
-    // stable var stableDirectories : [(Directory, Text)] = [];
-    // stable var stableFiles : [(File, Text)] = [];
-    stable var stableJournal : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) = ([], [], []);
-    // stable var stableCanisters : [Canister] = [];
+    /* -------------------------------------------------------------------------- */
+    /*                                   STORAGE                                  */
+    /* -------------------------------------------------------------------------- */
 
-    system func preupgrade() {
-        // stableDirectories := Iter.toArray(directories.entries());
-        // stableFiles := Iter.toArray(files.entries());
-        stableJournal := journal.preupgrade();
-        // stableCanisters := Iter.toArray(topup.preupgrade());
-    };
-
-    system func postupgrade() {
-        // let dirsBuffer : Buffer.Buffer<(Text, Directory)> = Buffer.Buffer(stableDirectories.size());
-        // for ((dir, path) in stableDirectories.vals()) dirsBuffer.add((path, dir));
-        // let dirsIter = dirsBuffer.vals();
-        // let filesBuffer : Buffer.Buffer<(Text, File)> = Buffer.Buffer(stableFiles.size());
-        // for ((file, path) in stableFiles.vals()) filesBuffer.add((path, file));
-        // let filesIter = filesBuffer.vals();
-
-        let dirsIter = stableJournal.0.vals();
-        let filesIter = stableJournal.1.vals();
-        let sharedFilesIter = stableJournal.2.vals();
-        journal := Journal.fromIter({ owner; installer }, dirsIter, filesIter, sharedFilesIter);
-
-        // directories := BiMap.fromIter<Directory, Text>(
-        //     stableDirectories.vals(),
-        //     BiHashMap.empty<Directory, Text>(0, equal, hash),
-        //     BiHashMap.empty<Text, Directory>(0, Text.equal, Text.hash),
-        //     Text.equal
-        // );
-        // stableDirectories := [];
-        // files := BiMap.fromIter<File, Text>(
-        //     stableFiles.vals(),
-        //     BiHashMap.empty<File, Text>(0, equal, hash),
-        //     BiHashMap.empty<Text, File>(0, Text.equal, Text.hash),
-        //     Text.equal
-        // );
-        // stableFiles := [];
-
-        restartTimers();
-        // topup.postupgrade(stableCanisters);
-        // stableCanisters := [];
-    };
-
-    func restartTimers() : () {
-        for ((_, { canisterId }) in Trie.iter(canisters)) {
-            // startBucketMonitor_(canisterId);
-        };
-    };
-
+    let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
+    let CYCLE_SHARE = 1_000_000_000_000;
     stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
-
-    let ic : IC.Self = actor "aaaaa-aa";
     var lockedStorageCreating : Bool = false;
 
     public shared ({ caller }) func getStorage(fileSize : Nat) : async ?BucketId {
@@ -292,67 +196,32 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         let { canister_id } = await ic.create_canister({ settings = ?settings });
         ignore await (system StorageBucket.Storage)(#install canister_id)(caller);
         storageBuckets := TrieSet.put<BucketId>(storageBuckets, canister_id, Principal.hash(canister_id), Principal.equal);
-        ignore startBucketMonitor_(canister_id);
+        startBucketMonitor(canister_id);
         canister_id;
     };
 
     // Удаление канистры пользователя
-    func deleteStorageBucket(caller : Principal, bucketId : BucketId) : async Result.Result<(), Text> {
+    public shared ({ caller }) func deleteStorage(bucketId : BucketId) : async () {
+        assert validateCaller(caller);
         switch (isStorage(bucketId)) {
-            case false #err("Bucket " # Principal.toText(bucketId) # " not found. " # Principal.toText(caller));
+            case false throw Error.reject("Bucket " # Principal.toText(bucketId) # " not found. " # Principal.toText(caller));
             case true {
-                try {
-                    await ic.uninstall_code({ canister_id = bucketId });
-                    ignore await (system Wallet.Wallet)(#install bucketId)();
-                    let wallet : actor { transferCycles : shared (canisterId : Principal) -> async () } = actor (Principal.toText(bucketId));
-                    await wallet.transferCycles(Principal.fromActor(this));
-                    await ic.stop_canister({ canister_id = bucketId });
-                    await ic.delete_canister({ canister_id = bucketId });
-                    storageBuckets := TrieSet.delete<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
-                    #ok();
-                } catch err {
-                    #err(Error.message(err));
-                };
+                await ic.uninstall_code({ canister_id = bucketId });
+                ignore await (system Wallet.Wallet)(#install bucketId)();
+                let wallet : actor { transferCycles : shared (canisterId : Principal) -> async () } = actor (Principal.toText(bucketId));
+                await wallet.transferCycles(Principal.fromActor(this));
+                await ic.stop_canister({ canister_id = bucketId });
+                await ic.delete_canister({ canister_id = bucketId });
+                storageBuckets := TrieSet.delete<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
+                await journal.deleteStorageFiles(bucketId);
             };
         };
     };
 
-    // TODO: удаление всех файлов в журнале из канистры-хранилища
-    public shared ({ caller }) func deleteStorage(bucketId : BucketId) : async () {
-        assert validateCaller(caller);
-        // assert not Principal.isAnonymous(caller) or Principal.equal(caller, owner) or Principal.equal(caller, installer) or Utils.isAdmin(caller);
-        ignore deleteStorageBucket(caller, bucketId);
-    };
-
     public query ({ caller }) func listStorages() : async [BucketId] {
-        assert not Principal.isAnonymous(caller);
         assert Principal.equal(caller, owner) or Principal.equal(caller, installer) or Utils.isAdmin(caller);
-
         TrieSet.toArray<BucketId>(storageBuckets);
     };
-
-    func isStorage(bucketId : BucketId) : Bool {
-        TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
-    };
-
-    public shared ({ caller }) func canisterStatus(canisterId : Principal) : async {
-        id : Principal;
-        status : IC.canister_status_response;
-        freezingThresholdInCycles : Nat;
-    } {
-        assert not Principal.isAnonymous(caller) and (Principal.equal(caller, owner) or Utils.isAdmin(caller));
-        let status = await ic.canister_status({ canister_id = canisterId });
-        // let memorySize = Float.fromInt(Nat.)
-        // let float: Float = Float.div(status.memory_size, 1024 * 1024 * 1024);
-        let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-        { id = canisterId; status; freezingThresholdInCycles };
-    };
-
-    // Логика по обновлению storage-канистр
-    // - администратор загружает в пользовательскую канистру журнала wasm-модуль storage-канистры
-    // - вызывает upgradeStorages, которая создает очередь из storage-канистр, запускает рекурсивный таймер (интервал)
-    // - раз в минуту происходит обновление одной канистры, обновленная канистра удаляется из очереди
-    // - когда очередь заканчивается, таймер отменяется
 
     stable var storageWasm : [Nat8] = [];
     // stable var storageQueue : List.List<BucketId> = List.nil();
@@ -393,9 +262,6 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
 
         for (bucketId in Iter.fromArray(TrieSet.toArray<BucketId>(storageBuckets))) {
-            // let storageBucket : StorageBucket.Storage = actor (Principal.toText(bucketId));
-            // ignore await (system StorageBucket.Storage)(#upgrade storageBucket)(owner);
-
             await ic.install_code({
                 arg = to_candid (owner);
                 wasm_module = Blob.fromArray(storageWasm);
@@ -403,49 +269,146 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 canister_id = bucketId;
             });
         };
-
-        // storageQueue := List.fromArray<BucketId>(TrieSet.toArray<BucketId>(storageBuckets));
-        // let timerId = recurringTimer(#seconds 60, func job() : async () {
-        //     switch (List.pop<BucketId>(storageQueue)) {
-        //         case (null, _) {};
-        //         case (?canisterId, newStorageQueue) {
-        //             ignore upgradeStorage(canisterId);
-        //             storageQueue := newStorageQueue;
-        //         };
-        //     };
-        // });
     };
 
+    /* -------------------------------------------------------------------------- */
+    /*                                   INVITES                                  */
+    /* -------------------------------------------------------------------------- */
+
+    type InviteCreate = Types.InviteCreate;
+    let INVITE_CYCLE_SHARE = 2_000_000_000_000;
+
+    public shared ({ caller }) func createInvite(expiredAt : Time.Time) : async Result.Result<(), { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError; #insufficientFunds : { balance : Tokens } }> {
+        assert validateCaller(caller);
+        let self = Principal.fromActor(this);
+        let freezingThresholdInCycles = await getFreezingThresholdInCycles(self);
+        let balance = Cycles.balance();
+        var cyclesShare : Nat = INVITE_CYCLE_SHARE;
+        let burnICP = Int64.less(
+            Int64.sub(
+                Int64.fromNat64(Nat64.fromNat(Nat.sub(balance, freezingThresholdInCycles))),
+                Int64.fromNat64(Nat64.fromNat(INVITE_CYCLE_SHARE))
+            ),
+            Int64.fromNat64(Nat64.fromNat(MANAGER_CYCLE_THRESHOLD))
+        );
+        Debug.print("[invite] before create " # debug_show ({ canisterId = self; balance; freezingThresholdInCycles }));
+        if (burnICP) {
+            cyclesShare := switch (await cyclesToE8s(INVITE_CYCLE_SHARE)) {
+                case (#ok amount) {
+                    let result = await depositCycles(amount);
+                    switch (result) {
+                        case (#ok { cycles }) cycles;
+                        case (#err err) return #err err;
+                    };
+                };
+                case (#err balance) {
+                    return #err(#insufficientFunds({ balance }));
+                };
+            };
+        };
+
+        Debug.print("[invite] create " # debug_show ({ canisterId = self; cycles = cyclesShare }));
+        let manager : actor { createInvite : shared (value : InviteCreate) -> async () } = actor (Principal.toText(installer));
+        Cycles.add(cyclesShare);
+        await manager.createInvite({
+            owner = caller;
+            expiredAt;
+            cycles = cyclesShare;
+        });
+        #ok();
+    };
+
+    func getFreezingThresholdInCycles(canisterId : Principal) : async Nat {
+        let status = await ic.canister_status({ canister_id = canisterId });
+        Float.mul(
+            Float.fromInt(status.idle_cycles_burned_per_day) |> Float.div(_, Float.fromInt(86400)),
+            Int.abs(status.settings.freezing_threshold) |> Float.fromInt _
+        ) |> Float.toInt _ |> Int.abs _;
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   ACCOUNT                                  */
+    /* -------------------------------------------------------------------------- */
+    
+    type Tokens = LedgerTypes.Tokens;
+    type TransferResult = LedgerTypes.TransferResult;
+    let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
+    let FEE : Nat64 = 10_000;
+
+    // вывод средств из пользовательского аккаунта
+    public shared ({ caller }) func withdraw({ amount : Tokens; to : ?A.AccountIdentifier }) : async TransferResult {
+        assert validateCaller(caller);
+        let fromSubaccount : A.Subaccount = A.principalToSubaccount(owner);
+        let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
+        let account : A.AccountIdentifier = A.accountIdentifier(caller, defaultSubaccount);
+        await Ledger.transfer({
+            to = Option.get(to, account);
+            fee = { e8s = FEE };
+            memo = 0;
+            from_subaccount = ?fromSubaccount;
+            amount;
+            created_at_time = ?{ timestamp_nanos = Nat64.fromNat(Int.abs(Time.now())) };
+        });
+    };
+
+    // внутренний аккаунт пользователя
+    public query ({ caller }) func accountIdentifier() : async A.AccountIdentifier {
+        assert validateCaller(caller);
+        accountIdentifier_();
+    };
+
+    func accountIdentifier_() : A.AccountIdentifier {
+        let subaccount : A.Subaccount = A.principalToSubaccount(owner);
+        A.accountIdentifier(Principal.fromActor(this), subaccount);
+    };
+
+    //TODO - disabled
+    /* -------------------------------------------------------------------------- */
+    /*                              TOP-UP CANISTERS                              */
+    /* -------------------------------------------------------------------------- */
+
+    type Topup = JournalTypes.Topup;
+    type MonitorCanister = JournalTypes.MonitorCanister;
+    type TransferError = LedgerTypes.TransferError;
+    type NotifyError = CMCTypes.NotifyError;
     let MEMO_CREATE_CANISTER : LedgerTypes.Memo = 0x41455243; // == 'CREA'
     let MEMO_TOP_UP_CANISTER : LedgerTypes.Memo = 0x50555054; // == 'TPUP'
-    let FEE : Nat64 = 10_000;
     let CHECK_INTERVAL_SECONDS : Nat = 20;
-    // stable var canisters : List.List<Canister> = List.nil<Canister>();
-    stable var canisters : Trie.Trie<BucketId, Canister> = Trie.empty<BucketId, Canister>();
-    // stable var topupQueue : List.List<Canister> = List.nil<Canister>();
+    let MANAGER_CYCLE_THRESHOLD = 1_000_000_000_000;
+    let STORAGE_CYCLE_THRESHOLD = 250_000_000_000;
+    let MIN_CYCLE_DEPOSIT = 1_000_000_000_000;
     var topupQueue : List.List<Topup> = List.nil();
     stable var depositQueue : List.List<BucketId> = List.nil();
     var toppingUp : ?BucketId = null;
     var depositing : Bool = false;
-
-    // public shared ({ caller }) func topupCanister(value : Topup) : async () {
-    //     assert not Principal.isAnonymous(caller);
-    //     assert isStorage(caller) or Utils.isAdmin(caller);
-
-    //     let isInTopupQueue = List.some<Topup>(topupQueue, func({ canisterId }) { Principal.equal(value.canisterId, canisterId) });
-    //     if (not isInTopupQueue) {
-    //         topupQueue := List.push<Topup>(value, topupQueue);
-    //     };
-    // };
+    stable var canisters : Trie.Trie<BucketId, MonitorCanister> = Trie.empty<BucketId, MonitorCanister>();
+    let CMC : CMCTypes.Self = actor (CYCLE_MINTING_CANISTER_ID);
 
     // запуск мониторинга состояния баланса канистры
-    public shared ({ caller }) func startBucketMonitor(canisterId : BucketId) : async () {
-        assert not Principal.isAnonymous(caller) and (Principal.equal(caller, owner) or Utils.isAdmin(caller));
-        await startBucketMonitor_(canisterId);
+    public shared ({ caller }) func startMonitor(canisterId : BucketId) : async () {
+        assert Principal.equal(caller, owner) or Utils.isAdmin(caller);
+        startBucketMonitor(canisterId);
     };
 
-    func startBucketMonitor_(canisterId : BucketId) : async () {
-        let found : ?Canister = Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
+    public shared ({ caller }) func stopMonitor(canisterId : BucketId) : async () {
+        assert Principal.equal(caller, owner) or Utils.isAdmin(caller);
+        stopBucketMonitor(canisterId);
+    };
+
+    public query ({ caller }) func listMonitors() : async [MonitorCanister] {
+        assert Principal.equal(caller, owner) or Utils.isAdmin(caller);
+        Trie.fold<BucketId, MonitorCanister, Buffer.Buffer<MonitorCanister>>(
+            canisters,
+            func(_, canister, buffer) {
+                buffer.add(canister);
+                buffer;
+            },
+            Buffer.Buffer<MonitorCanister>(Trie.size(canisters))
+        ) |> Buffer.toArray _;
+    };
+
+    func startBucketMonitor(canisterId : BucketId) : () {
+        let found : ?MonitorCanister = Trie.get<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
         let defaults = switch (found) {
             case null {
                 { canisterId; owner; lastChecked = Time.now(); status = null };
@@ -464,18 +427,12 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                 ignore monitorCycles(canisterId);
             }
         );
-        let value : Canister = { defaults with timerId = ?timerId; monitoring = #running; error = null };
-        canisters := Trie.put<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, value).0;
+        let value : MonitorCanister = { defaults with timerId = ?timerId; monitoring = #running; error = null };
+        canisters := Trie.put<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, value).0;
     };
 
-    // остановка мониторинга
-    public shared ({ caller }) func stopBucketMonitor(canisterId : BucketId) : async () {
-        assert not Principal.isAnonymous(caller) and (Principal.equal(caller, owner) or Utils.isAdmin(caller));
-        await stopBucketMonitor_(canisterId);
-    };
-
-    func stopBucketMonitor_(canisterId : BucketId) : async () {
-        switch (Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal)) {
+    func stopBucketMonitor(canisterId : BucketId) : () {
+        switch (Trie.get<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal)) {
             case null {};
             case (?canister) {
                 switch (canister.timerId) {
@@ -483,15 +440,66 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     case (?timerId) cancelTimer(timerId);
                 };
 
-                let value : Canister = { canister with timerId = null; monitoring = #stopped };
-                canisters := Trie.put<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, value).0;
+                let value : MonitorCanister = { canister with timerId = null; monitoring = #stopped };
+                canisters := Trie.put<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, value).0;
+            };
+        };
+    };
+
+    func checkCycles() : async () {
+        try {
+            let self = Principal.fromActor(this);
+            let status = await ic.canister_status({ canister_id = self });
+            let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
+            let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
+            let amount : Nat = Nat.max(MANAGER_CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
+            Debug.print("[manager] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
+            if (availableCycles <= amount) {
+                Debug.print("[manager] deposit " # debug_show ({ canisterId = self }));
+                let amount : Tokens = switch (await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
+                    case (#ok amount) amount;
+                    case (#err balance) {
+                        { e8s = Nat64.max(Nat64.fromNat(0), Nat64.sub(balance.e8s, FEE)) };
+                    };
+                };
+                ignore await depositCycles(amount);
+            };
+        } catch (err) {
+            Debug.print("[manager] afterCheck " # Error.message(err));
+        };
+    };
+
+    // проверка состояния баланса канистры, добавление в очередь на пополнение при необходимости
+    func monitorCycles(canisterId : BucketId) : async () {
+        let found : ?MonitorCanister = Trie.get<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
+        switch (found) {
+            case null {};
+            case (?canister) {
+                let now = Time.now();
+                let updatedCanister = try {
+                    let status = await ic.canister_status({ canister_id = canister.canisterId });
+                    let value : MonitorCanister = { canister with status = ?status; lastChecked = now };
+                    let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
+                    let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
+                    let amount : Nat = Nat.max(STORAGE_CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
+                    let isInTopupQueue = List.some<Topup>(topupQueue, func ({ canisterId = id }) = Principal.equal(id, value.canisterId));
+                    Debug.print("[storage] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
+                    if (availableCycles <= amount and not isInTopupQueue) {
+                        Debug.print("[storage] enqueueTopUp " # debug_show ({ canisterId }));
+                        topupQueue := List.push<Topup>({ canisterId = value.canisterId; amount }, topupQueue);
+                    };
+                    value;
+                } catch (err) {
+                    Debug.print("[storage] afterCheck " # Error.message(err));
+                    { canister with error = ?Error.message(err); lastChecked = now };
+                };
+                canisters := Trie.put<BucketId, MonitorCanister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, updatedCanister).0;
             };
         };
     };
 
     func topup() : async () {
         assert Option.isNull(toppingUp);
-
         switch (List.pop<Topup>(topupQueue)) {
             case (null, _) {};
             case (?{ canisterId; amount }, newTopupQueue) {
@@ -510,27 +518,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    // func cyclesToE8s(cycles : Nat) : async Tokens {
-    //     let { data } = await CMC.get_icp_xdr_conversion_rate();
-    //     let account : A.AccountIdentifier = accountIdentifier_();
-    //     let balance = await Ledger.account_balance({ account });
-    //     let e8s : Nat64 = Int64.toNat64(Float.toInt64(Float.div(Float.fromInt(Int.abs(cycles)), Float.fromInt64(Int64.fromNat64(data.xdr_permyriad_per_icp)) * 100_000_000) * 100_000_000));
-    //     { e8s = Nat64.max(Nat64.fromNat(0), Nat64.sub(Nat64.min(e8s, balance.e8s), FEE)) };
-    // };
-
-    // пополнение текущей канистры
-    // func depositCycles() : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
-    //     let amount : Tokens = switch(await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
-    //         case (#ok amount) amount;
-    //         case (#err balance) {
-    //             { e8s = Nat64.max(Nat64.fromNat(0), Nat64.sub(balance.e8s, FEE)) };
-    //         };
-    //     };
-    //     await depositCycles_(Principal.fromActor(this), amount);
-    // };
-
     // пополнение канистры циклами из Cycles Minting Canister путем сжигания ICP на внутреннем балансе пользователя
-    func depositCycles(amount : Tokens) : async Result.Result<{ cycles : Nat }, { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError }> {
+    func depositCycles(amount : Tokens) : async Result.Result<{ cycles : Nat }, { #transfer : TransferError; #notify : NotifyError }> {
         let self = Principal.fromActor(this);
         let fromSubaccount : A.Subaccount = A.principalToSubaccount(owner);
         let account : A.AccountIdentifier = do {
@@ -569,134 +558,12 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    // stable var ongoingTransactions : TrieSet.Set<Principal> = TrieSet.empty<Principal>();
-
-    // вывод средств из пользовательского аккаунта
-    public shared ({ caller }) func withdraw({ amount : LedgerTypes.Tokens; to : ?A.AccountIdentifier }) : async LedgerTypes.TransferResult {
-        assert validateCaller(caller);
-        let fromSubaccount : A.Subaccount = A.principalToSubaccount(owner);
-        let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
-        let account : A.AccountIdentifier = A.accountIdentifier(caller, defaultSubaccount);
-        await Ledger.transfer({
-            to = Option.get(to, account);
-            fee = { e8s = FEE };
-            memo = 0;
-            from_subaccount = ?fromSubaccount;
-            amount;
-            created_at_time = ?{ timestamp_nanos = Nat64.fromNat(Int.abs(Time.now())) };
-        });
-    };
-
-    // внутренний аккаунт пользователя
-    public query ({ caller }) func accountIdentifier() : async A.AccountIdentifier {
-        assert validateCaller(caller);
-        accountIdentifier_();
-    };
-
-    func accountIdentifier_() : A.AccountIdentifier {
-        let subaccount : A.Subaccount = A.principalToSubaccount(owner);
-        A.accountIdentifier(Principal.fromActor(this), subaccount);
-    };
-
-    // public shared ({ caller }) func depositInfo() : async {
-    //     account : A.AccountIdentifier;
-    //     subaccount : A.Subaccount;
-    //     balance : { e8s : Nat64 };
-    // } {
-    //     assert Utils.isAdmin(caller);
-    //     let subaccount : A.Subaccount = A.principalToSubaccount(owner);
-    //     let defaultSubaccount : A.Subaccount = A.defaultSubaccount();
-    //     // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromText(LEDGER_CANISTER_ID), subaccount);
-    //     let account : A.AccountIdentifier = A.accountIdentifier(owner, defaultSubaccount);
-    //     // let account : A.AccountIdentifier = A.accountIdentifier(Principal.fromActor(this), subaccount);
-    //     let balance = await Ledger.account_balance({ account });
-    //     { account; subaccount; balance };
-    // };
-
-    // public shared ({ caller }) func deposit() : async () {
-    //     ignore depositCycles();
-    // };
-
-    // system func heartbeat() : async () {
-    //     ignore topup();
-    // };
-
-    // system func timer(set : Nat64 -> ()) : async () {
-    //     set(Nat64.fromIntWrap(Time.now() + CHECK_INTERVAL_NANOS));
-    //     ignore checkBalance();
-    // };
-
-    func checkCycles() : async () {
-        try {
-            let self = Principal.fromActor(this);
-            let status = await ic.canister_status({ canister_id = self });
-            let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-            let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
-            let amount : Nat = Nat.max(MANAGER_CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
-            Debug.print("[manager] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
-            if (availableCycles <= amount) {
-                Debug.print("[manager] deposit " # debug_show ({ canisterId = self }));
-                let amount : Tokens = switch (await cyclesToE8s(MIN_CYCLE_DEPOSIT)) {
-                    case (#ok amount) amount;
-                    case (#err balance) {
-                        { e8s = Nat64.max(Nat64.fromNat(0), Nat64.sub(balance.e8s, FEE)) };
-                    };
-                };
-                ignore await depositCycles(amount);
-            };
-        } catch (err) {
-            Debug.print("[manager] afterCheck " # Error.message(err));
-        };
-    };
-
-    // проверка состояния баланса канистры, добавление в очередь на пополнение при необходимости
-    func monitorCycles(canisterId : BucketId) : async () {
-        let found : ?Canister = Trie.get<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal);
-        switch (found) {
-            case null {};
-            case (?canister) {
-                let now = Time.now();
-                let updatedCanister = try {
-                    let status = await ic.canister_status({ canister_id = canister.canisterId });
-                    let value : Canister = { canister with status = ?status; lastChecked = now };
-                    let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-                    let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
-                    let amount : Nat = Nat.max(STORAGE_CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
-                    let isInTopupQueue = List.some<Topup>(topupQueue, func({ canisterId = id }) { Principal.equal(id, value.canisterId) });
-                    Debug.print("[storage] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
-                    if (availableCycles <= amount and not isInTopupQueue) {
-                        Debug.print("[storage] enqueueTopUp " # debug_show ({ canisterId }));
-                        topupQueue := List.push<Topup>({ canisterId = value.canisterId; amount }, topupQueue);
-                    };
-                    value;
-                } catch (err) {
-                    Debug.print("[storage] afterCheck " # Error.message(err));
-                    { canister with error = ?Error.message(err); lastChecked = now };
-                };
-                canisters := Trie.put<BucketId, Canister>(canisters, Utils.keyPrincipal(canisterId), Principal.equal, updatedCanister).0;
-            };
-        };
-    };
-
-    public query func getCanisters() : async [Canister] {
-        Buffer.toArray(
-            Trie.fold<BucketId, Canister, Buffer.Buffer<Canister>>(
-                canisters,
-                func(_, canister, buffer) {
-                    buffer.add(canister);
-                    buffer;
-                },
-                Buffer.Buffer<Canister>(Trie.size(canisters))
-            )
-        );
-    };
-
     // конвертация циклов в ICP
     func cyclesToE8s(cyclesAmount : Nat) : async Result.Result<Tokens, Tokens> {
         let { data } = await CMC.get_icp_xdr_conversion_rate();
         let account : A.AccountIdentifier = accountIdentifier_();
         let balance : Tokens = await Ledger.account_balance({ account });
-        let e8s : Nat64 = Int64.toNat64(Float.toInt64(Float.div(Float.fromInt(Int.abs(cyclesAmount)), Float.fromInt64(Int64.fromNat64(data.xdr_permyriad_per_icp)) * 100_000_000) * 100_000_000));
+        let e8s : Nat64 = Int64.fromNat64(data.xdr_permyriad_per_icp) |> Float.div(Float.fromInt(Int.abs(cyclesAmount)), Float.fromInt64 _ * 100_000_000) * 100_000_000 |> Float.toInt64 _ |> Int64.toNat64 _;
         if (Nat64.greaterOrEqual(balance.e8s, Nat64.add(e8s, FEE))) {
             #ok({ e8s });
         } else {
@@ -704,95 +571,8 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         };
     };
 
-    public shared ({ caller }) func createInvite(expiredAt : Time.Time) : async Result.Result<(), { #transfer : LedgerTypes.TransferError; #notify : CMCTypes.NotifyError; #insufficientFunds : { balance : Tokens } }> {
-        assert validateCaller(caller);
-        let self = Principal.fromActor(this);
-        // let amount : Tokens = switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
-        //     case (#ok amount) amount;
-        //     case (#err balance) balance;
-        // };
-        // let result = await depositCycles(installer, amount);
-        // switch (result) {
-        //     case (#ok cycles) {
-
-        //         #ok();
-        //     };
-        //     case (#err err) #err err;
-        // };
-        let freezingThresholdInCycles = await getFreezingThresholdInCycles(self);
-        let balance = Cycles.balance();
-        var cyclesShare : Nat = INVITE_CYCLE_SHARE;
-        let burnICP = Int64.less(
-            Int64.sub(
-                Int64.fromNat64(Nat64.fromNat(Nat.sub(balance, freezingThresholdInCycles))),
-                Int64.fromNat64(Nat64.fromNat(INVITE_CYCLE_SHARE))
-            ),
-            Int64.fromNat64(Nat64.fromNat(MANAGER_CYCLE_THRESHOLD))
-        );
-        Debug.print("[invite] before create " # debug_show ({ canisterId = self; balance; freezingThresholdInCycles }));
-        if (burnICP) {
-            cyclesShare := switch (await cyclesToE8s(INVITE_CYCLE_SHARE)) {
-                case (#ok amount) {
-                    let result = await depositCycles(amount);
-                    switch (result) {
-                        case (#ok { cycles }) cycles;
-                        case (#err err) return #err err;
-                    };
-                };
-                case (#err balance) {
-                    return #err(#insufficientFunds({ balance }));
-                };
-            };
-        };
-
-        Debug.print("[invite] create " # debug_show ({ canisterId = self; cycles = cyclesShare }));
-        let manager : actor { createInvite : shared (value : InviteCreate) -> async () } = actor (Principal.toText(installer));
-        Cycles.add(cyclesShare);
-        await manager.createInvite({
-            owner = caller;
-            expiredAt;
-            cycles = cyclesShare;
-        });
-        #ok();
-        // let freezingThresholdInCycles2 = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
-        // Debug.print("[main] createInvite " # debug_show({ status; freezingThresholdInCycles; freezingThresholdInCycles2 }));
-
-        // switch(await cyclesToE8s(INVITE_CYCLE_SHARE)) {
-        //     case (#ok amount) {
-        //         let result = await depositCycles(self, amount);
-        //         switch (result) {
-        //             case (#ok { cycles }) {
-        //                 ignore Cycles.accept(cycles);
-        //                 Debug.print("[invite] create " # debug_show({ canisterId = self; cycles; }));
-        //                 let manager : actor { createInvite : shared (value : InviteCreate) -> async () } = actor (Principal.toText(installer));
-        //                 Cycles.add(cycles);
-        //                 await manager.createInvite({
-        //                     owner = caller;
-        //                     expiredAt;
-        //                     cycles;
-        //                 });
-        //                 #ok();
-        //             };
-        //             case (#err err) #err err;
-        //         };
-        //     };
-        //     case (#err balance) {
-        //         #err(#insufficientFunds({ balance }));
-        //     };
-        // };
-    };
-
-    func getFreezingThresholdInCycles(canisterId : Principal) : async Nat {
-        let status = await ic.canister_status({ canister_id = canisterId });
-        Int.abs(Float.toInt(Float.mul(Float.div(Float.fromInt(status.idle_cycles_burned_per_day), Float.fromInt(86400)), Float.fromInt(Int.abs(status.settings.freezing_threshold)))));
-    };
-
-    func validateCaller(caller : Principal) : Bool {
-        not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
-    };
-
     /* -------------------------------------------------------------------------- */
-    /*                                 Encryption                                 */
+    /*                                 ENCRYPTION                                 */
     /* -------------------------------------------------------------------------- */
 
     public shared ({ caller }) func fileVetkdPublicKey(id : ID, derivationPath : [Blob]) : async Text {
@@ -808,10 +588,12 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
         await journal.getFileEncryptedSymmetricKey(caller, id, tpk);
     };
 
+    //TODO - implement notification canister with web-sockets
     /* -------------------------------------------------------------------------- */
-    /*                                   Sharing                                  */
+    /*                                   SHARING                                  */
     /* -------------------------------------------------------------------------- */
 
+    type SharedFileParams = JournalTypes.SharedFileParams;
     type SharedFileExtended = JournalTypes.SharedFileExtended;
     public shared ({ caller }) func shareFile(id : ID, fields : SharedFileParams) : async Result.Result<FileExtended, { #notFound }> {
         assert validateCaller(caller);
@@ -831,5 +613,64 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     public query func getSharedFile(caller : Principal, id : ID) : async Result.Result<SharedFileExtended, { #notFound; #noPermission }> {
         journal.getSharedFile(caller, id);
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   TIMERS                                   */
+    /* -------------------------------------------------------------------------- */
+
+    let CHECK_INTERVAL_NANOS : Nat = 60_000_000_000; // 1 minute
+
+    // system func timer(set : Nat64 -> ()) : async () {
+    //     set(Nat64.fromIntWrap(Time.now() + CHECK_INTERVAL_NANOS));
+    //     ignore checkBalance();
+    // };
+
+    func restartTimers() : () {
+        for ((_, { canisterId }) in Trie.iter(canisters)) {
+            startBucketMonitor(canisterId);
+        };
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /*                                SYSTEM HOOKS                                */
+    /* -------------------------------------------------------------------------- */
+
+    stable var stableJournal : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) = ([], [], []);
+
+    system func preupgrade() {
+        stableJournal := journal.preupgrade();
+    };
+
+    system func postupgrade() {
+        let dirsIter = stableJournal.0.vals();
+        let filesIter = stableJournal.1.vals();
+        let sharedFilesIter = stableJournal.2.vals();
+        journal := Journal.fromIter({ owner; installer }, dirsIter, filesIter, sharedFilesIter);
+        // restartTimers();
+    };
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  UTILITES                                  */
+    /* -------------------------------------------------------------------------- */
+
+    func validateCaller(caller : Principal) : Bool {
+        not Principal.isAnonymous(caller) and Principal.equal(caller, owner);
+    };
+
+    func isStorage(bucketId : BucketId) : Bool {
+        TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
+    };
+
+    //NOTE - DEPRECATED!
+    public shared ({ caller }) func canisterStatus(canisterId : Principal) : async {
+        id : Principal;
+        status : IC.canister_status_response;
+        freezingThresholdInCycles : Nat;
+    } {
+        assert Principal.equal(caller, owner) or Utils.isAdmin(caller);
+        let status = await ic.canister_status({ canister_id = canisterId });
+        let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
+        { id = canisterId; status; freezingThresholdInCycles };
     };
 };

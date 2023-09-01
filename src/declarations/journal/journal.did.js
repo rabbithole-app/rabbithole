@@ -126,21 +126,21 @@ export const idlFactory = ({ IDL }) => {
         Processing: IDL.Null,
         TransactionTooOld: BlockIndex__1
     });
-    const Tokens__1 = IDL.Record({ e8s: IDL.Nat64 });
     const Tokens = IDL.Record({ e8s: IDL.Nat64 });
+    const Tokens__1 = IDL.Record({ e8s: IDL.Nat64 });
     const BlockIndex = IDL.Nat64;
     const TransferError = IDL.Variant({
         TxTooOld: IDL.Record({ allowed_window_nanos: IDL.Nat64 }),
-        BadFee: IDL.Record({ expected_fee: Tokens }),
+        BadFee: IDL.Record({ expected_fee: Tokens__1 }),
         TxDuplicate: IDL.Record({ duplicate_of: BlockIndex }),
         TxCreatedInFuture: IDL.Null,
-        InsufficientFunds: IDL.Record({ balance: Tokens })
+        InsufficientFunds: IDL.Record({ balance: Tokens__1 })
     });
     const Result_8 = IDL.Variant({
         ok: IDL.Null,
         err: IDL.Variant({
             notify: NotifyError,
-            insufficientFunds: IDL.Record({ balance: Tokens__1 }),
+            insufficientFunds: IDL.Record({ balance: Tokens }),
             transfer: TransferError
         })
     });
@@ -148,15 +148,6 @@ export const idlFactory = ({ IDL }) => {
     const NotFoundError = IDL.Variant({ notFound: IDL.Null });
     const Result_7 = IDL.Variant({ ok: IDL.Null, err: NotFoundError });
     const BucketId__1 = IDL.Principal;
-    const Canister = IDL.Record({
-        status: IDL.Opt(canister_status_response),
-        owner: IDL.Principal,
-        error: IDL.Opt(IDL.Text),
-        monitoring: IDL.Variant({ stopped: IDL.Null, running: IDL.Null }),
-        lastChecked: Time,
-        timerId: IDL.Opt(IDL.Nat),
-        canisterId: BucketId
-    });
     const FileShare = IDL.Record({
         journalId: BucketId,
         limitDownloads: IDL.Opt(IDL.Nat),
@@ -225,6 +216,15 @@ export const idlFactory = ({ IDL }) => {
         share: IDL.Opt(FileShare),
         updatedAt: Time,
         parentId: IDL.Opt(ID)
+    });
+    const MonitorCanister = IDL.Record({
+        status: IDL.Opt(canister_status_response),
+        owner: IDL.Principal,
+        error: IDL.Opt(IDL.Text),
+        monitoring: IDL.Variant({ stopped: IDL.Null, running: IDL.Null }),
+        lastChecked: Time,
+        timerId: IDL.Opt(IDL.Nat),
+        canisterId: BucketId
     });
     const DirectoryMoveError = IDL.Variant({
         sourceNotFound: IDL.Null,
@@ -297,13 +297,13 @@ export const idlFactory = ({ IDL }) => {
         deleteFile: IDL.Func([IDL.Text], [Result_7], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
         fileVetkdPublicKey: IDL.Func([ID__1, IDL.Vec(IDL.Vec(IDL.Nat8))], [IDL.Text], []),
-        getCanisters: IDL.Func([], [IDL.Vec(Canister)], ['query']),
         getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
         getFileEncryptedSymmetricKey: IDL.Func([ID__1, IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_6], ['query']),
         getSharedFile: IDL.Func([IDL.Principal, ID__1], [Result_5], ['query']),
         getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId__1)], []),
         listFiles: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(FileExtended)], ['query']),
+        listMonitors: IDL.Func([], [IDL.Vec(MonitorCanister)], ['query']),
         listStorages: IDL.Func([], [IDL.Vec(BucketId__1)], ['query']),
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_4], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_3], []),
@@ -312,8 +312,8 @@ export const idlFactory = ({ IDL }) => {
         shareFile: IDL.Func([ID__1, SharedFileParams], [Result_1], []),
         sharedWithMe: IDL.Func([], [IDL.Vec(SharedFileExtended)], ['query']),
         showDirectoriesTree: IDL.Func([IDL.Opt(ID__1)], [IDL.Text], ['query']),
-        startBucketMonitor: IDL.Func([BucketId__1], [], []),
-        stopBucketMonitor: IDL.Func([BucketId__1], [], []),
+        startMonitor: IDL.Func([BucketId__1], [], []),
+        stopMonitor: IDL.Func([BucketId__1], [], []),
         storageLoadWasm: IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Record({ total: IDL.Nat, chunks: IDL.Nat })], []),
         storageResetWasm: IDL.Func([], [], []),
         unshareFile: IDL.Func([ID__1], [Result_1], []),

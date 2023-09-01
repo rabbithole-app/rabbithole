@@ -6,7 +6,7 @@ import Principal "mo:base/Principal";
 import Error "mo:base/Error";
 import Nat32 "mo:base/Nat32";
 import { recurringTimer; cancelTimer } "mo:base/Timer";
-import Map "mo:hashmap/Map";
+import Map "mo:hashmap_v8/Map";
 import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
 import Array "mo:base/Array";

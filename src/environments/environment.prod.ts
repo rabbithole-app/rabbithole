@@ -5,7 +5,7 @@ export const environment = {
     identityUrl: 'https://identity.ic0.app/#authorize',
     appName: 'The Rabbit Hole',
     envName: 'PROD',
-    registrationEnabled: true,
+    registrationEnabled: false,
     // Point to icp-api for the mainnet. Leaving host undefined will work for localhost
     httpAgentHost: 'https://icp-api.io',
     versions: {

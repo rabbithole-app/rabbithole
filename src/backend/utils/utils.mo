@@ -11,7 +11,7 @@ import Trie "mo:base/Trie";
 import AsyncSource "mo:uuid/async/SourceV4";
 import UUID "mo:uuid/UUID";
 import Base64 "mo:encoding/Base64";
-import { hashNat32 } = "mo:hashmap/utils";
+import { hashNat32 } = "mo:hashmap_v8/utils";
 
 import Types "../types/types";
 import Env "../env";

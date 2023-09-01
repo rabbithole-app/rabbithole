@@ -13,6 +13,7 @@ dfx deploy vetkd_system_api
 dfx deploy rabbithole
 dfx deploy journal --argument "principal \"$DEV_PRINCIPAL\""
 dfx deploy storage --argument "principal \"$DEV_PRINCIPAL\""
+dfx deploy rabbithole_frontend
 
 # npx prettier "src/**/*.{js,ts,mo}" --write --loglevel silent
 for f in $(find src/declarations -type f -name index.js)

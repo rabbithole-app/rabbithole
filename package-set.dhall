@@ -8,7 +8,7 @@ let additions =
   [
     { name = "base"
     , repo = "https://github.com/dfinity/motoko-base"
-    , version = "moc-0.9.7"
+    , version = "moc-0.9.8"
     , dependencies = [] : List Text
     },
     -- { name = "stableBTree"
@@ -16,6 +16,11 @@ let additions =
     -- , version = "main"
     -- , dependencies = ["base", "matchers"]
     -- },
+    { name = "hashmap_v8"
+    , repo = "https://github.com/ZhenyaUsenko/motoko-hash-tree"
+    , version = "main"
+    , dependencies = [] : List Text
+    },
     { name = "hashmap"
     , repo = "https://github.com/ZhenyaUsenko/motoko-hash-map"
     , version = "master"

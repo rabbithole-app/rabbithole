@@ -1,48 +1,52 @@
-import Map "mo:hashmap/Map";
-import Types "types";
-import Buffer "mo:base/Buffer";
-import Iter "mo:base/Iter";
-import Result "mo:base/Result";
-import Char "mo:base/Char";
-import Text "mo:base/Text";
-import Option "mo:base/Option";
-import Time "mo:base/Time";
-import Utils "../utils/utils";
 import Array "mo:base/Array";
-import Principal "mo:base/Principal";
-import Nat "mo:base/Nat";
-import Error "mo:base/Error";
-import Prelude "mo:base/Prelude";
+import Blob "mo:base/Blob";
+import Buffer "mo:base/Buffer";
+import Char "mo:base/Char";
 import Debug "mo:base/Debug";
+import Error "mo:base/Error";
 import IC "mo:base/ExperimentalInternetComputer";
+import Iter "mo:base/Iter";
+import Nat "mo:base/Nat";
+import Option "mo:base/Option";
+import Prelude "mo:base/Prelude";
+import Principal "mo:base/Principal";
+import Result "mo:base/Result";
+import Text "mo:base/Text";
+import Time "mo:base/Time";
+
 import Hex "mo:encoding/Hex";
+import Map "mo:hashmap_v8/Map";
+
+import JournalTypes "types";
+import Types "../types/types";
+import Utils "../utils/utils";
 import VETKD_SYSTEM_API "canister:vetkd_system_api";
 import VetKDTypes "../types/vetkd_types";
-import Blob "mo:base/Blob";
 
 module {
     type ID = Text;
-    type Entry = Types.Entry;
-    type File = Types.File;
-    type FileCreate = Types.FileCreate;
-    type FileExtended = Types.FileExtended;
-    type FileCreateError = Types.FileCreateError;
-    type CreatePath = Types.CreatePath;
-    type Directory = Types.Directory;
-    type EntryCreate = Types.EntryCreate;
-    type DirectoryCreateError = Types.DirectoryCreateError;
-    type DirectoryMoveError = Types.DirectoryMoveError;
-    type DirectoryAction = Types.DirectoryAction;
-    type DirectoryColor = Types.DirectoryColor;
-    type DirectoryUpdatableFields = Types.DirectoryUpdatableFields;
-    type FileMoveError = Types.FileMoveError;
-    type DirectoryState = Types.DirectoryState;
-    type DirectoryStateError = Types.DirectoryStateError;
-    type NotFoundError = Types.NotFoundError;
-    type AlreadyExistsError<T> = Types.AlreadyExistsError<T>;
-    type SharedFile = Types.SharedFile;
-    type SharedFileParams = Types.SharedFileParams;
-    type SharedFileExtended = Types.SharedFileExtended;
+    type BucketId = Types.BucketId;
+    type Entry = JournalTypes.Entry;
+    type File = JournalTypes.File;
+    type FileCreate = JournalTypes.FileCreate;
+    type FileExtended = JournalTypes.FileExtended;
+    type FileCreateError = JournalTypes.FileCreateError;
+    type CreatePath = JournalTypes.CreatePath;
+    type Directory = JournalTypes.Directory;
+    type EntryCreate = JournalTypes.EntryCreate;
+    type DirectoryCreateError = JournalTypes.DirectoryCreateError;
+    type DirectoryMoveError = JournalTypes.DirectoryMoveError;
+    type DirectoryAction = JournalTypes.DirectoryAction;
+    type DirectoryColor = JournalTypes.DirectoryColor;
+    type DirectoryUpdatableFields = JournalTypes.DirectoryUpdatableFields;
+    type FileMoveError = JournalTypes.FileMoveError;
+    type DirectoryState = JournalTypes.DirectoryState;
+    type DirectoryStateError = JournalTypes.DirectoryStateError;
+    type NotFoundError = JournalTypes.NotFoundError;
+    type AlreadyExistsError<T> = JournalTypes.AlreadyExistsError<T>;
+    type SharedFile = JournalTypes.SharedFile;
+    type SharedFileParams = JournalTypes.SharedFileParams;
+    type SharedFileExtended = JournalTypes.SharedFileExtended;
     type VetKDKeyId = VetKDTypes.VetKDKeyId;
     type VetKDPublicKeyRequest = VetKDTypes.VetKDPublicKeyRequest;
     type VetKDPublicKeyReply = VetKDTypes.VetKDPublicKeyReply;
@@ -81,6 +85,7 @@ module {
         setFileEncryptedSymmetricKey : (ID, Blob) -> async Text;
         getFileEncryptedSymmetricKey : (Principal, ID, Blob) -> async Text;
         fileVetkdPublicKey : (ID, [Blob]) -> async Text;
+        deleteStorageFiles : Principal -> async ();
         preupgrade : () -> ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]);
         // postupgrade : (([(Text, Directory)], [(Text, File)])) -> ();
     };
@@ -843,6 +848,13 @@ module {
                 curve = #bls12_381;
                 name = "test_key_1";
             };
+        };
+
+        public func deleteStorageFiles(storageId : BucketId) : async () {
+            files := Map.filter<Text, File>(files, thash, func (path, file) = Principal.notEqual(file.bucketId, storageId));
+            sharedFiles := Map.filter<ID, SharedFile>(sharedFiles, thash, func (id, file) = Principal.notEqual(file.storageId, storageId));
+            let rabbithole : actor { unshareStorageFiles : shared Principal -> async () } = actor (Principal.toText(installer));
+            await rabbithole.unshareStorageFiles(storageId);
         };
 
         public func preupgrade() : ([(Text, Directory)], [(Text, File)], [(ID, SharedFile)]) {

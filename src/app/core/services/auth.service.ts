@@ -12,10 +12,10 @@ import { catchError, delayWhen, filter, map, repeat, skip, switchMap, takeUntil,
 import { ClosableSnackbarComponent } from '@core/components/closable-snackbar/closable-snackbar.component';
 import { APP_DERIVATION_ORIGIN, AUTH_MAX_TIME_TO_LIVE, AUTH_POPUP_HEIGHT, AUTH_POPUP_WIDTH } from '@core/constants';
 import { AUTH_CLIENT_INIT_STATE } from '@core/tokens';
+import { isCustomDomain } from '@core/utils';
 import { environment } from 'environments/environment';
 import { AUTH_RX_STATE, AuthStatus } from '../stores';
 import { CoreService } from './core.service';
-import { isCustomDomain } from '@core/utils';
 
 interface State {
     signedOutSnackBarRef: MatSnackBarRef<ClosableSnackbarComponent>;

@@ -101,9 +101,9 @@ export interface SharedFile {
     id: ID__1;
     owner: Principal;
     createdAt: Time;
-    journalId: BucketId;
+    journalId: BucketId__1;
     limitDownloads: [] | [bigint];
-    storageId: BucketId;
+    storageId: BucketId__1;
     sharedWith: { everyone: null } | { users: Array<Principal> };
     updatedAt: Time;
     downloads: bigint;
@@ -115,10 +115,10 @@ export interface SharedFileExtended {
     owner: Principal;
     name: string;
     createdAt: Time;
-    journalId: BucketId;
+    journalId: BucketId__1;
     limitDownloads: [] | [bigint];
     fileSize: bigint;
-    storageId: BucketId;
+    storageId: BucketId__1;
     encrypted: boolean;
     sharedWith: { everyone: null } | { users: Array<Principal> };
     updatedAt: Time;
@@ -160,7 +160,7 @@ export interface _SERVICE {
     deleteProfile: ActorMethod<[], Result_1>;
     getInvites: ActorMethod<[], Array<Invite>>;
     getInvoice: ActorMethod<[], [] | [Invoice]>;
-    getJournalBucket: ActorMethod<[], [] | [BucketId__1]>;
+    getJournalBucket: ActorMethod<[], [] | [BucketId]>;
     getProfile: ActorMethod<[], [] | [ProfileInfoV2]>;
     getRegistrationMode: ActorMethod<[], RegistrationMode>;
     getSharedFile: ActorMethod<[ID], [] | [SharedFileExtended]>;
@@ -175,7 +175,7 @@ export interface _SERVICE {
         ],
         undefined
     >;
-    listBuckets: ActorMethod<[string], Array<[Principal, BucketId__1]>>;
+    listBuckets: ActorMethod<[string], Array<[Principal, BucketId]>>;
     listProfiles: ActorMethod<[], Array<Profile__1>>;
     putProfile: ActorMethod<[ProfileUpdateV2], Result_1>;
     redeemInvite: ActorMethod<[ID], Result>;
@@ -183,5 +183,6 @@ export interface _SERVICE {
     shareFile: ActorMethod<[ID, SharedFile], undefined>;
     sharedWithMe: ActorMethod<[], Array<UserShare>>;
     unshareFile: ActorMethod<[ID], undefined>;
+    unshareStorageFiles: ActorMethod<[BucketId], undefined>;
     upgradeJournalBuckets: ActorMethod<[], undefined>;
 }

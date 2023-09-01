@@ -6,15 +6,6 @@ export type BlockIndex = bigint;
 export type BlockIndex__1 = bigint;
 export type BucketId = Principal;
 export type BucketId__1 = Principal;
-export interface Canister {
-    status: [] | [canister_status_response];
-    owner: Principal;
-    error: [] | [string];
-    monitoring: { stopped: null } | { running: null };
-    lastChecked: Time;
-    timerId: [] | [bigint];
-    canisterId: BucketId;
-}
 export interface Directory {
     id: ID;
     name: string;
@@ -146,13 +137,13 @@ export interface JournalBucket {
     deleteFile: ActorMethod<[string], Result_7>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
     fileVetkdPublicKey: ActorMethod<[ID__1, Array<Uint8Array | number[]>], string>;
-    getCanisters: ActorMethod<[], Array<Canister>>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getFileEncryptedSymmetricKey: ActorMethod<[ID__1, Uint8Array | number[]], string>;
     getJournal: ActorMethod<[[] | [string]], Result_6>;
     getSharedFile: ActorMethod<[Principal, ID__1], Result_5>;
     getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
     listFiles: ActorMethod<[[] | [ID__1]], Array<FileExtended>>;
+    listMonitors: ActorMethod<[], Array<MonitorCanister>>;
     listStorages: ActorMethod<[], Array<BucketId__1>>;
     moveDirectory: ActorMethod<[string, [] | [string]], Result_4>;
     moveFile: ActorMethod<[string, [] | [string]], Result_3>;
@@ -161,14 +152,23 @@ export interface JournalBucket {
     shareFile: ActorMethod<[ID__1, SharedFileParams], Result_1>;
     sharedWithMe: ActorMethod<[], Array<SharedFileExtended>>;
     showDirectoriesTree: ActorMethod<[[] | [ID__1]], string>;
-    startBucketMonitor: ActorMethod<[BucketId__1], undefined>;
-    stopBucketMonitor: ActorMethod<[BucketId__1], undefined>;
+    startMonitor: ActorMethod<[BucketId__1], undefined>;
+    stopMonitor: ActorMethod<[BucketId__1], undefined>;
     storageLoadWasm: ActorMethod<[Uint8Array | number[]], { total: bigint; chunks: bigint }>;
     storageResetWasm: ActorMethod<[], undefined>;
     unshareFile: ActorMethod<[ID__1], Result_1>;
     updateDirectory: ActorMethod<[DirectoryAction, DirectoryUpdatableFields], Result>;
     upgradeStorages: ActorMethod<[], undefined>;
     withdraw: ActorMethod<[{ to: [] | [AccountIdentifier]; amount: Tokens }], TransferResult>;
+}
+export interface MonitorCanister {
+    status: [] | [canister_status_response];
+    owner: Principal;
+    error: [] | [string];
+    monitoring: { stopped: null } | { running: null };
+    lastChecked: Time;
+    timerId: [] | [bigint];
+    canisterId: BucketId;
 }
 export type NotFoundError = { notFound: null };
 export type NotifyError =
@@ -197,7 +197,7 @@ export type Result_7 = { ok: null } | { err: NotFoundError };
 export type Result_8 =
     | { ok: null }
     | {
-          err: { notify: NotifyError } | { insufficientFunds: { balance: Tokens__1 } } | { transfer: TransferError };
+          err: { notify: NotifyError } | { insufficientFunds: { balance: Tokens } } | { transfer: TransferError };
       };
 export type Result_9 = { ok: Directory } | { err: DirectoryCreateError };
 export interface SharedFileExtended {
@@ -232,10 +232,10 @@ export type TransferError =
     | {
           TxTooOld: { allowed_window_nanos: bigint };
       }
-    | { BadFee: { expected_fee: Tokens } }
+    | { BadFee: { expected_fee: Tokens__1 } }
     | { TxDuplicate: { duplicate_of: BlockIndex } }
     | { TxCreatedInFuture: null }
-    | { InsufficientFunds: { balance: Tokens } };
+    | { InsufficientFunds: { balance: Tokens__1 } };
 export type TransferResult = { Ok: BlockIndex } | { Err: TransferError };
 export interface canister_status_response {
     status: { stopped: null } | { stopping: null } | { running: null };

@@ -1,9 +1,10 @@
-import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
-import Types "../types/types";
-import IC = "../types/ic";
+import Time "mo:base/Time";
+
 import HTTPTypes "../types/http";
+import IC = "../types/ic";
+import Types "../types/types";
 
 module {
     type BucketId = Types.BucketId;
@@ -97,7 +98,7 @@ module {
         name : Text;
         parentId : ?ID;
     } and Thumbnail and FileAttributes;
-    public type Canister = {
+    public type MonitorCanister = {
         canisterId : BucketId;
         owner : Principal;
         // firstChecked : Time.Time;

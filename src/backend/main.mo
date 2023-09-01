@@ -34,7 +34,7 @@ import Order "mo:base/Order";
 import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
 import Vector "mo:vector";
-import Map "mo:hashmap/Map";
+import Map "mo:hashmap_v8/Map";
 
 actor Rabbithole {
     type ID = Types.ID;
@@ -832,6 +832,20 @@ actor Rabbithole {
         ).0;
     };
 
+    public shared ({ caller }) func unshareStorageFiles(storageId : BucketId) : async () {
+        assert isJournal(caller);
+        sharedFiles := Trie.mapFilter<Principal, Trie.Trie<ID, SharedFile>, Trie.Trie<ID, SharedFile>>(
+            sharedFiles,
+            func (user, trie) {
+                let newTrie = Trie.filter<ID, SharedFile>(
+                    trie,
+                    func (id, file) = Principal.notEqual(file.storageId, storageId)
+                );
+                if (Trie.size(newTrie) == 0) null else ?newTrie;
+            }
+        );
+    };
+
     public composite query ({ caller }) func getSharedFile(id : ID) : async ?SharedFileExtended {
         let bucketId = label exit : ?Principal {
             label forLoop for ((owner, trie) in Trie.iter(sharedFiles)) {
@@ -857,8 +871,6 @@ actor Rabbithole {
             case null null;
         };
     };
-
-    
 
     public query ({ caller }) func sharedWithMe() : async [UserShare] {
         assert not Principal.isAnonymous(caller);
