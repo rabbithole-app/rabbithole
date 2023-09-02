@@ -122,6 +122,7 @@ Table of available arguments for scripts:
 - [x] Developers scripts
   - [x] upgrading canisters
   - [x] storage capacity testing
+- [ ] Auto top-up user canisters
 - [ ] Notification canister (WebSockets feature)
   - [ ] email (https outcalls)
 - [ ] Collaborative journal (vetKD)
