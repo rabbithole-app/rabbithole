@@ -1,23 +1,28 @@
-<div class="item">
-    <div class="icon-container">
-        <ng-container *rxIf="!data.thumbnailUrl; else thumbTemplate">
-            <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
-            <ng-container [ngTemplateOutlet]="statusBadge"></ng-container>
-        </ng-container>
-        <ng-template #thumbTemplate>
-            <img class="thumbnail" [src]="$any(data.thumbnailUrl)" alt="" />
-            <ng-container [ngTemplateOutlet]="statusBadge"></ng-container>
+<ng-container *transloco="let t; read: 'shared'">
+    <div class="item">
+        <div class="icon-container">
+            <ng-container *rxIf="!data.thumbnailUrl; else thumbTemplate">
+                <mat-icon class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
+                <ng-container [ngTemplateOutlet]="statusBadge"></ng-container>
+            </ng-container>
+            <ng-template #thumbTemplate>
+                <img class="thumbnail" [src]="$any(data.thumbnailUrl)" alt="" />
+                <ng-container [ngTemplateOutlet]="statusBadge"></ng-container>
+            </ng-template>
+            <div class="badge" *rxIf="timelocked()">
+                <mat-icon svgIcon="far:timer" [matTooltip]="timelockTooltip()"></mat-icon>
+            </div>
+        </div>
+        <div class="info">
+            <div class="title">{{ data.name }}</div>
+            <div class="size">{{ formatBytes(data.fileSize) }}</div>
+        </div>
+        <ng-template #statusBadge>
+            <div *rxIf="showStatus()" class="status">{{ status() }}</div>
         </ng-template>
     </div>
-    <div class="info">
-        <div class="title">{{ data.name }}</div>
-        <div class="size">{{ formatBytes(data.fileSize) }}</div>
-    </div>
-    <ng-template #statusBadge>
-        <div *rxIf="showStatus()" class="status">{{ status() }}</div>
-    </ng-template>
-</div>
-<button mat-button (click)="download.emit()">Download</button>
+    <button mat-button (click)="download.emit()" [disabled]="downloadDisabled()">{{ t('actions.download', { count: 1 }) }}</button>
+</ng-container>
 <!-- <div class="image">
     <mat-icon *rxIf="!data.thumbnailUrl; else thumbTemplate" class="file-icon" [svgIcon]="getIconByExt(data.name)"></mat-icon>
     <ng-template #thumbTemplate>
