@@ -15,7 +15,6 @@ import {
     combineLatestWith,
     concatWith,
     connect,
-    delayWhen,
     exhaustMap,
     filter,
     first,
@@ -275,9 +274,7 @@ function initStorages(): (source$: Observable<ActorSubclass<JournalActor>>) => O
 
 function getStorage(fileSize: bigint): Observable<Bucket<StorageActor>> {
     return state.select('journal').pipe(
-        first(),
-        filter(actor => !isNull(actor)),
-        map(actor => actor as NonNullable<typeof actor>),
+        first((actor): actor is NonNullable<typeof actor> => !isNull(actor)),
         switchMap(actor => getStorageBySize(actor, fileSize)),
         withLatestFrom(state.select('storages')),
         switchMap(([bucketId, storages]) => {
@@ -523,6 +520,14 @@ const fileUpload$ = files.asObservable().pipe(
                                 return EMPTY;
                             })
                         );
+                    }),
+                    catchError(err => {
+                        const res = err.message.match(/(?:Body|Reject text): (.+)/);
+                        const errorMessage = isNull(res) ? err.message : res[1];
+                        return of({
+                            status: UPLOAD_STATUS.Failed,
+                            errorMessage
+                        });
                     })
                 )
             ),

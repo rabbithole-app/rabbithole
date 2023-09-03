@@ -150,7 +150,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     /* -------------------------------------------------------------------------- */
 
     let STORAGE_BUCKET_CAPACITY = 2040109465; // 1.9gb => 2040109465
-    let CYCLE_SHARE = 1_000_000_000_000;
+    let CYCLE_SHARE = 500_000_000_000;
     stable var storageBuckets : TrieSet.Set<BucketId> = TrieSet.empty<BucketId>();
     var lockedStorageCreating : Bool = false;
 
