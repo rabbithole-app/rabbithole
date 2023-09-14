@@ -30,6 +30,47 @@
             "candid": "src/backend/vetkd_system_api/vetkd_system_api.did",
             "wasm": "src/backend/vetkd_system_api/vetkd_system_api.wasm.gz",
             "shrink": false
+        },
+        "internet_identity": {
+            "type": "custom",
+            "candid": "src/backend/internet_identity/internet_identity.did",
+            "wasm": "src/backend/internet_identity/internet_identity.wasm.gz",
+            "shrink": false,
+            "remote": {
+                "candid": "src/backend/internet_identity/internet_identity.did",
+                "id": {
+                    "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+                }
+            },
+            "declarations": {
+                "node_compatibility": true
+            }
+        },
+        "ledger": {
+            "type": "custom",
+            "candid": "src/backend/ledger/ledger.did",
+            "wasm": "src/backend/ledger/ledger.wasm.gz",
+            "remote": {
+                "id": {
+                    "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+                }
+            },
+            "declarations": {
+                "node_compatibility": true
+            }
+        },
+        "cmc": {
+            "type": "custom",
+            "candid": "src/backend/cmc/cmc.did",
+            "wasm": "src/backend/cmc/cmc-custom.wasm",
+            "remote": {
+                "id": {
+                    "ic": "rkp4c-7iaaa-aaaaa-aaaca-cai"
+                }
+            },
+            "declarations": {
+                "node_compatibility": true
+            }
         }
     },
     "defaults": {

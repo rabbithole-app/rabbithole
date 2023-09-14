@@ -1772,6 +1772,15 @@
   resolved "https://registry.yarnpkg.com/@dfinity/cmc/-/cmc-0.0.16.tgz#7c80b7bf7759c981285e33208396c6094f385586"
   integrity sha512-jjuyNmYNAgQdz33/epiVmAeYlG+EBik5G81QKsbVRaQEfGy6CMF2WIJLRQrjkF0qoLdqsjpm7KXyfuLdQ2tEnQ==
 
+"@dfinity/ic-management@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@dfinity/ic-management/-/ic-management-0.0.6.tgz#5162583789c781dd409739bf9b987df9ab7dfb03"
+  integrity sha512-Zg5GE1vkX7aOF6GNmzm2lO0GuBbrYli4FQHzoje5hiGOUY6BWwWWNnkzaXIKYC9Sh7ajlAa176NNFlt0Lp4pSw==
+  dependencies:
+    base58-js "^1.0.5"
+    bech32 "^2.0.0"
+    js-sha256 "^0.9.0"
+
 "@dfinity/identity-secp256k1@^0.19.2":
   version "0.19.2"
   resolved "https://registry.yarnpkg.com/@dfinity/identity-secp256k1/-/identity-secp256k1-0.19.2.tgz#6436fc56cb5187ce4b0bf16f225866c4475240aa"
@@ -1791,6 +1800,11 @@
     "@noble/hashes" "^1.3.1"
     borc "^2.1.1"
     tweetnacl "^1.0.1"
+
+"@dfinity/ledger@^0.0.13":
+  version "0.0.13"
+  resolved "https://registry.yarnpkg.com/@dfinity/ledger/-/ledger-0.0.13.tgz#ab1ed0fbf56fb66a20225c2cc9418315dd1188b1"
+  integrity sha512-SAJGMy24luIlPyIMgOKbwfvzaTKweQpqurGAJkl0UQAz094/scooN0MSmo22bJRdwrqxnuSZFYgLyuBKDIot6w==
 
 "@dfinity/nns-proto@^0.0.6":
   version "0.0.6"
@@ -4469,6 +4483,11 @@ base-x@^3.0.2:
   dependencies:
     safe-buffer "^5.0.1"
 
+base58-js@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/base58-js/-/base58-js-1.0.5.tgz#00697bff954aa85007fa45ce76b699b7960768cd"
+  integrity sha512-LkkAPP8Zu+c0SVNRTRVDyMfKVORThX+rCViget00xdgLRrKkClCTz1T7cIrpr69ShwV5XJuuoZvMvJ43yURwkA==
+
 base64-arraybuffer@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.2.0.tgz#4b944fac0191aa5907afe2d8c999ccc57ce80f45"
@@ -4483,6 +4502,11 @@ batch@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/batch/-/batch-0.6.1.tgz#dc34314f4e679318093fc760272525f94bf25c16"
   integrity sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==
+
+bech32@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/bech32/-/bech32-2.0.0.tgz#078d3686535075c8c79709f054b1b226a133b355"
+  integrity sha512-LcknSilhIGatDAsY1ak2I8VtGaHNhgMSYVxFrGLXv+xLHytaKZKcaUJJUE7qmBr7h33o5YQwP55pMI0xmkpJwg==
 
 big-integer@^1.6.44:
   version "1.6.51"
@@ -8548,6 +8572,11 @@ path-type@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
+
+pem-file@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/pem-file/-/pem-file-1.0.1.tgz#8f07393cc710deb3a5763817927dc4cba5f7ad24"
+  integrity sha512-jIDhaSc4Pk8go+kDYJJ2aS7Bg8Lxvir02NnGp9B1bdJpKiDH680ULl+Duh0jBkz8gV3PywEAWz9XNYqLcd6kVg==
 
 picocolors@^1.0.0:
   version "1.0.0"

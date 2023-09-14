@@ -329,7 +329,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     /* -------------------------------------------------------------------------- */
     /*                                   ACCOUNT                                  */
     /* -------------------------------------------------------------------------- */
-    
+
     type Tokens = LedgerTypes.Tokens;
     type TransferResult = LedgerTypes.TransferResult;
     let Ledger : LedgerTypes.Self = actor (LEDGER_CANISTER_ID);
@@ -482,7 +482,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
                     let freezingThresholdInCycles = status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
                     let availableCycles = Nat.sub(status.cycles, freezingThresholdInCycles);
                     let amount : Nat = Nat.max(STORAGE_CYCLE_THRESHOLD, status.idle_cycles_burned_per_day * 10);
-                    let isInTopupQueue = List.some<Topup>(topupQueue, func ({ canisterId = id }) = Principal.equal(id, value.canisterId));
+                    let isInTopupQueue = List.some<Topup>(topupQueue, func({ canisterId = id }) = Principal.equal(id, value.canisterId));
                     Debug.print("[storage] afterCheck " # debug_show ({ cycles = status.cycles; availableCycles }));
                     if (availableCycles <= amount and not isInTopupQueue) {
                         Debug.print("[storage] enqueueTopUp " # debug_show ({ canisterId }));

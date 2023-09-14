@@ -152,7 +152,7 @@ actor Rabbithole {
         Map_V9.mapFilter<Principal, ProfileInfoV2, Profile>(
             profilesV3,
             Map_V9.phash,
-            func (principal, { username; displayName; avatarUrl }) = ?{ username; displayName; principal; avatarUrl }
+            func(principal, { username; displayName; avatarUrl }) = ?{ username; displayName; principal; avatarUrl }
         ) |> Map_V9.vals _ |> Iter.toArray _;
     };
 
@@ -456,7 +456,9 @@ actor Rabbithole {
                 });
                 switch (result) {
                     case (#Ok height) {
-                        let updated : Invoice = { invoice with stage = #notifyCanister({ block_index = height; controller = self; subnet_type = null }) };
+                        let updated : Invoice = {
+                            invoice with stage = #notifyCanister({ block_index = height; controller = self; subnet_type = null })
+                        };
                         invoices.put(invoice.owner, updated);
                         await createJournal_(updated);
                     };
@@ -836,10 +838,10 @@ actor Rabbithole {
         assert isJournal(caller);
         sharedFiles := Trie.mapFilter<Principal, Trie.Trie<ID, SharedFile>, Trie.Trie<ID, SharedFile>>(
             sharedFiles,
-            func (user, trie) {
+            func(user, trie) {
                 let newTrie = Trie.filter<ID, SharedFile>(
                     trie,
-                    func (id, file) = Principal.notEqual(file.storageId, storageId)
+                    func(id, file) = Principal.notEqual(file.storageId, storageId)
                 );
                 if (Trie.size(newTrie) == 0) null else ?newTrie;
             }

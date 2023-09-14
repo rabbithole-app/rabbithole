@@ -14,7 +14,7 @@ type Environment = {
 
 export const environment: Environment = {
     production: false,
-    identityUrl: 'http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080/#authorize',
+    identityUrl: 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:8080/',
     appName: 'The Rabbit Hole',
     envName: 'DEV',
     registrationEnabled: true,
