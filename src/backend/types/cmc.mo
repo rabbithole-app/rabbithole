@@ -47,7 +47,7 @@ module {
         data : [(Principal, [Principal])];
     };
     public type SubnetTypesToSubnetsResponse = { data : [(Text, [Principal])] };
-    public type Self = ?CyclesCanisterInitPayload -> async actor {
+    public type Self = actor {
         get_icp_xdr_conversion_rate : shared query () -> async IcpXdrConversionRateResponse;
         get_principals_authorized_to_create_canisters_to_subnets : shared query () -> async PrincipalsAuthorizedToCreateCanistersToSubnetsResponse;
         get_subnet_types_to_subnets : shared query () -> async SubnetTypesToSubnetsResponse;

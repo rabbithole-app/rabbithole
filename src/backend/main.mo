@@ -663,7 +663,7 @@ actor Rabbithole {
         let id : ID = await Utils.generateId();
         let now = Time.now();
         let expiredAt = now + 604_800_000_000_000; // 1 week
-        let invite : Invite = { id; canisterId = caller; createdAt = now; expiredAt; owner = caller; status = #active; cycles = 2_000_000_000_000 };
+        let invite : Invite = { id; canisterId = caller; createdAt = now; expiredAt; owner = caller; status = #active; cycles = 2_500_000_000_000 };
         invites.put(id, invite);
         if (Option.isNull(invitesTimerId)) {
             startMonitorInvites();

@@ -9,7 +9,7 @@ IC_VERSION=d353989b94e5862692ea2887637dcacace4e244c
 mkdir -p $SRC_DIR
 curl -kLo $SRC_DIR/ledger.wasm.gz https://download.dfinity.systems/ic/$IC_VERSION/canisters/ledger-canister.wasm.gz
 curl -kLo $SRC_DIR/ledger.did https://raw.githubusercontent.com/dfinity/ic/$IC_VERSION/rs/rosetta-api/icp_ledger/ledger.did
-mkdir .dfx/local/canisters/ledger
+mkdir -p .dfx/local/canisters/ledger
 cp $SRC_DIR/ledger.wasm.gz .dfx/local/canisters/ledger/ledger.wasm.gz
 dfx identity new --storage-mode=plaintext minter
 dfx identity use minter
