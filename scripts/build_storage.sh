@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. ./scripts/banner.sh
+
 export DFX_MOC_PATH="$(vessel bin)/moc"
 network="--network ${1:-"local"}"
 mode="--mode ${2:-"upgrade"}"
