@@ -1,4 +1,4 @@
-let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.9.8-20230811/package-set.dhall sha256:162f8cfe5f4df8c65d3ef46b6ee2275235476b94290b92dff2626733676fd2db
+let upstream = https://github.com/dfinity/vessel-package-set/releases/download/mo-0.10.0-20230911/package-set.dhall sha256:7bce6afe8b96a8808f66b5b6f7015257d44fc1f3e95add7ced3ccb7ce36e5603
 let aviate-labs = https://github.com/aviate-labs/package-set/releases/download/v0.1.8/package-set.dhall sha256:9ab42c1f732299dc8c1f631d39ea6a2551414bf6efc8bbde4e11e36ebc6d7edd
 
 let Package =
@@ -8,7 +8,7 @@ let additions =
   [
     { name = "base"
     , repo = "https://github.com/dfinity/motoko-base"
-    , version = "moc-0.9.8"
+    , version = "moc-0.10.0"
     , dependencies = [] : List Text
     },
     -- { name = "stableBTree"
@@ -50,6 +50,21 @@ let additions =
     , repo = "https://github.com/research-ag/vector.git"
     , version = "main"
     , dependencies = ["base"] : List Text
+    },
+    { name = "btree"
+    , repo = "https://github.com/canscale/StableHeapBTreeMap"
+    , version = "v0.3.2"
+    , dependencies = ["base"]
+    },
+    { name = "testing"
+    , repo = "https://github.com/internet-computer/testing.mo"
+    , version = "v0.1.3"
+    , dependencies = [] : List Text
+    },
+    { name = "cycles-manager"
+    , repo = "https://github.com/CycleOperators/cycles-manager.git"
+    , version = "main"
+    , dependencies = ["base", "btree", "testing"] : List Text
     }
   ] : List Package
 

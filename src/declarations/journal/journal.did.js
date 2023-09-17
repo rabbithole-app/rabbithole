@@ -145,6 +145,17 @@ export const idlFactory = ({ IDL }) => {
         })
     });
     const ID__1 = IDL.Text;
+    const TransferCyclesError = IDL.Variant({
+        too_few_cycles_requested: IDL.Null,
+        canister_quota_reached: IDL.Null,
+        other: IDL.Text,
+        insufficient_cycles_available: IDL.Null,
+        aggregate_quota_reached: IDL.Null
+    });
+    const TransferCyclesResult = IDL.Variant({
+        ok: IDL.Nat,
+        err: TransferCyclesError
+    });
     const NotFoundError = IDL.Variant({ notFound: IDL.Null });
     const Result_7 = IDL.Variant({ ok: IDL.Null, err: NotFoundError });
     const BucketId__1 = IDL.Principal;
@@ -217,15 +228,6 @@ export const idlFactory = ({ IDL }) => {
         updatedAt: Time,
         parentId: IDL.Opt(ID)
     });
-    const MonitorCanister = IDL.Record({
-        status: IDL.Opt(canister_status_response),
-        owner: IDL.Principal,
-        error: IDL.Opt(IDL.Text),
-        monitoring: IDL.Variant({ stopped: IDL.Null, running: IDL.Null }),
-        lastChecked: Time,
-        timerId: IDL.Opt(IDL.Nat),
-        canisterId: BucketId
-    });
     const DirectoryMoveError = IDL.Variant({
         sourceNotFound: IDL.Null,
         notFound: IDL.Null,
@@ -293,6 +295,7 @@ export const idlFactory = ({ IDL }) => {
         createDirectory: IDL.Func([EntryCreate], [Result_9], []),
         createInvite: IDL.Func([Time], [Result_8], []),
         createPaths: IDL.Func([IDL.Vec(IDL.Text), IDL.Vec(ID__1), IDL.Opt(ID__1)], [IDL.Vec(IDL.Tuple(IDL.Text, ID__1))], []),
+        cycles_manager_transferCycles: IDL.Func([IDL.Nat], [TransferCyclesResult], []),
         deleteDirectory: IDL.Func([IDL.Text], [Result_7], []),
         deleteFile: IDL.Func([IDL.Text], [Result_7], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
@@ -303,7 +306,6 @@ export const idlFactory = ({ IDL }) => {
         getSharedFile: IDL.Func([IDL.Principal, ID__1], [Result_5], ['query']),
         getStorage: IDL.Func([IDL.Nat], [IDL.Opt(BucketId__1)], []),
         listFiles: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(FileExtended)], ['query']),
-        listMonitors: IDL.Func([], [IDL.Vec(MonitorCanister)], ['query']),
         listStorages: IDL.Func([], [IDL.Vec(BucketId__1)], ['query']),
         moveDirectory: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_4], []),
         moveFile: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [Result_3], []),

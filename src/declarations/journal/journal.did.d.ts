@@ -133,6 +133,7 @@ export interface JournalBucket {
     createDirectory: ActorMethod<[EntryCreate], Result_9>;
     createInvite: ActorMethod<[Time], Result_8>;
     createPaths: ActorMethod<[Array<string>, Array<ID__1>, [] | [ID__1]], Array<[string, ID__1]>>;
+    cycles_manager_transferCycles: ActorMethod<[bigint], TransferCyclesResult>;
     deleteDirectory: ActorMethod<[string], Result_7>;
     deleteFile: ActorMethod<[string], Result_7>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
@@ -143,7 +144,6 @@ export interface JournalBucket {
     getSharedFile: ActorMethod<[Principal, ID__1], Result_5>;
     getStorage: ActorMethod<[bigint], [] | [BucketId__1]>;
     listFiles: ActorMethod<[[] | [ID__1]], Array<FileExtended>>;
-    listMonitors: ActorMethod<[], Array<MonitorCanister>>;
     listStorages: ActorMethod<[], Array<BucketId__1>>;
     moveDirectory: ActorMethod<[string, [] | [string]], Result_4>;
     moveFile: ActorMethod<[string, [] | [string]], Result_3>;
@@ -160,15 +160,6 @@ export interface JournalBucket {
     updateDirectory: ActorMethod<[DirectoryAction, DirectoryUpdatableFields], Result>;
     upgradeStorages: ActorMethod<[], undefined>;
     withdraw: ActorMethod<[{ to: [] | [AccountIdentifier]; amount: Tokens }], TransferResult>;
-}
-export interface MonitorCanister {
-    status: [] | [canister_status_response];
-    owner: Principal;
-    error: [] | [string];
-    monitoring: { stopped: null } | { running: null };
-    lastChecked: Time;
-    timerId: [] | [bigint];
-    canisterId: BucketId;
 }
 export type NotFoundError = { notFound: null };
 export type NotifyError =
@@ -228,6 +219,13 @@ export interface Tokens {
 export interface Tokens__1 {
     e8s: bigint;
 }
+export type TransferCyclesError =
+    | { too_few_cycles_requested: null }
+    | { canister_quota_reached: null }
+    | { other: string }
+    | { insufficient_cycles_available: null }
+    | { aggregate_quota_reached: null };
+export type TransferCyclesResult = { ok: bigint } | { err: TransferCyclesError };
 export type TransferError =
     | {
           TxTooOld: { allowed_window_nanos: bigint };

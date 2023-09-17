@@ -12,7 +12,10 @@ import AsyncSource "mo:uuid/async/SourceV4";
 import UUID "mo:uuid/UUID";
 import Base64 "mo:encoding/Base64";
 import { hashNat32 } = "mo:hashmap_v8/utils";
+import Float "mo:base/Float";
+import Int "mo:base/Int";
 
+import IC "../types/ic";
 import Types "../types/types";
 import Env "../env";
 
@@ -67,6 +70,14 @@ module {
     public func base64(b : Blob) : Text {
         let bytes = Blob.toArray(b);
         arrayToText(Base64.StdEncoding.encode(bytes));
+    };
+
+    public func calcFreezingThresholdInCycles(status : IC.canister_status_response) : Nat {
+        // status.memory_size * status.settings.freezing_threshold * 127000 / 1073741824;
+        Float.mul(
+            Float.fromInt(status.idle_cycles_burned_per_day) |> Float.div(_, Float.fromInt(86400)),
+            Int.abs(status.settings.freezing_threshold) |> Float.fromInt _
+        ) |> Float.toInt _ |> Int.abs _;
     };
 
     func arrayToText(arr : [Nat8]) : Text {

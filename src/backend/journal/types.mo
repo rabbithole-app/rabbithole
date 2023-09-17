@@ -98,22 +98,12 @@ module {
         name : Text;
         parentId : ?ID;
     } and Thumbnail and FileAttributes;
-    public type MonitorCanister = {
-        canisterId : BucketId;
-        owner : Principal;
-        // firstChecked : Time.Time;
-        lastChecked : Time.Time;
-        // lastDonated : Time.Time;
-        status : ?IC.canister_status_response;
-        // freezingThresholdInCycles : Nat;
-        error : ?Text;
-        monitoring : { #running; #stopped };
-        timerId : ?Nat;
-    };
+
     public type Topup = {
         canisterId : BucketId;
         amount : Nat;
     };
+
     public type CreatePath = {
         path : Text;
         parentId : ?ID;

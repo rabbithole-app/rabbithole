@@ -24,7 +24,7 @@ import List "mo:base/List";
 import Option "mo:base/Option";
 import Debug "mo:base/Debug";
 import Nat64 "mo:base/Nat64";
-import A "./utils/Account";
+import A "./utils/account";
 import Timer "mo:base/Timer";
 import Int64 "mo:base/Int64";
 import Float "mo:base/Float";
@@ -796,7 +796,6 @@ actor Rabbithole {
         stableInvites := [];
         setTimers();
         profiles := TrieMap.fromEntries<Principal, ProfileInfo>(stableProfiles.vals(), Principal.equal, Principal.hash);
-        profilesV3 := Map_V9.fromIter(Map.entries(profilesV2), Map_V9.phash);
         stableProfiles := [];
     };
 

@@ -31,6 +31,19 @@ type TransferError =
    TxDuplicate: record {duplicate_of: BlockIndex;};
    TxTooOld: record {allowed_window_nanos: nat64;};
  };
+type TransferCyclesResult = 
+ variant {
+   err: TransferCyclesError;
+   ok: nat;
+ };
+type TransferCyclesError = 
+ variant {
+   aggregate_quota_reached;
+   canister_quota_reached;
+   insufficient_cycles_available;
+   other: text;
+   too_few_cycles_requested;
+ };
 type Tokens__1 = record {e8s: nat64;};
 type Tokens = record {e8s: nat64;};
 type Time = int;
@@ -158,19 +171,6 @@ type NotifyError =
    TransactionTooOld: BlockIndex__1;
  };
 type NotFoundError = variant {notFound;};
-type MonitorCanister = 
- record {
-   canisterId: BucketId;
-   error: opt text;
-   lastChecked: Time;
-   monitoring: variant {
-                 running;
-                 stopped;
-               };
-   owner: principal;
-   status: opt canister_status_response;
-   timerId: opt nat;
- };
 type JournalBucket = 
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
@@ -190,6 +190,7 @@ type JournalBucket =
            text;
            ID__1;
          });
+   cycles_manager_transferCycles: (nat) -> (TransferCyclesResult);
    deleteDirectory: (text) -> (Result_7);
    deleteFile: (text) -> (Result_7);
    deleteStorage: (BucketId__1) -> ();
@@ -200,7 +201,6 @@ type JournalBucket =
    getSharedFile: (principal, ID__1) -> (Result_5) query;
    getStorage: (nat) -> (opt BucketId__1);
    listFiles: (opt ID__1) -> (vec FileExtended) query;
-   listMonitors: () -> (vec MonitorCanister) query;
    listStorages: () -> (vec BucketId__1) query;
    moveDirectory: (text, opt text) -> (Result_4);
    moveFile: (text, opt text) -> (Result_3);

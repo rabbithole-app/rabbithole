@@ -21,12 +21,15 @@ import CertTree "mo:ic-certification/CertTree";
 import CanisterSigs "mo:ic-certification/CanisterSigs";
 import MerkleTree "mo:ic-certification/MerkleTree";
 import CertifiedData "mo:base/CertifiedData";
+import CyclesRequester "mo:cycles-manager/CyclesRequester";
+import CyclesManager "mo:cycles-manager/CyclesManager";
 
 import Types "../types/types";
 import StorageTypes "types";
 import HTTP "../types/http";
 import JournalTypes "../journal/types";
 import Utils "../utils/utils";
+import IC "../types/ic";
 
 shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     type ID = Types.ID;
@@ -63,15 +66,55 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     let ct = CertTree.Ops(certStore);
     let csm = CanisterSigs.Manager(ct, null);
 
+    /* -------------------------------------------------------------------------- */
+    /*                              CYCLES REQUESTER                              */
+    /* -------------------------------------------------------------------------- */
+
+    let STORAGE_CANISTER_CYCLE_THRESHOLD = 500_000_000_000;
+
+    stable var cyclesRequester : CyclesRequester.CyclesRequester = CyclesRequester.init({
+        batteryCanisterPrincipal = installer;
+        topupRule = {
+            // Request 100 Billion cycles from the battery canister anytime when this canister is below 0.5T cycles
+            threshold = STORAGE_CANISTER_CYCLE_THRESHOLD;
+            method = #by_amount(100_000_000_000);
+        };
+    });
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   TIMERS                                   */
+    /* -------------------------------------------------------------------------- */
+
+    let CHECK_INTERVAL_NANOS : Nat = 600_000_000_000; // 10 minutes
+    let ic : IC.Self = actor "aaaaa-aa";
+
+    system func timer(set : Nat64 -> ()) : async () {
+        set(Nat64.fromIntWrap(Time.now() + CHECK_INTERVAL_NANOS));
+        ignore updateCyclesRequesterThreshold();
+    };
+
+    func updateCyclesRequesterThreshold() : async () {
+        let self = Principal.fromActor(this);
+        let status = await ic.canister_status({ canister_id = self });
+        let freezingThresholdInCycles = Utils.calcFreezingThresholdInCycles(status);
+        CyclesRequester.setTopupRule(
+            cyclesRequester,
+            {
+                threshold = Nat.add(freezingThresholdInCycles, STORAGE_CANISTER_CYCLE_THRESHOLD);
+                method = #by_amount(100_000_000_000);
+            }
+        );
+    };
+
     public query func getCertTree() : async MerkleTree.RawTree {
         MerkleTree.structure(certStore.tree);
     };
 
     public query func version() : async Nat { VERSION };
 
-    /**
-     * HTTP
-     */
+    /* -------------------------------------------------------------------------- */
+    /*                                    HTTP                                    */
+    /* -------------------------------------------------------------------------- */
 
     public query ({ caller }) func http_request({ method : Text; url : Text } : HttpRequest) : async HttpResponse {
         try {
@@ -199,15 +242,16 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         streamingToken;
     };
 
-    /**
-     * Upload
-     */
+    /* -------------------------------------------------------------------------- */
+    /*                                   UPLOAD                                   */
+    /* -------------------------------------------------------------------------- */
 
     public shared ({ caller }) func initUpload(key : AssetKey) : async InitUpload {
         if (Principal.notEqual(caller, owner)) {
             throw Error.reject("User does not have the permission to upload data. Caller: " # Principal.toText(caller));
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         // let exists = label v : Bool {
         //     for ((id, asset) in Trie.iter<ID, Asset>(assets)) {
         //         switch (key.sha256, asset.key.sha256) {
@@ -233,6 +277,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             throw Error.reject("User does not have the permission to keep batch alive.");
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let ?batch : ?Batch = Map.get(batches, nhash, id) else throw Error.reject("Batch not found.");
         ignore Map.put(batches, nhash, id, { batch with expiresAt = Time.now() + BATCH_EXPIRY_NANOS });
     };
@@ -242,6 +287,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             throw Error.reject("User does not have the permission to a upload any chunks of content.");
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let ?batch : ?Batch = Map.get(batches, nhash, chunk.batchId) else throw Error.reject("Batch not found.");
         nextChunkID := nextChunkID + 1;
         chunks := Trie.put<Nat32, Chunk>(chunks, Utils.keyNat32 nextChunkID, Nat32.equal, chunk).0;
@@ -263,6 +309,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             throw Error.reject("User does not have the permission to commit an upload.");
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let ?batch = Map.get(batches, nhash, batchId) else return #err(#batchNotFound);
         // Test batch is not expired
         let now : Time.Time = Time.now();
@@ -339,6 +386,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             throw Error.reject("User does not have the permission to get the size of stable memory.");
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let stableVarInfo = StableMemory.stableVarQuery();
         let { size } = await stableVarInfo();
         Nat64.toNat(size);
@@ -362,7 +410,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
         let chunkIdsBuffer = Buffer.fromArray<Nat32>(chunkIds);
         chunks := Trie.filter<Nat32, Chunk>(
             chunks,
-            func (chunkId, _) = not Buffer.contains<Nat32>(chunkIdsBuffer, chunkId, Nat32.equal)
+            func(chunkId, _) = not Buffer.contains<Nat32>(chunkIdsBuffer, chunkId, Nat32.equal)
         );
     };
 
@@ -371,6 +419,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
             throw Error.reject("User does not have the permission to delete an asset.");
         };
 
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let (newAssets, asset) = Trie.remove<ID, Asset>(assets, Utils.keyText(id), Text.equal);
         assets := newAssets;
         switch (asset) {
@@ -466,6 +515,7 @@ shared ({ caller = installer }) actor class Storage(owner : Principal) = this {
     };
 
     public shared ({ caller }) func getStableMemorySize() : async Nat {
+        ignore await* CyclesRequester.requestTopupIfBelowThreshold(cyclesRequester);
         let stableVarInfo = StableMemory.stableVarQuery();
         let { size } = await stableVarInfo();
         Nat64.toNat(size);
