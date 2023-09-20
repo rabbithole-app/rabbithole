@@ -241,6 +241,7 @@ service : {
   deleteInvite: (ID) -> (Result_2);
   deleteInvoice: () -> ();
   deleteProfile: () -> (Result_1);
+  fixJournalControllers: () -> ();
   getInvites: () -> (vec Invite) query;
   getInvoice: () -> (opt Invoice) query;
   getJournalBucket: () -> (opt BucketId);

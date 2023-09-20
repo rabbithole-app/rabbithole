@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 
 import { authGuard, createProfileGuard, dashboardGuard, invitationsGuard, journalGuard, loginGuard, registerGuard } from '@core/guards';
-import { CanistersService } from '@features/canisters/services';
+import { CanisterService } from '@features/canisters/services';
 import { FILE_LIST_ICONS_CONFIG } from '@features/file-list/config';
 import { GRAY_ICONS_CONFIG } from '@features/file-list/config/icons';
 import { fileListResolver } from '@features/file-list/resolvers/file-list.resolver';
@@ -57,7 +57,7 @@ export const appRoutes: Route[] = [
             {
                 path: 'canisters',
                 loadComponent: () => import('./features/canisters/canisters.component').then(m => m.CanistersComponent),
-                providers: [CanistersService]
+                providers: [CanisterService]
             },
             {
                 path: '',

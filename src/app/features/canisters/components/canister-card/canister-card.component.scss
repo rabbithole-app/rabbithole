@@ -1,0 +1,29 @@
+@use '@angular/material' as mat;
+
+.card-content {
+    display: grid;
+    row-gap: 1rem;
+    
+    &--error {
+        grid-template-columns: 1fr auto;
+        column-gap: 1rem;
+    }
+}
+
+.settings {
+    display: grid;
+    row-gap: 1rem;
+}
+
+.info-icon {
+    height: 16px;
+    width: 16px;
+}
+
+.status-running {
+    --mdc-chip-elevated-container-color: #A5D6A7;
+}
+.status-stopping, .status-stopped {
+    --mdc-chip-elevated-container-color: var(--warn-color);
+    --mdc-chip-label-text-color: #fff;
+}

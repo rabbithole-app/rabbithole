@@ -1,1 +1,1 @@
-export * from './canisters.service';
+export * from './canister.service';

@@ -1,10 +1,17 @@
 @use 'mixins';
 
 :host {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     column-gap: 0.5rem;
     white-space: nowrap;
     align-items: center;
+
+    .content {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 .copy-button {

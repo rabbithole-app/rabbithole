@@ -57,19 +57,28 @@
             "label": "Expert mode"
         }
     },
-    "table": {
-        "header": {
+    "canisters": {
+        "journals": "Journals",
+        "storages": "Storages",
+        "card": {
             "id": "ID",
             "canisterId": "Canister ID",
             "cycles": "Cycles",
             "status": "Status",
-            "createdAt": "Created at",
-            "expiredAt": "Expired at",
-            "actions": "Actions",
             "memorySize": "Memory size",
+            "freezingThreshold": "Freezing threshold",
             "freezingThresholdInCycles": "Freezing threshold in cycles",
             "moduleHash": "Module hash",
-            "settings": "Settings"
+            "settings": "Settings",
+            "controllers": "Controllers",
+            "actions": {
+                "expand": "Expand",
+                "collapse": "Collapse",
+                "delete": "Delete"
+            }
+        },
+        "messages": {
+            "deleteOk": "Canister {{ id }} successfully deleted"
         }
     },
     "paginator": {

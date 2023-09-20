@@ -158,6 +158,7 @@ export interface _SERVICE {
     deleteInvite: ActorMethod<[ID], Result_2>;
     deleteInvoice: ActorMethod<[], undefined>;
     deleteProfile: ActorMethod<[], Result_1>;
+    fixJournalControllers: ActorMethod<[], undefined>;
     getInvites: ActorMethod<[], Array<Invite>>;
     getInvoice: ActorMethod<[], [] | [Invoice]>;
     getJournalBucket: ActorMethod<[], [] | [BucketId]>;

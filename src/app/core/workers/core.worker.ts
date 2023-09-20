@@ -32,10 +32,10 @@ import {
     withLatestFrom
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
+import { ICManagementCanister } from '@dfinity/ic-management';
 
 import { createActor, decryptArrayBuffer, initVetAesGcmKey, loadIdentity, loadWasm } from '@core/utils';
 import { _SERVICE as RabbitholeActor } from '@declarations/rabbithole/rabbithole.did';
-import { ICManagementCanister } from '@dfinity/ic-management';
 import { DownloadComplete, DownloadFailed, DownloadProgress, DownloadRetrieveKey, DownloadStatus, FileInfoExtended } from '@features/file-list/models';
 import { concatUint8Arrays, toDirectoryExtended, toFileExtended } from '@features/file-list/utils';
 import { SharedFileExtended } from '@features/shared-with-me/models';
@@ -50,6 +50,7 @@ import { canisterId as rabbitholeCanisterId, idlFactory as rabbitholeIdlFactory 
 import { idlFactory as storageIdlFactory } from 'declarations/storage';
 import { AssetInfo, _SERVICE as StorageActor } from 'declarations/storage/storage.did';
 import { environment } from 'environments/environment';
+import { formatCanisterStatus } from '@features/canisters/utils';
 
 interface State {
     identity: Identity;
@@ -95,6 +96,7 @@ const SHARED_WITH_ME_INTERVAL = 10000;
 const canistersTimer: Subject<boolean> = new Subject();
 const canistersTimerOn$ = canistersTimer.asObservable().pipe(filter(v => v));
 const canistersTimerOff$ = canistersTimer.asObservable().pipe(filter(v => !v));
+const deleteStorage: Subject<string> = new Subject();
 
 addEventListener('message', ({ data }) => {
     switch (data.action) {
@@ -197,6 +199,9 @@ addEventListener('message', ({ data }) => {
             break;
         case 'stopCanistersTimer':
             canistersTimer.next(false);
+            break;
+        case 'deleteStorage':
+            deleteStorage.next(data.canisterId);
             break;
         default:
             break;
@@ -617,7 +622,7 @@ sharedTimerOn$
     )
     .subscribe(payload => postMessage({ action: 'sharedWithMeDone', payload }));
 
-/* canistersTimerOn$
+canistersTimerOn$
     .pipe(
         switchMap(() =>
             state.select('identity').pipe(
@@ -626,18 +631,63 @@ sharedTimerOn$
                 map(agent => ICManagementCanister.create({ agent }))
             )
         ),
-        delayWhen(() => state.select('journalId')),
-        withLatestFrom(state.select('journalId')),
-        switchMap(([ic, canisterId]) => timer(0, SHARED_WITH_ME_INTERVAL).pipe(exhaustMap(() => ic.canisterStatus(canisterId)))),
-        catchError(err => {
-            console.error(err);
-            postMessage({ action: 'canisterStatusFailed', errorMessage: err.message });
-            return EMPTY;
-        }),
+        switchMap(ic =>
+            merge(
+                state.select('journalId').pipe(switchMap(canisterId => timer(0, 5000).pipe(map(() => ({ canisterId: canisterId.toText(), type: 'journal' }))))),
+                state.select('storages').pipe(
+                    map(storages => storages.map(({ canisterId }) => canisterId)),
+                    switchMap(storages => from(storages).pipe(mergeMap(canisterId => timer(0, 5000).pipe(map(() => ({ canisterId, type: 'storage' }))))))
+                )
+            ).pipe(
+                tap(({ canisterId, type }) => postMessage({ action: 'canisterStatusLoading', payload: { canisterId, type, loading: true } })),
+                mergeMap(({ canisterId, type }) =>
+                    from(ic.canisterStatus(Principal.fromText(canisterId))).pipe(
+                        map(canisterStatusResponse => ({
+                            canisterId,
+                            type,
+                            canisterStatusResponse,
+                            canisterStatus: formatCanisterStatus(canisterStatusResponse),
+                            loading: false
+                        })),
+                        catchError(err => {
+                            const res = err.message.match(/(?:"Reject message"): "(.+)"/);
+                            const errorMessage = isNull(res) ? err.message : res[1];
+                            postMessage({ action: 'canisterStatusFailed', payload: { canisterId, type, errorMessage, loading: false } });
+                            return EMPTY;
+                        })
+                    )
+                )
+            )
+        ),
         takeUntil(canistersTimerOff$),
         repeat()
     )
-    .subscribe(payload => postMessage({ action: 'canisterStatusDone', payload })); */
+    .subscribe(payload => postMessage({ action: 'canisterStatusDone', payload }));
+
+deleteStorage
+    .asObservable()
+    .pipe(
+        mergeMap(canisterId =>
+            state.select('journal').pipe(
+                first(),
+                switchMap(actor => actor.deleteStorage(Principal.fromText(canisterId))),
+                map(() => ({ canisterId })),
+                catchError(err => {
+                    const res = err.message.match(/(?:"Reject message"): "(.+)"/);
+                    const errorMessage = isNull(res) ? err.message : res[1];
+                    postMessage({ action: 'deleteStorageFailed', payload: { canisterId, errorMessage } });
+                    return EMPTY;
+                })
+            )
+        )
+    )
+    .subscribe(payload => {
+        postMessage({ action: 'deleteStorageDone', payload });
+        state.set(_state => ({
+            ..._state,
+            storages: _state.storages.filter(({ canisterId }) => canisterId !== payload.canisterId)
+        }));
+    });
 
 function download(
     { id, name, storageId }: { id: string; name: string; storageId: Principal },

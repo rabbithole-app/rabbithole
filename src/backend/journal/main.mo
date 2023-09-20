@@ -188,7 +188,7 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     func createStorageBucket(caller : Principal) : async BucketId {
         let self : Principal = Principal.fromActor(this);
         let settings = {
-            controllers = ?[self];
+            controllers = ?[self, caller];
             freezing_threshold = null;
             memory_allocation = null;
             compute_allocation = null;
@@ -570,17 +570,5 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
 
     func isStorage(bucketId : BucketId) : Bool {
         TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
-    };
-
-    //NOTE - DEPRECATED!
-    public shared ({ caller }) func canisterStatus(canisterId : Principal) : async {
-        id : Principal;
-        status : IC.canister_status_response;
-        freezingThresholdInCycles : Nat;
-    } {
-        assert Principal.equal(caller, owner) or Utils.isAdmin(caller);
-        let status = await ic.canister_status({ canister_id = canisterId });
-        let freezingThresholdInCycles = Utils.calcFreezingThresholdInCycles(status);
-        { id = canisterId; status; freezingThresholdInCycles };
     };
 };

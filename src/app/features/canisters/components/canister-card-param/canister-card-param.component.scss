@@ -1,0 +1,12 @@
+:host {
+    display: grid;
+    justify-items: start;
+    .label {
+        font-weight: 500;
+    }
+    .description {
+        display: flex;
+        column-gap: 0.5rem;
+        align-items: center;
+    }
+}

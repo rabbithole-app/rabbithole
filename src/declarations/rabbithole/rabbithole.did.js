@@ -202,6 +202,7 @@ export const idlFactory = ({ IDL }) => {
         deleteInvite: IDL.Func([ID], [Result_2], []),
         deleteInvoice: IDL.Func([], [], []),
         deleteProfile: IDL.Func([], [Result_1], []),
+        fixJournalControllers: IDL.Func([], [], []),
         getInvites: IDL.Func([], [IDL.Vec(Invite)], ['query']),
         getInvoice: IDL.Func([], [IDL.Opt(Invoice)], ['query']),
         getJournalBucket: IDL.Func([], [IDL.Opt(BucketId)], []),

@@ -213,7 +213,7 @@ actor Rabbithole {
     func createJournalBucket(caller : Principal, cyclesShare : Nat) : async BucketId {
         let self : Principal = Principal.fromActor(Rabbithole);
         let settings = {
-            controllers = ?[self];
+            controllers = ?[self, caller];
             freezing_threshold = null;
             memory_allocation = null;
             compute_allocation = null;
@@ -267,6 +267,20 @@ actor Rabbithole {
                 Buffer.toArray(buffer);
             };
             case (_) throw Error.reject("Incorrect bucket type");
+        };
+    };
+
+    public shared ({ caller }) func fixJournalControllers() : async () {
+        assert Utils.isAdmin(caller);
+        let self : Principal = Principal.fromActor(Rabbithole);
+        for ((owner, bucketId) in Trie.iter<Principal, BucketId>(journals)) {
+            let settings = {
+                controllers = ?[self, owner];
+                freezing_threshold = null;
+                memory_allocation = null;
+                compute_allocation = null;
+            };
+            await ic.update_settings({ canister_id = bucketId; settings });
         };
     };
 
@@ -800,7 +814,7 @@ actor Rabbithole {
     };
 
     /* -------------------------------------------------------------------------- */
-    /*                                File sharing                                */
+    /*                                FILE SHARING                                */
     /* -------------------------------------------------------------------------- */
 
     // <user, fileId, [user]>

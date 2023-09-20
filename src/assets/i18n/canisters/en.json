@@ -1,9 +1,0 @@
-{
-    "journals": "Journals",
-    "storages": "Storages",
-    "details": {
-        "freezingThreshold": "Freezing threshold",
-        "status": "Status",
-        "controllers": "Controllers"
-    }
-}

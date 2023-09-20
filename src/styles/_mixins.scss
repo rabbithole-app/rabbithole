@@ -4,6 +4,7 @@
         height: $button-size;
         padding: ($button-size - $icon-size) / 2;
         font-size: $icon-size;
+        line-height: initial;
         mat-icon {
             height: $icon-size;
             width: $icon-size;
