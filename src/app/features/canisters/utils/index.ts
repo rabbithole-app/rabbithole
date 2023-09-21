@@ -25,7 +25,9 @@ export const toStatus = (status: { stopped: null } | { stopping: null } | { runn
     'stopped' in status && status.stopped === null ? 'stopped' : 'stopping' in status && status.stopping === null ? 'stopping' : 'running';
 
 export function formatCanisterStatus(status: CanisterStatusResponse): CanisterStatusFormatted {
-    const freezingThresholdInCycles = formatTCycles(BigInt((Number(status.idle_cycles_burned_per_day) / 86400) * Number(status.settings.freezing_threshold)));
+    const freezingThresholdInCycles = formatTCycles(
+        BigInt(Math.floor((Number(status.idle_cycles_burned_per_day) / 86400) * Number(status.settings.freezing_threshold)))
+    );
     const moduleHash = fromNullable(status.module_hash);
     return {
         cycles: formatTCycles(status.cycles),

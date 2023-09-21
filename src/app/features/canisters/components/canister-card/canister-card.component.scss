@@ -3,11 +3,6 @@
 .card-content {
     display: grid;
     row-gap: 1rem;
-    
-    &--error {
-        grid-template-columns: 1fr auto;
-        column-gap: 1rem;
-    }
 }
 
 .settings {
@@ -26,4 +21,16 @@
 .status-stopping, .status-stopped {
     --mdc-chip-elevated-container-color: var(--warn-color);
     --mdc-chip-label-text-color: #fff;
+}
+
+.cycles {
+    display: flex;
+    column-gap: .5rem;
+    align-items: center;
+}
+
+.error-wrapper {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 1rem;
 }

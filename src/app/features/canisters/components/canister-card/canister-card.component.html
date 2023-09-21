@@ -1,51 +1,58 @@
 <ng-container *transloco="let t; read: 'canisters.card'">
     <mat-card>
-        <mat-card-content class="card-content" [ngClass]="{ 'card-content--error': hasError(data) }">
-            <ng-container *rxIf="hasStatus(data); else error">
-                <ng-container [ngTemplateOutlet]="canisterId"></ng-container>
+        <mat-card-content class="card-content">
+            <ng-container *rxIf="status(); let d; else: errorTemplate">
+                <ng-container [ngTemplateOutlet]="canisterIdTemplate"></ng-container>
                 <app-canister-card-param label="{{ t('cycles') }}">
-                    {{ data.canisterStatus.cycles }} TCycles
-                    <mat-icon class="info-icon" svgIcon="far:circle-info" matTooltip="{{ data.canisterStatusResponse.cycles }} Cycles"></mat-icon>
+                    <div class="cycles">
+                        {{ d.canisterStatus.cycles }} TCycles
+                        <mat-icon class="info-icon" svgIcon="far:circle-info" matTooltip="{{ d.canisterStatusResponse.cycles }} Cycles"></mat-icon>
+                    </div>
                 </app-canister-card-param>
                 <app-canister-card-param label="{{ t('memorySize') }}">
-                    {{ data.canisterStatus.memorySize }}
+                    {{ d.canisterStatus.memorySize }}
                 </app-canister-card-param>
                 <app-canister-card-param>
-                    <mat-chip disableRipple [class]="'status-' + data.canisterStatus.settings.status">{{ data.canisterStatus.settings.status }}</mat-chip>
+                    <mat-chip disableRipple [class]="'status-' + d.canisterStatus.settings.status">{{ d.canisterStatus.settings.status }}</mat-chip>
                 </app-canister-card-param>
                 <div class="settings" *rxIf="expanded()">
-                    <ng-container *rxIf="data.canisterStatus.moduleHash">
+                    <ng-container *rxIf="d.canisterStatus.moduleHash">
                         <app-canister-card-param label="{{ t('moduleHash') }}">
-                            <app-copy-id [content]="data.canisterStatus.moduleHash"></app-copy-id>
+                            <app-copy-id [content]="d.canisterStatus.moduleHash"></app-copy-id>
                         </app-canister-card-param>
                     </ng-container>
                     <app-canister-card-param label="{{ t('freezingThreshold') }}">
-                        {{ data.canisterStatus.settings.freezingThreshold }}
+                        {{ d.canisterStatus.settings.freezingThreshold }}
                     </app-canister-card-param>
                     <app-canister-card-param label="{{ t('freezingThresholdInCycles') }}">
-                        {{ data.canisterStatus.freezingThresholdInCycles }} TCycles
+                        {{ d.canisterStatus.freezingThresholdInCycles }} TCycles
                     </app-canister-card-param>
                     <app-canister-card-param label="{{ t('controllers') }}">
-                        <app-copy-id *rxFor="let id of data.canisterStatus.settings.controllers" [content]="id"></app-copy-id>
+                        <app-copy-id *rxFor="let id of d.canisterStatus.settings.controllers" [content]="id"></app-copy-id>
                     </app-canister-card-param>
                 </div>
             </ng-container>
-            <mat-divider *rxIf="hasStatus(data)"></mat-divider>
+            <mat-divider *rxIf="hasStatus()"></mat-divider>
         </mat-card-content>
-        <mat-card-actions *rxIf="hasStatus(data)">
-            <button *rxIf="hasStatus(data)" mat-button (click)="toggle()">{{ t(expanded() ? 'actions.collapse' : 'actions.expand') }}</button>
-            <button *rxIf="!disableDelete" color="warn" mat-button (click)="delete()" [disabled]="loading()">{{ t('actions.delete') }}</button>
+        <mat-card-actions *rxIf="hasStatus()">
+            <button *rxIf="hasStatus()" mat-button (click)="toggle()">{{ t(expanded() ? 'actions.collapse' : 'actions.expand') }}</button>
+            <button *rxIf="!disableDelete" color="warn" mat-button (click)="delete()" [disabled]="deleting()">{{ t('actions.delete') }}</button>
         </mat-card-actions>
-        <ng-template #error>
-            <ng-container [ngTemplateOutlet]="canisterId"></ng-container>
-            <ng-container *rxIf="hasError(data)">
-                <mat-icon color="warn" svgIcon="far:triangle-exclamation" [matTooltip]="data.errorMessage"></mat-icon>
-            </ng-container>
-        </ng-template>
-        <ng-template #canisterId>
-            <app-canister-card-param label="{{ t('canisterId') }}">
-                <app-copy-id [content]="data.canisterId"></app-copy-id>
-            </app-canister-card-param>
-        </ng-template>
+        <mat-card-footer *rxIf="loading()">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </mat-card-footer>
     </mat-card>
+    <ng-template #errorTemplate>
+        <div class="error-wrapper">
+            <ng-container [ngTemplateOutlet]="canisterIdTemplate"></ng-container>
+            <ng-container *rxIf="errorMessage(); let message">
+                <mat-icon color="warn" svgIcon="far:triangle-exclamation" [matTooltip]="message"></mat-icon>
+            </ng-container>
+        </div>
+    </ng-template>
+    <ng-template #canisterIdTemplate>
+        <app-canister-card-param *rxIf="canisterId(); let id" label="{{ t('canisterId') }}">
+            <app-copy-id [content]="id"></app-copy-id>
+        </app-canister-card-param>
+    </ng-template>
 </ng-container>
