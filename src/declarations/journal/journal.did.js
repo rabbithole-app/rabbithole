@@ -43,24 +43,6 @@ export const idlFactory = ({ IDL }) => {
         parentNotFound: IDL.Null
     });
     const Result_12 = IDL.Variant({ ok: File__1, err: FileCreateError });
-    const definite_canister_settings = IDL.Record({
-        freezing_threshold: IDL.Nat,
-        controllers: IDL.Vec(IDL.Principal),
-        memory_allocation: IDL.Nat,
-        compute_allocation: IDL.Nat
-    });
-    const canister_status_response = IDL.Record({
-        status: IDL.Variant({
-            stopped: IDL.Null,
-            stopping: IDL.Null,
-            running: IDL.Null
-        }),
-        memory_size: IDL.Nat,
-        cycles: IDL.Nat,
-        settings: definite_canister_settings,
-        idle_cycles_burned_per_day: IDL.Nat,
-        module_hash: IDL.Opt(IDL.Vec(IDL.Nat8))
-    });
     const EntryCreate = IDL.Record({
         name: IDL.Text,
         parentId: IDL.Opt(ID)
@@ -279,17 +261,6 @@ export const idlFactory = ({ IDL }) => {
     const JournalBucket = IDL.Service({
         accountIdentifier: IDL.Func([], [AccountIdentifier], ['query']),
         addFile: IDL.Func([FileCreate], [Result_12], []),
-        canisterStatus: IDL.Func(
-            [IDL.Principal],
-            [
-                IDL.Record({
-                    id: IDL.Principal,
-                    status: canister_status_response,
-                    freezingThresholdInCycles: IDL.Nat
-                })
-            ],
-            []
-        ),
         checkDirname: IDL.Func([EntryCreate], [Result_11], ['query']),
         checkFilename: IDL.Func([EntryCreate], [Result_10], ['query']),
         createDirectory: IDL.Func([EntryCreate], [Result_9], []),
@@ -300,6 +271,7 @@ export const idlFactory = ({ IDL }) => {
         deleteFile: IDL.Func([IDL.Text], [Result_7], []),
         deleteStorage: IDL.Func([BucketId__1], [], []),
         fileVetkdPublicKey: IDL.Func([ID__1, IDL.Vec(IDL.Vec(IDL.Nat8))], [IDL.Text], []),
+        fixStorageControllers: IDL.Func([], [], []),
         getChildrenDirs: IDL.Func([IDL.Opt(ID__1)], [IDL.Vec(Directory)], ['query']),
         getFileEncryptedSymmetricKey: IDL.Func([ID__1, IDL.Vec(IDL.Nat8)], [IDL.Text], []),
         getJournal: IDL.Func([IDL.Opt(IDL.Text)], [Result_6], ['query']),

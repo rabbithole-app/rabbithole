@@ -173,6 +173,7 @@ type InvoiceStage =
    installJournal: principal;
    notifyCanister: NotifyCreateCanisterArg;
    paid;
+   setControllers: principal;
    transferUnusedFunds: principal;
  };
 type Invoice = 

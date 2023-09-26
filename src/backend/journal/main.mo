@@ -571,4 +571,18 @@ shared ({ caller = installer }) actor class JournalBucket(owner : Principal) = t
     func isStorage(bucketId : BucketId) : Bool {
         TrieSet.mem<BucketId>(storageBuckets, bucketId, Principal.hash(bucketId), Principal.equal);
     };
+
+    public shared ({ caller }) func fixStorageControllers() : async () {
+        assert Principal.isController(caller);
+        let self = Principal.fromActor(this);
+        let settings = {
+            controllers = ?[self, owner];
+            freezing_threshold = null;
+            memory_allocation = null;
+            compute_allocation = null;
+        };
+        for (bucketId in Iter.fromArray(TrieSet.toArray<BucketId>(storageBuckets))) {
+            await ic.update_settings({ canister_id = bucketId; settings });
+        };
+    };
 };

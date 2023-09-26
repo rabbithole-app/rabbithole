@@ -113,6 +113,7 @@ module {
         #paid; // пользователь пополнил аккаунт
         #createCanister : LedgerTypes.Tokens; // создание пустой канистры
         #notifyCanister : CMCTypes.NotifyCreateCanisterArg; // нотификация CMC
+        #setControllers : Principal;
         #installJournal : Principal; // установка журнала
         #transferUnusedFunds : Principal; // перевод остатка ICP в defaultSubaccount канистры-журнала
         #complete : Principal; // журнал создан

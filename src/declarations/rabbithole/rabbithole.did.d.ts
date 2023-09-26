@@ -40,6 +40,7 @@ export type InvoiceStage =
     | { notifyCanister: NotifyCreateCanisterArg }
     | { transferUnusedFunds: Principal }
     | { complete: Principal }
+    | { setControllers: Principal }
     | { installJournal: Principal }
     | { createCanister: Tokens };
 export interface NotifyCreateCanisterArg {

@@ -16,7 +16,6 @@ import Types "types/types";
 import JournalBucket "journal/main";
 import JournalTypes "journal/types";
 import Utils "utils/utils";
-import Roles "utils/Roles";
 import LedgerTypes "types/ledger";
 import CMCTypes "types/cmc";
 import { LEDGER_CANISTER_ID; CYCLE_MINTING_CANISTER_ID } = "env";
@@ -63,8 +62,6 @@ actor Rabbithole {
     // type Deposit = Types.Deposit;
     type PublicKey = Text;
     type EncryptedKey = Text;
-    type Role = Roles.Role;
-    type StableUsers = Roles.StableUsers;
     type Topup = JournalTypes.Topup;
     type TimerId = Timer.TimerId;
 
@@ -281,6 +278,8 @@ actor Rabbithole {
                 compute_allocation = null;
             };
             await ic.update_settings({ canister_id = bucketId; settings });
+            let journalBucket : actor { fixStorageControllers : shared () -> async () } = actor (Principal.toText(bucketId));
+            await journalBucket.fixStorageControllers();
         };
     };
 
@@ -483,12 +482,25 @@ actor Rabbithole {
                 let notifyResult = await CMC.notify_create_canister(args);
                 switch (notifyResult) {
                     case (#Ok canisterId) {
-                        let updated : Invoice = { invoice with stage = #installJournal(canisterId) };
+                        let updated : Invoice = { invoice with stage = #setControllers(canisterId) };
                         ignore invoices.replace(invoice.owner, updated);
                         await createJournal_(updated);
                     };
                     case (#Err err) #err(#notify err);
                 };
+            };
+            case (#setControllers(canisterId)) {
+                let self = Principal.fromActor(Rabbithole);
+                let settings = {
+                    controllers = ?[self, invoice.owner];
+                    freezing_threshold = null;
+                    memory_allocation = null;
+                    compute_allocation = null;
+                };
+                await ic.update_settings({ canister_id = canisterId; settings });
+                let updated : Invoice = { invoice with stage = #installJournal(canisterId) };
+                ignore invoices.replace(invoice.owner, updated);
+                await createJournal_(updated);
             };
             case (#installJournal(canisterId)) {
                 ignore await (system JournalBucket.JournalBucket)(#install canisterId)(invoice.owner);

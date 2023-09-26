@@ -120,14 +120,6 @@ export type ID__1 = string;
 export interface JournalBucket {
     accountIdentifier: ActorMethod<[], AccountIdentifier>;
     addFile: ActorMethod<[FileCreate], Result_12>;
-    canisterStatus: ActorMethod<
-        [Principal],
-        {
-            id: Principal;
-            status: canister_status_response;
-            freezingThresholdInCycles: bigint;
-        }
-    >;
     checkDirname: ActorMethod<[EntryCreate], Result_11>;
     checkFilename: ActorMethod<[EntryCreate], Result_10>;
     createDirectory: ActorMethod<[EntryCreate], Result_9>;
@@ -138,6 +130,7 @@ export interface JournalBucket {
     deleteFile: ActorMethod<[string], Result_7>;
     deleteStorage: ActorMethod<[BucketId__1], undefined>;
     fileVetkdPublicKey: ActorMethod<[ID__1, Array<Uint8Array | number[]>], string>;
+    fixStorageControllers: ActorMethod<[], undefined>;
     getChildrenDirs: ActorMethod<[[] | [ID__1]], Array<Directory>>;
     getFileEncryptedSymmetricKey: ActorMethod<[ID__1, Uint8Array | number[]], string>;
     getJournal: ActorMethod<[[] | [string]], Result_6>;
@@ -235,18 +228,4 @@ export type TransferError =
     | { TxCreatedInFuture: null }
     | { InsufficientFunds: { balance: Tokens__1 } };
 export type TransferResult = { Ok: BlockIndex } | { Err: TransferError };
-export interface canister_status_response {
-    status: { stopped: null } | { stopping: null } | { running: null };
-    memory_size: bigint;
-    cycles: bigint;
-    settings: definite_canister_settings;
-    idle_cycles_burned_per_day: bigint;
-    module_hash: [] | [Uint8Array | number[]];
-}
-export interface definite_canister_settings {
-    freezing_threshold: bigint;
-    controllers: Array<Principal>;
-    memory_allocation: bigint;
-    compute_allocation: bigint;
-}
 export interface _SERVICE extends JournalBucket {}

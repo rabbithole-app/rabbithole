@@ -34,6 +34,7 @@ export const idlFactory = ({ IDL }) => {
         notifyCanister: NotifyCreateCanisterArg,
         transferUnusedFunds: IDL.Principal,
         complete: IDL.Principal,
+        setControllers: IDL.Principal,
         installJournal: IDL.Principal,
         createCanister: Tokens
     });

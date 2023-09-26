@@ -1,23 +1,3 @@
-type definite_canister_settings = 
- record {
-   compute_allocation: nat;
-   controllers: vec principal;
-   freezing_threshold: nat;
-   memory_allocation: nat;
- };
-type canister_status_response = 
- record {
-   cycles: nat;
-   idle_cycles_burned_per_day: nat;
-   memory_size: nat;
-   module_hash: opt blob;
-   settings: definite_canister_settings;
-   status: variant {
-             running;
-             stopped;
-             stopping;
-           };
- };
 type TransferResult = 
  variant {
    Err: TransferError;
@@ -175,12 +155,6 @@ type JournalBucket =
  service {
    accountIdentifier: () -> (AccountIdentifier) query;
    addFile: (FileCreate) -> (Result_12);
-   canisterStatus: (principal) ->
-    (record {
-       freezingThresholdInCycles: nat;
-       id: principal;
-       status: canister_status_response;
-     });
    checkDirname: (EntryCreate) -> (Result_11) query;
    checkFilename: (EntryCreate) -> (Result_10) query;
    createDirectory: (EntryCreate) -> (Result_9);
@@ -195,6 +169,7 @@ type JournalBucket =
    deleteFile: (text) -> (Result_7);
    deleteStorage: (BucketId__1) -> ();
    fileVetkdPublicKey: (ID__1, vec blob) -> (text);
+   fixStorageControllers: () -> ();
    getChildrenDirs: (opt ID__1) -> (vec Directory) query;
    getFileEncryptedSymmetricKey: (ID__1, blob) -> (text);
    getJournal: (opt text) -> (Result_6) query;

@@ -4,9 +4,6 @@ module {
     // - browser: vlldi-gmo5e...
     public let admin : [Text] = [
         "zfhgj-uj3qh-74azx-xqocs-uhv2w-h356s-wpztq-shdvd-wjinm-h7ar7-gae",
-        "bg2f6-rkk5t-osvog-vxkjf-qx52f-j3dvt-j3pj3-ysahz-kniqn-zvgfl-xae",
-        "5ifww-lko2z-u4vxb-anja6-thws4-zi3j4-ixbuz-rpcfc-ugdom-selmm-tqe",
-
         // 13916 id on IC
         "4ezhh-okhwy-n7ooy-yomtb-7by5k-imbyj-obc6i-upd74-tu4j2-vujni-yqe"
     ];
