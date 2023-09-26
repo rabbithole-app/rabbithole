@@ -48,8 +48,7 @@ const checkDelegationChain = async (): Promise<boolean> => {
 
 on$.pipe(
     switchMap(() => interval(AUTH_TIMER_INTERVAL)),
-    switchMap(() => forkJoin({ auth: checkAuthentication(), delegation: checkDelegationChain() })),
-    filter(({ auth, delegation }) => !auth || !delegation),
+    switchMap(() => forkJoin({ auth: checkAuthentication(), delegation: checkDelegationChain() }).pipe(filter(({ auth, delegation }) => !auth || !delegation))),
     bufferCount(2),
     take(1),
     takeUntil(off$),

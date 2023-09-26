@@ -1,41 +1,59 @@
-import { Injectable, Signal, WritableSignal, signal } from '@angular/core';
-import { AuthClient } from '@dfinity/auth-client';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Injectable, Signal, WritableSignal, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Observable, Subject } from 'rxjs';
-import { first, map } from 'rxjs/operators';
+import { filter, map, mergeWith } from 'rxjs/operators';
+import { isNull } from 'lodash';
 
-import { createAuthClient } from '@core/utils';
+import { AUTH_RX_STATE } from '@core/stores';
+import { AuthService } from './auth.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class CoreService {
+    #authState = inject(AUTH_RX_STATE);
+    #authService = inject(AuthService);
     worker: WritableSignal<Worker | null> = signal(null);
     #workerMessage: Subject<MessageEvent> = new Subject();
     workerMessage$: Observable<MessageEvent> = this.#workerMessage.asObservable();
     readonly workerEnabled = true;
-    client: WritableSignal<AuthClient | null> = signal(null);
-    isAuthenticated: WritableSignal<boolean> = signal(false);
     workerInited: Signal<boolean> = toSignal(
         this.workerMessage$.pipe(
-            first(({ data }) => data.action === 'init'),
-            map(() => true)
+            filter(({ data }) => data.action === 'init'),
+            map(() => true),
+            mergeWith(
+                toObservable(this.worker).pipe(
+                    filter(worker => isNull(worker)),
+                    map(() => false)
+                )
+            )
         ),
         { initialValue: false }
     );
 
     constructor() {
+        this.#authState.select('isAuthenticated').subscribe(isAuthenticated => {
+            if (isAuthenticated) this.#initWorker();
+            else this.#terminate();
+        });
+        this.workerMessage$.pipe(filter(({ data }) => data.action === 'rabbitholeSignOutAuthTimer')).subscribe(async () => {
+            await this.#authService.signedOutByWorker();
+        });
+    }
+
+    #initWorker() {
         if (typeof Worker !== 'undefined' && this.workerEnabled) {
             const worker = new Worker(new URL('../workers/core.worker', import.meta.url), { type: 'module' });
-            this.worker.set(worker);
             worker.onmessage = event => this.#workerMessage.next(event);
+            this.worker.set(worker);
         }
     }
 
-    async createAuthClient() {
-        const client = await createAuthClient();
-        this.client.set(client);
-        const isAuthenticated = await client.isAuthenticated();
-        this.isAuthenticated.set(isAuthenticated);
+    #terminate() {
+        const worker = this.worker();
+        if (worker) {
+            worker.terminate();
+            this.worker.set(null);
+        }
     }
 }

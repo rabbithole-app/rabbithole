@@ -12,7 +12,6 @@ import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.
 
 export enum AuthStatus {
     Anonymous,
-    // InitializingCrypto,
     Initialized
 }
 

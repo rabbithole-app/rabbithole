@@ -7,7 +7,7 @@ import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
 import { PhotonImage, crop, resize } from '@silvia-odwyer/photon';
 import { addSeconds, differenceInMilliseconds, isDate } from 'date-fns';
-import { defaults, get, has, isNull, isUndefined, omit, partition, pick, sortBy } from 'lodash';
+import { defaults, get, has, isNil, isNull, isUndefined, omit, partition, pick, sortBy } from 'lodash';
 import { CropperPosition } from 'ngx-image-cropper';
 import { EMPTY, MonoTypeOperatorFunction, Observable, Subject, concat, defer, forkJoin, from, iif, merge, of, onErrorResumeNextWith, pipe, timer } from 'rxjs';
 import {
@@ -23,7 +23,9 @@ import {
     mergeMap,
     reduce,
     repeat,
+    retry,
     scan,
+    single,
     skip,
     switchMap,
     takeUntil,
@@ -55,8 +57,8 @@ import { formatCanisterStatus } from '@features/canisters/utils';
 interface State {
     identity: Identity;
     actor: ActorSubclass<RabbitholeActor>;
-    journal: ActorSubclass<JournalActor>;
-    journalId: Principal;
+    journal: ActorSubclass<JournalActor> | null;
+    journalId: Principal | null;
     storages: Bucket<StorageActor>[];
     files: Record<string, FileUpload>;
     progress: Record<string, FileUploadState>;
@@ -96,6 +98,7 @@ const SHARED_WITH_ME_INTERVAL = 10000;
 const canistersTimer: Subject<boolean> = new Subject();
 const canistersTimerOn$ = canistersTimer.asObservable().pipe(filter(v => v));
 const canistersTimerOff$ = canistersTimer.asObservable().pipe(filter(v => !v));
+const CANISTER_STATUS_INTERVAL = 10000;
 const deleteStorage: Subject<string> = new Subject();
 
 addEventListener('message', ({ data }) => {
@@ -163,7 +166,7 @@ addEventListener('message', ({ data }) => {
                 ? from(encryptedItems).pipe(
                       mergeMap(({ id, name, storageId }) =>
                           state.select(selectSlice(['journalId', 'identity'])).pipe(
-                              first(),
+                              first((value): value is { journalId: Principal; identity: Identity } => !isNil(value.journalId)),
                               switchMap(({ journalId, identity }) =>
                                   downloadEncryptedFile({
                                       id,
@@ -209,18 +212,16 @@ addEventListener('message', ({ data }) => {
 });
 postMessage({ action: 'init' });
 
-function createRabbitholeActor(): Observable<ActorSubclass<RabbitholeActor>> {
-    return state.select('identity').pipe(
-        switchMap(identity =>
-            createActor<RabbitholeActor>({
-                identity,
-                canisterId: rabbitholeCanisterId,
-                idlFactory: rabbitholeIdlFactory,
-                host: environment.httpAgentHost ?? location.origin
-            })
-        )
-    );
-}
+const rabbitholeActor$ = state.select('identity').pipe(
+    switchMap(identity =>
+        createActor<RabbitholeActor>({
+            identity,
+            canisterId: rabbitholeCanisterId,
+            idlFactory: rabbitholeIdlFactory,
+            host: environment.httpAgentHost ?? location.origin
+        }).pipe(map(actor => ({ actor, isAnonymous: identity.getPrincipal().isAnonymous() })))
+    )
+);
 
 function createJournalActor(canisterId: Principal): Observable<ActorSubclass<JournalActor>> {
     return state.select('identity').pipe(
@@ -251,32 +252,6 @@ function createStorageActor(canisterId: Principal): Observable<Bucket<StorageAct
     );
 }
 
-function loadJournal(): (source$: Observable<ActorSubclass<RabbitholeActor>>) => Observable<Principal> {
-    return source$ =>
-        source$.pipe(
-            switchMap(actor =>
-                from(actor.getJournalBucket()).pipe(
-                    map(optCanister => fromNullable(optCanister)),
-                    filter(canisterId => !isUndefined(canisterId)),
-                    map(canisterId => canisterId as NonNullable<typeof canisterId>)
-                )
-            )
-        );
-}
-
-function initStorages(): (source$: Observable<ActorSubclass<JournalActor>>) => Observable<Bucket<StorageActor>[]> {
-    return source$ =>
-        source$.pipe(
-            switchMap(journalActor =>
-                from(journalActor.listStorages()).pipe(
-                    switchMap(buckets => from(buckets)),
-                    mergeMap(bucketId => createStorageActor(bucketId)),
-                    toArray()
-                )
-            )
-        );
-}
-
 function getStorage(fileSize: bigint): Observable<Bucket<StorageActor>> {
     return state.select('journal').pipe(
         first((actor): actor is NonNullable<typeof actor> => !isNull(actor)),
@@ -302,16 +277,15 @@ function updateProgress(id: string, value: Partial<FileUploadState> & { chunkSiz
     postMessage({ action: 'progressUpload', id, progress: value });
 }
 
-const identity$ = from(loadIdentity()).pipe(
-    map(identity => {
-        if (isUndefined(identity)) {
-            return new AnonymousIdentity();
-        }
-
-        return identity;
-    })
+state.connect(
+    'identity',
+    defer(() => loadIdentity()).pipe(
+        single((identity): identity is Identity => !isUndefined(identity)),
+        retry({ delay: 500, count: 3 }),
+        catchError(() => of<Identity>(new AnonymousIdentity())),
+        map(identity => identity as Identity)
+    )
 );
-state.connect('identity', identity$);
 
 // state.connect(
 //     'vetAesGcmKey',
@@ -319,19 +293,44 @@ state.connect('identity', identity$);
 // );
 
 state.connect(
-    createRabbitholeActor().pipe(
+    rabbitholeActor$.pipe(
         connect(shared =>
             merge(
-                shared.pipe(map(actor => ({ actor }))),
+                shared.pipe(map(({ actor }) => ({ actor }))),
                 shared.pipe(
-                    loadJournal(),
-                    switchMap(canisterId => createJournalActor(canisterId).pipe(map(journal => ({ journal, journalId: canisterId })))),
+                    switchMap(({ actor, isAnonymous }) => {
+                        if (isAnonymous) {
+                            return of({ journal: null, journalId: null });
+                        }
+
+                        return defer(() =>
+                            from(actor.getJournalBucket()).pipe(
+                                map(optCanister => fromNullable(optCanister)),
+                                filter((canisterId): canisterId is NonNullable<typeof canisterId> => !isUndefined(canisterId))
+                            )
+                        ).pipe(switchMap(canisterId => createJournalActor(canisterId).pipe(map(journal => ({ journal, journalId: canisterId })))));
+                    }),
                     connect(sharedJournal =>
                         merge(
                             sharedJournal,
                             sharedJournal.pipe(
-                                map(({ journal }) => journal),
-                                initStorages(),
+                                switchMap(({ journal }) => {
+                                    if (journal) {
+                                        return from(journal.listStorages()).pipe(
+                                            switchMap(buckets => {
+                                                if (buckets.length > 0) {
+                                                    return from(buckets).pipe(
+                                                        mergeMap(bucketId => createStorageActor(bucketId)),
+                                                        toArray()
+                                                    );
+                                                }
+                                                return of([]);
+                                            })
+                                        );
+                                    }
+
+                                    return of([]);
+                                }),
                                 map(storages => ({ storages }))
                             )
                         )
@@ -340,7 +339,7 @@ state.connect(
             )
         ),
         catchError(err => {
-            if (err.message.includes('Failed to authenticate request') || err.message.includes('Internal Server Error')) {
+            if (err.message.includes('Failed to authenticate request') || (!environment.production && err.message.includes('Internal Server Error'))) {
                 postMessage({ action: 'rabbitholeSignOutAuthTimer' });
             }
 
@@ -349,10 +348,12 @@ state.connect(
     )
 );
 
+const journal$ = state.select('journal').pipe(filter((journal): journal is NonNullable<typeof journal> => !isNull(journal)));
+
 updateJournal
     .asObservable()
     .pipe(
-        combineLatestWith(state.select('journal')),
+        combineLatestWith(journal$),
         switchMap(([path, actor]) =>
             from(actor.getJournal(toNullable(path || undefined))).pipe(
                 map(response => {
@@ -388,7 +389,7 @@ updateJournal
 listFiles
     .asObservable()
     .pipe(
-        combineLatestWith(state.select('journal')),
+        combineLatestWith(journal$),
         switchMap(([parentId, actor]) =>
             from(actor.listFiles(toNullable(parentId || undefined))).pipe(map(items => ({ parentId, items: items.map(toFileExtended) })))
         ),
@@ -443,7 +444,7 @@ const fileUpload$ = files.asObservable().pipe(
                     defer(() =>
                         options && options.encryption
                             ? state.select(selectSlice(['journal', 'identity'])).pipe(
-                                  first(),
+                                  first((value): value is { journal: ActorSubclass<JournalActor>; identity: Identity } => !isNull(value.journal)),
                                   switchMap(({ journal, identity }) => initVetAesGcmKey(item.id, identity.getPrincipal(), journal, false)),
                                   // switchMap(aesKey => encryptArrayBuffer(aesKey, item.data)),
                                   catchError(err => {
@@ -633,10 +634,15 @@ canistersTimerOn$
         ),
         switchMap(ic =>
             merge(
-                state.select('journalId').pipe(switchMap(canisterId => timer(0, 5000).pipe(map(() => ({ canisterId: canisterId.toText(), type: 'journal' }))))),
+                state.select('journalId').pipe(
+                    filter((journalId): journalId is Principal => !isNull(journalId)),
+                    switchMap(canisterId => timer(0, CANISTER_STATUS_INTERVAL).pipe(map(() => ({ canisterId: canisterId.toText(), type: 'journal' }))))
+                ),
                 state.select('storages').pipe(
                     map(storages => storages.map(({ canisterId }) => canisterId)),
-                    switchMap(storages => from(storages).pipe(mergeMap(canisterId => timer(0, 5000).pipe(map(() => ({ canisterId, type: 'storage' }))))))
+                    switchMap(storages =>
+                        from(storages).pipe(mergeMap(canisterId => timer(0, CANISTER_STATUS_INTERVAL).pipe(map(() => ({ canisterId, type: 'storage' })))))
+                    )
                 )
             ).pipe(
                 tap(({ canisterId, type }) => postMessage({ action: 'canisterStatusLoading', payload: { canisterId, type, loading: true } })),
@@ -669,7 +675,7 @@ deleteStorage
     .pipe(
         mergeMap(canisterId =>
             state.select('journal').pipe(
-                first(),
+                first((actor): actor is ActorSubclass<JournalActor> => !isNull(actor)),
                 switchMap(actor => actor.deleteStorage(Principal.fromText(canisterId))),
                 map(() => ({ canisterId })),
                 catchError(err => {

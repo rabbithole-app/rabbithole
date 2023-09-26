@@ -2,34 +2,15 @@
     <div class="login">
         <!-- <img height="100" src="../../../assets/logo.svg" alt="Rabbit Hole" /> -->
         <app-logo [expanded]="true"></app-logo>
-        <!-- <main>
-            <h1 class="mat-h1">Encrypted decentralized file storage</h1>
-            <p class="mat-subheading-2">Приложение «Кроличья нора» позволяет хранить ваши файлы безопасным и защищенным образом. Любые файлы, которые вы бросите в кроличью нору, будут помещены в <a href="https://internetcomputer.org/what-is-the-ic">Internet Computer</a> - децентрализованный облачный мировой компьютер. Все данные будут зашифрованы с использованием вашего закрытого ключа, которым управляете только вы. Это эффективно исключает любую возможность несанкционированного доступа к вашей информации. Теперь вы и только вы являетесь реальным владельцем ваших данных.</p>
-        </main> -->
-        <ng-container [ngSwitch]="status$ | push">
-            <button *ngSwitchCase="authStatus.Anonymous" mat-raised-button (click)="authService.signIn()" color="primary">
+        <button mat-raised-button disabled *rxIf="initialized(); else signIn">
+            <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
+            {{ t('application.sign-in-redirect') }}
+        </button>
+        <ng-template #signIn>
+            <button mat-raised-button (click)="authService.signIn()" color="primary">
                 <mat-icon svgIcon="ic:dfinity"></mat-icon>
                 {{ t('application.sign-in') }}
             </button>
-            <button mat-raised-button disabled *ngSwitchCase="authStatus.Initialized">
-                <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
-                {{ t('application.sign-in-redirect') }}
-            </button>
-            <!-- <ng-container *ngSwitchCase="authStatus.InitializingAuth" [ngTemplateOutlet]="initializingButton"></ng-container>
-            <ng-container *ngSwitchCase="authStatus.InitializingCrypto" [ngTemplateOutlet]="initializingButton"></ng-container>
-            <ng-container *ngSwitchCase="authStatus.Synchronizing">
-                <button mat-raised-button disabled>
-                    <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
-                    {{ t('application.synchronizing') }}
-                </button>
-                <span class="mat-subheading-2">{{ t('application.synchronizing.description') }}</span>
-            </ng-container> -->
-            <ng-template #initializingButton>
-                <button mat-raised-button disabled>
-                    <mat-spinner class="mdc-button__icon" diameter="20"></mat-spinner>
-                    {{ t('application.initializing') }}
-                </button>
-            </ng-template>
-        </ng-container>
+        </ng-template>
     </div>
 </ng-container>

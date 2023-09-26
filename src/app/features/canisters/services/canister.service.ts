@@ -1,12 +1,12 @@
 import { Injectable, WritableSignal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { throwError } from 'rxjs';
-import { auditTime, catchError, combineLatestWith, distinctUntilChanged, filter, finalize, first, map, scan, startWith } from 'rxjs/operators';
+import { catchError, combineLatestWith, distinctUntilChanged, filter, finalize, first, map, scan, startWith } from 'rxjs/operators';
 import { findIndex, isEqual } from 'lodash';
+import { TranslocoService } from '@ngneat/transloco';
 
 import { CoreService, NotificationService } from '@core/services';
 import { CanisterStatusResult } from '../models';
-import { TranslocoService } from '@ngneat/transloco';
 
 @Injectable({
     providedIn: 'root'
@@ -41,7 +41,6 @@ export class CanisterService {
                 ),
                 map(([data, canisterId]) => (canisterId ? data.filter(item => item.canisterId !== canisterId) : data)),
                 distinctUntilChanged(isEqual),
-                auditTime(100),
                 takeUntilDestroyed()
             )
             .subscribe(data => this.canisters.set(data));

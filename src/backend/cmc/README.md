@@ -15,15 +15,15 @@ ic-wasm ../../../target/wasm32-unknown-unknown/release/cycles-minting-canister.w
 ```
 Copy `cmc-custom.wasm` to the project. Next, add a new method to `cmc.did`:
 ```
-type SetAuthorizedSubnetworkListArgs = record {
-    who : opt principal;
-    subnets : vec principal;
-};
++type SetAuthorizedSubnetworkListArgs = record {
++    who : opt principal;
++    subnets : vec principal;
++};
 
 service : (opt CyclesCanisterInitPayload) -> {
   // ...
 
-  set_authorized_subnetwork_list: (SetAuthorizedSubnetworkListArgs) -> ();
++  set_authorized_subnetwork_list: (SetAuthorizedSubnetworkListArgs) -> ();
 }
 ```
 

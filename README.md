@@ -118,11 +118,11 @@ Table of available arguments for scripts:
   - [x] keep batch alive when upload is paused
 - [x] Registration
   - [x] with ICP
-  - [x] with an invitatation code
+  - [x] with an invitation code
 - [x] Developers scripts
   - [x] upgrading canisters
   - [x] storage capacity testing
-- [ ] Auto top-up user canisters
+- [x] Auto top-up user canisters ([cycles-manager](https://github.com/CycleOperators/cycles-manager))
 - [ ] Notification canister (WebSockets feature)
   - [ ] email (https outcalls)
 - [ ] Collaborative journal (vetKD)
