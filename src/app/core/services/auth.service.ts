@@ -76,7 +76,6 @@ export class AuthService extends RxState<State> {
             .asObservable()
             .pipe(
                 throttleTime(100),
-                switchMap(() => this.authState.select('client').pipe(switchMap(client => client.logout()))),
                 tap(() => this.authState.set({ status: AuthStatus.Anonymous })),
                 delayWhen(() => this.authState.select('isAuthenticated').pipe(filter(v => !v)))
             )

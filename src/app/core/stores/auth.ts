@@ -3,10 +3,10 @@ import { ActorSubclass, AnonymousIdentity, Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
 import { RxState } from '@rx-angular/state';
 import { selectSlice } from '@rx-angular/state/selections';
-import { merge } from 'rxjs';
-import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
+import { from, merge } from 'rxjs';
+import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operators';
 
-import { createActor } from '@core/utils';
+import { createActor, createAuthClient } from '@core/utils';
 import { canisterId, idlFactory } from 'declarations/rabbithole';
 import { _SERVICE as RabbitholeActor } from 'declarations/rabbithole/rabbithole.did';
 
@@ -42,7 +42,13 @@ export const authStateFactory = () => {
     );
     const anonymous$ = state.select('status').pipe(
         filter(status => status === AuthStatus.Anonymous),
-        switchMap(() => {
+        switchMap(() =>
+            state.select('client').pipe(
+                first(),
+                switchMap(client => from(client.logout()).pipe(switchMap(() => createAuthClient())))
+            )
+        ),
+        switchMap(client => {
             const identity = new AnonymousIdentity();
             return createActor<RabbitholeActor>({
                 identity,
@@ -50,6 +56,7 @@ export const authStateFactory = () => {
                 idlFactory
             }).pipe(
                 map(actor => ({
+                    client,
                     identity,
                     actor,
                     isAuthenticated: false
