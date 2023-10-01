@@ -1,6 +1,7 @@
 import pkgIdentity from '@dfinity/identity';
 import pkgIdentity256k1 from '@dfinity/identity-secp256k1';
 import { readFileSync } from 'fs';
+import { homedir } from 'os';
 import pemfile from 'pem-file';
 
 const { Secp256k1KeyIdentity } = pkgIdentity256k1;
@@ -30,7 +31,7 @@ const decode = (rawKey) => {
 };
 
 export const initIdentity = () => {
-    const buffer = readFileSync('/Users/khalik/.config/dfx/identity/default/identity.pem');
+    const buffer = readFileSync(`${homedir()}/.config/dfx/identity/default/identity.pem`);
     const key = buffer.toString('utf-8');
 
     return decode(key);

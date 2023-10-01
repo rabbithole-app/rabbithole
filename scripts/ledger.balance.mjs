@@ -27,7 +27,7 @@ const getBalance = async (mainnet) => {
 
 	console.log(formatE8sICP(e8sBalance), '|', e8sBalance);
 
-	const identifier = accountIdentifier(mainnet);
+	const identifier = accountIdentifier();
 
 	console.log(identifier.toHex());
 };

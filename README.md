@@ -16,6 +16,22 @@
 
 # Deploy locally
 
+## Prerequisites
+
+1. [dfx](https://github.com/dfinity/sdk)
+2. [vessel 0.7.0](https://github.com/dfinity/vessel/releases/tag/v0.7.0) and later
+```shell
+vessel install
+vessel verify --version 0.9.8
+```
+3. node v18 (v19 is not suitable), I use [nvm](https://github.com/nvm-sh/nvm) to work with several versions of Node at once:
+```shell
+nvm install 18
+nvm use 18
+```
+
+## Deploy
+
 If this is your first time installing a project, then just type:
 ```sh
 yarn install # npm install
